@@ -71,5 +71,21 @@ public class TreeSpotter implements EntryPoint {
       Window.Location.replace(loginInfo.getLogoutUrl());
     }
   }
+  
+  private void doSearch() {
+    
+  }
+  
+  private void displaySearchResults(ArrayList<ClientTreeData> rlist) {
+    
+  }
+  
+  private void displayTreeInfoPage(ClientTreeData t) {
+    
+  }
+  
+  private void addUserTree() {
+    
+  }
 
 }
