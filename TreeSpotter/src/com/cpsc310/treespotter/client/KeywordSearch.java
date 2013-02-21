@@ -2,23 +2,26 @@ package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
 
+import com.cpsc310.treespotter.client.SearchQuery.SearchFieldID;
+import com.cpsc310.treespotter.client.SearchQuery.SearchParam;
+
 public class KeywordSearch implements SearchQuery {
   
-  public String getSearchType() {
-    return null;
-  }
-  
-  // need to properly define what params are
-  public ArrayList<String> getSearchParams() {
-    return null;
-  }
-  
-  public void setSearchType(String type) {
-    
-  }
-  
-  public void setSearchParams(ArrayList<String> params) {
-    
-  }
+	  
+	  public ArrayList<SearchParam> getSearchParams() {
+	    return null;
+	  }
+	  
+	  public void addSearchParam(SearchParam searchParam){
+		  
+	  }
+	  
+	  public void addSearchParam(SearchFieldID fieldID, String fieldString){
+		  
+	  }
+	  
+	  public void setSearchParams(ArrayList<SearchParam> params) {
+	    
+	  }
   
 }
