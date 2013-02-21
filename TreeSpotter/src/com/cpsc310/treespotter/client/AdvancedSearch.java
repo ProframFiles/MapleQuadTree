@@ -1,22 +1,14 @@
 package com.cpsc310.treespotter.client;
 
-import java.util.ArrayList;
 
-public class AdvancedSearch implements SearchQuery {
-  public String getSearchType() {
-    return null;
-  }
+public class AdvancedSearch extends SearchQuery {
   
-  // need to properly define what params are
-  public ArrayList<String> getSearchParams() {
-    return null;
-  }
-  
-  public void setSearchType(String type) {
-    
-  }
-  
-  public void setSearchParams(ArrayList<String> params) {
-    
-  }
+	/**
+	 * Auto-generated for serialization
+	 */
+	private static final long serialVersionUID = 1631310427446098555L;
+
+	public void CreateSearchParams(){
+		
+	}
 }
