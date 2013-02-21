@@ -13,6 +13,6 @@ public interface TreeDataServiceAsync {
   // UML said int, but shouldn't it be ClientTreeData for display?
   public void getTreeData(String id, String userType, AsyncCallback<ClientTreeData> async);
   
-  public void searchTreeData(SearchQuery query, AsyncCallback<ArrayList<ClientTreeData>> async);
+  public void searchTreeData(SearchQueryInterface query, AsyncCallback<ArrayList<ClientTreeData>> async);
 
 }

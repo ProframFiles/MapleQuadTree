@@ -4,10 +4,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
-import com.cpsc310.treespotter.client.SearchQueryInterface;
-import com.cpsc310.treespotter.client.SearchParam;
 
-public abstract class SearchQuery implements SearchQueryInterface, Iterable<SearchParam> {
+import com.cpsc310.treespotter.client.SearchQueryInterface;
+
+public abstract class SearchQuery implements SearchQueryInterface {
   private ArrayList<SearchParam> paramList = new ArrayList<SearchParam>();
 	
   public List<SearchParam> getSearchParams(){
@@ -18,7 +18,11 @@ public abstract class SearchQuery implements SearchQueryInterface, Iterable<Sear
 	  return Collections.unmodifiableList(paramList).iterator();
   }
   
-  // to be used like: addSearchParam(new SearchParam(SearchFieldID::SPECIES, species_string));
+  /**
+   *  to be used like: addSearchParam(new SearchParam(SearchFieldID::SPECIES, species_string));
+   * 
+   * @param searchParam
+   */
   public void addSearchParam(SearchParam searchParam){
 	  paramList.add(searchParam);
   }

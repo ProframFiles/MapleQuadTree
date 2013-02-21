@@ -15,5 +15,5 @@ public interface TreeDataService extends RemoteService {
   // UML said int, but shouldn't it be ClientTreeData for display?
   public ClientTreeData getTreeData(String id, String userType);
   
-  public ArrayList<ClientTreeData> searchTreeData(SearchQuery query);
+  public ArrayList<ClientTreeData> searchTreeData(SearchQueryInterface query);
 }
