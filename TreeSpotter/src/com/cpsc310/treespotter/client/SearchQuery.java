@@ -1,35 +1,41 @@
 package com.cpsc310.treespotter.client;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
+import com.cpsc310.treespotter.client.SearchQueryInterface;
+import com.cpsc310.treespotter.client.SearchParam;
 
-public interface SearchQuery {
-  public enum SearchFieldID
-  {
-	  KEYWORD, // use for uncategorized strings
-	  SPECIES,
-	  LOCATION,
-	  ADD_OTHERS_AS_NEEDED
+public abstract class SearchQuery implements SearchQueryInterface, Iterable<SearchParam> {
+  private ArrayList<SearchParam> paramList = new ArrayList<SearchParam>();
+	
+  public List<SearchParam> getSearchParams(){
+	  return Collections.unmodifiableList(paramList);
   }
   
-  // A small "struct" to be used to pass search terms around
-  // tying the string to an enum representing it's actual role is on purpose:
-  // we shouldn't have loose strings passed in and around without knowing what
-  // they actually represent
-  public class SearchParam {
-	  SearchParam(SearchFieldID searchFieldID, String stringValue ){
-		  value = stringValue;
-		  fieldID = searchFieldID;
-	  }
-	  public SearchFieldID fieldID;
-	  public String value;
+  public Iterator<SearchParam> iterator(){
+	  return Collections.unmodifiableList(paramList).iterator();
   }
-  
-  public ArrayList<SearchParam> getSearchParams();
   
   // to be used like: addSearchParam(new SearchParam(SearchFieldID::SPECIES, species_string));
-  public void addSearchParam(SearchParam searchParam);
+  public void addSearchParam(SearchParam searchParam){
+	  paramList.add(searchParam);
+  }
   
-  public void addSearchParam(SearchFieldID fieldID, String fieldString);
+  public void addSearchParam(SearchFieldID fieldID, String fieldString){
+	  paramList.add(new SearchParam(fieldID, fieldString));
+  }
   
-  public void setSearchParams(ArrayList<SearchParam> params);
+  public void setSearchParams(List<SearchParam> params){
+	  paramList.clear();
+	  paramList.addAll(params);
+  }
+  
+  /**
+ * Basic search query creator, to be re-implemented in advanced and basic search.
+ * I'm not even sure what the method name/signature should be for this
+ * So feel free to change it as needed
+ */
+  public abstract void CreateSearchParams();
 }
