@@ -8,8 +8,12 @@ import java.util.Collections;
 import com.cpsc310.treespotter.client.SearchQueryInterface;
 
 public abstract class SearchQuery implements SearchQueryInterface {
+
   private ArrayList<SearchParam> paramList = new ArrayList<SearchParam>();
-	
+  
+  public SearchQuery(){
+  }
+  
   public List<SearchParam> getSearchParams(){
 	  return Collections.unmodifiableList(paramList);
   }
