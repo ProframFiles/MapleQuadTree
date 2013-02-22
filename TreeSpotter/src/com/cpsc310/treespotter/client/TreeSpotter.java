@@ -8,18 +8,23 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.maps.client.MapWidget;
+import com.google.gwt.maps.client.Maps;
+import com.google.gwt.maps.client.geocode.Geocoder;
+import com.google.gwt.maps.client.geocode.LatLngCallback;
+import com.google.gwt.maps.client.geom.LatLng;
+import com.google.gwt.user.client.Random;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.*;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -37,11 +42,19 @@ public class TreeSpotter implements EntryPoint {
   private List<TextBox> advancedSearchList = new ArrayList<TextBox>();
   private List<TextBox> addFormList = new ArrayList<TextBox>();
 
+  private final TreeDataServiceAsync treeDataService = GWT.create(TreeDataService.class);
+  private final VerticalPanel infoMapPanel = new VerticalPanel();
+  private Geocoder geo;
+  private Label invalidLoc = new Label("Tree location could not be displayed");
+  private static final int ZOOM_LVL = 12;
+  private static final String ADMIN = "admin";
+  
   
   /**
    * Entry point method.
    */
   public void onModuleLoad() {
+
       // do we care if they're logged in?
 //      LoginServiceAsync loginService = GWT.create(LoginService.class);
 //      loginService.login(GWT.getHostPageBaseURL(), new AsyncCallback<LoginInfo>() {
@@ -59,9 +72,24 @@ public class TreeSpotter implements EntryPoint {
 //        }
 //      });
 
-	  initHomePage();	
-	  initButtons();
-	  initLoginLogout();
+    /* to see specific tree info page, use GET parameters
+    eg. treespotter.appspot.com/viewTree.html?id=xxx
+    uncomment the following to get the parameter and pass to server */
+    /*String tid = Window.Location.getParameter("id");
+    // how to determine user type to pass in? Shouldn't be via GET
+    // dependent on how we keep track of user privileges
+
+    String user = ADMIN;
+    getTreeInfo(tid, user);*/
+    
+    Maps.loadMapsApi("", "2", true, new Runnable() {
+      public void run() {
+        initHomePage(); 
+        initButtons();
+        initLoginLogout();
+      }
+    });
+
   }
 
 private void handleError(Throwable error) {
@@ -191,6 +219,17 @@ private void handleError(Throwable error) {
 	  RootPanel.get("content").add(resultsTable);
   }
   
+  private void getTreeInfo(String id, String user) {
+    treeDataService.getTreeData(id, user, new AsyncCallback<ClientTreeData>() {
+      public void onFailure(Throwable error) {
+        handleError(error);
+      }
+      public void onSuccess(ClientTreeData data) {
+        displayTreeInfoPage(data);
+      }
+    });
+  }
+
   /**
    * Replaces content panel with details from the given ClientTreeData
    * @param t ClientTreeData to display details of
@@ -200,9 +239,7 @@ private void handleError(Throwable error) {
 	  panel.setSpacing(50);
 	  
 	  /* create the map */
-	  HorizontalPanel mapPanel = new HorizontalPanel();
-	  mapPanel.setSize("400px", "400px");
-	  mapPanel.setStyleName("map");
+    setTreeInfoMap(t); 
 
 	  /* create panel with all the data */
 	  VerticalPanel data = new VerticalPanel();
@@ -217,17 +254,19 @@ private void handleError(Throwable error) {
 	  data.add(createResultDataRow("Height", "1.2m"));
 	  data.add(createResultDataRow("Weight", "38.0kg"));
 	  
-	  panel.add(mapPanel);
+	  panel.add(infoMapPanel);
 	  panel.add(data);
 	  
 	  RootPanel.get("content").clear();
 	  RootPanel.get("content").add(panel); 
+
   }
   
   /**
    * Open a popup for a form to add a tree to the database
    */
   private void addUserTree() {
+
 	  final PopupPanel addPanel = new PopupPanel();
 	  VerticalPanel addForm = new VerticalPanel();
 	  
@@ -240,9 +279,27 @@ private void handleError(Throwable error) {
 	  /* add submit button */
 	  // TODO: hook up to add tree service
 	  Button submitBtn = new Button("Add Tree");
-	  for (TextBox tb: addFormList) {
-		System.out.println(tb.getValue());
-	  }
+	  submitBtn.addClickHandler(new ClickHandler() {
+	    public void onClick(ClickEvent event) {
+//  	    for (TextBox tb: addFormList) {
+//          System.out.println(tb.getValue());
+//        }  
+	      UserTreeData addTree = new UserTreeData();
+	      //TODO: set form data to populate UserTreeData
+//	      treeDataService.
+	      treeDataService.addTree(addTree, new AsyncCallback<Void>() {
+	        public void onFailure(Throwable error) {
+	          handleError(error);
+	        }
+	        public void onSuccess(Void v) {
+//	          displayTreeInfoPage(data);
+	          // TODO
+	          // maybe it'd be nice to be redirected to newly added tree info page?
+	          // would require TreeDataService to return ClientTreeData from server
+	        }
+	      });
+	    }
+	  });
 	  
 	  /* add cancel button to close popup */
 	  Button cancelBtn = new Button("Cancel");
@@ -407,4 +464,45 @@ private void handleError(Throwable error) {
 		return row;
 	}
 
+private void setTreeInfoMap(ClientTreeData data) {
+  infoMapPanel.clear();
+  // TODO: add infoMapPanel to tree info page
+  infoMapPanel.setSize("400px", "400px");
+  infoMapPanel.setStyleName("map");
+  if (data.getCoordinates() == null) {
+    infoMapPanel.add(invalidLoc);
+    return;
+  }
+    
+  System.out.println(data.getCoordinates());
+  LatLng coords = LatLng.fromUrlValue(data.getCoordinates());
+  if (!validCoordinates(coords)) {  // geocode location
+    
+    geo.getLatLng(data.getLocation(), new LatLngCallback() {
+      public void onFailure() {
+        infoMapPanel.add(invalidLoc);
+      }
+      
+      public void onSuccess(LatLng pt) {
+        setTreeInfoMap(pt);
+        // TODO: add new coordinates back to server database
+      }
+    });
+  }
+  else {
+    setTreeInfoMap(coords);
+  }
+
+}
+
+private void setTreeInfoMap(LatLng pt) {
+  MapWidget map = new MapWidget(pt, ZOOM_LVL);
+  infoMapPanel.add(map);
+}
+
+private boolean validCoordinates(LatLng c) {
+  if (Double.isNaN(c.getLatitude()) || Double.isNaN(c.getLongitude()))
+    return false;
+  return true;
+}
 }

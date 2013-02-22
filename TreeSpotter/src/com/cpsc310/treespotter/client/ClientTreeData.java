@@ -1,8 +1,9 @@
 package com.cpsc310.treespotter.client;
 
 import java.util.Date;
+import java.io.Serializable;
 
-public class ClientTreeData implements java.io.Serializable {
+public class ClientTreeData implements Serializable {
 	/**
 	 * 
 	 */

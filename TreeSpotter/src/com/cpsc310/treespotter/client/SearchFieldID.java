@@ -7,7 +7,14 @@ package com.cpsc310.treespotter.client;
 public enum SearchFieldID
 {
 	  KEYWORD, // use for uncategorized strings
+	  ID,
+	  NEIGHBOUR,
+//	  these would work better as range searches, lower priority
+//	  HEIGHT, 
+//	  DIAMETER,
+	  GENUS,
 	  SPECIES,
-	  LOCATION,
+	  COMMON,
+	  LOCATION, // is this address or coordinates?
 	  ADD_OTHERS_AS_NEEDED
 }
