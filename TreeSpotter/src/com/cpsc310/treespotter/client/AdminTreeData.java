@@ -1,6 +1,6 @@
 package com.cpsc310.treespotter.client;
 
-public class AdminTreeData implements ClientTreeData {
+public class AdminTreeData extends ClientTreeData {
   
   public String getID() {
     return null;
