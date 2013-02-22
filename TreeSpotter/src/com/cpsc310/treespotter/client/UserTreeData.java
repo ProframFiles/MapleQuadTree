@@ -1,6 +1,8 @@
 package com.cpsc310.treespotter.client;
 
-public class UserTreeData implements ClientTreeData {
+import java.io.Serializable;
+
+public class UserTreeData implements ClientTreeData, Serializable {
   
   public String getID() {
     return null;
@@ -12,7 +14,8 @@ public class UserTreeData implements ClientTreeData {
   
   // depends on if we use the geocoded LatLng data
   public String getCoordinates() {
-    return null;
+//    return null;
+    return "49.225838, -123.017374";
   }
   
   public String getSpecies() {

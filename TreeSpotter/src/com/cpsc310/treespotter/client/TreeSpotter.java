@@ -16,6 +16,7 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.maps.client.MapWidget;
+import com.google.gwt.maps.client.Maps;
 import com.google.gwt.maps.client.geocode.Geocoder;
 import com.google.gwt.maps.client.geocode.LatLngCallback;
 import com.google.gwt.maps.client.geom.LatLng;
@@ -46,7 +47,7 @@ public class TreeSpotter implements EntryPoint {
   private Geocoder geo;
   private Label invalidLoc = new Label("Tree location could not be displayed");
   private static final int ZOOM_LVL = 12;
-
+  private static final String ADMIN = "admin";
   
   
   /**
@@ -77,18 +78,18 @@ public class TreeSpotter implements EntryPoint {
     /*String tid = Window.Location.getParameter("id");
     // how to determine user type to pass in? Shouldn't be via GET
     // dependent on how we keep track of user privileges
-    // User class does not provide enough info, we may have to create
-    // some kind of JDO wrapper class around it or add another field to
-    // LoginInfo
-    String user = "admin";
+
+    String user = ADMIN;
     getTreeInfo(tid, user);*/
     
-    
-    // TODO: add infoMapPanel to tree info page
-    infoMapPanel.setSize("250px", "250px");
-    initHomePage();	
-    initButtons();
-    initLoginLogout();
+    Maps.loadMapsApi("", "2", true, new Runnable() {
+      public void run() {
+        initHomePage(); 
+        initButtons();
+        initLoginLogout();
+      }
+    });
+
   }
 
 private void handleError(Throwable error) {
@@ -238,9 +239,7 @@ private void handleError(Throwable error) {
 	  panel.setSpacing(50);
 	  
 	  /* create the map */
-	  HorizontalPanel mapPanel = new HorizontalPanel();
-	  mapPanel.setSize("400px", "400px");
-	  mapPanel.setStyleName("map");
+    setTreeInfoMap(t); 
 
 	  /* create panel with all the data */
 	  VerticalPanel data = new VerticalPanel();
@@ -255,13 +254,12 @@ private void handleError(Throwable error) {
 	  data.add(createResultDataRow("Height", "1.2m"));
 	  data.add(createResultDataRow("Weight", "38.0kg"));
 	  
-	  panel.add(mapPanel);
+	  panel.add(infoMapPanel);
 	  panel.add(data);
 	  
 	  RootPanel.get("content").clear();
 	  RootPanel.get("content").add(panel); 
-    // uncomment this line to set infoMapPanel to display tree with ID
-    setTreeInfoMap(t); 
+
   }
   
   /**
@@ -281,9 +279,27 @@ private void handleError(Throwable error) {
 	  /* add submit button */
 	  // TODO: hook up to add tree service
 	  Button submitBtn = new Button("Add Tree");
-	  for (TextBox tb: addFormList) {
-		System.out.println(tb.getValue());
-	  }
+	  submitBtn.addClickHandler(new ClickHandler() {
+	    public void onClick(ClickEvent event) {
+//  	    for (TextBox tb: addFormList) {
+//          System.out.println(tb.getValue());
+//        }  
+	      UserTreeData addTree = new UserTreeData();
+	      //TODO: set form data to populate UserTreeData
+//	      treeDataService.
+	      treeDataService.addTree(addTree, new AsyncCallback<Void>() {
+	        public void onFailure(Throwable error) {
+	          handleError(error);
+	        }
+	        public void onSuccess(Void v) {
+//	          displayTreeInfoPage(data);
+	          // TODO
+	          // maybe it'd be nice to be redirected to newly added tree info page?
+	          // would require TreeDataService to return ClientTreeData from server
+	        }
+	      });
+	    }
+	  });
 	  
 	  /* add cancel button to close popup */
 	  Button cancelBtn = new Button("Cancel");
@@ -450,6 +466,15 @@ private void handleError(Throwable error) {
 
 private void setTreeInfoMap(ClientTreeData data) {
   infoMapPanel.clear();
+  // TODO: add infoMapPanel to tree info page
+  infoMapPanel.setSize("400px", "400px");
+  infoMapPanel.setStyleName("map");
+  if (data.getCoordinates() == null) {
+    infoMapPanel.add(invalidLoc);
+    return;
+  }
+    
+  System.out.println(data.getCoordinates());
   LatLng coords = LatLng.fromUrlValue(data.getCoordinates());
   if (!validCoordinates(coords)) {  // geocode location
     
@@ -467,6 +492,7 @@ private void setTreeInfoMap(ClientTreeData data) {
   else {
     setTreeInfoMap(coords);
   }
+
 }
 
 private void setTreeInfoMap(LatLng pt) {

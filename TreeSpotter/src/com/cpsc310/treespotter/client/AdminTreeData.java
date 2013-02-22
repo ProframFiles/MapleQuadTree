@@ -1,6 +1,8 @@
 package com.cpsc310.treespotter.client;
 
-public class AdminTreeData implements ClientTreeData {
+import java.io.Serializable;
+
+public class AdminTreeData implements ClientTreeData, Serializable {
   
   public String getID() {
     return null;
