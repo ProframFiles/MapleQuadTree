@@ -48,6 +48,8 @@ public class TreeSpotter implements EntryPoint {
   private Label invalidLoc = new Label("Tree location could not be displayed");
   private static final int ZOOM_LVL = 12;
   private static final String ADMIN = "admin";
+  // in order to be accessed by inner classes this has to be a member
+  private  ArrayList<ClientTreeData> treeList = new ArrayList<ClientTreeData>();
   
   
   /**
@@ -166,10 +168,15 @@ private void handleError(Throwable error) {
    * call displaySearchResults to display the returned list of results
    */
   private void doSearch() {
+	  treeList.clear();
+	  SearchQuery q = null;
 	  if (isBasicSearch) {
 		  /* perform basic search */
 		  System.out.println("Basic Search:");
 		  System.out.println(basicSearch.getValue());
+		  q = new KeywordSearch();
+		  q.addSearchParam(SearchFieldID.KEYWORD, "mapple");
+		  
 	  } else {
 		  /* perform advanced search */
 		  System.out.println("Advanced Search:");
@@ -179,10 +186,32 @@ private void handleError(Throwable error) {
 		  }
 	  }
 	  
-	  ClientTreeData tree = new UserTreeData();		
-	  ArrayList<ClientTreeData> treeList = new ArrayList<ClientTreeData>();
-	  treeList.add(tree);
-	  treeList.add(tree);
+	  // (aleksy) this is just a fake test search: remove as desired
+	  if(q != null){
+		  treeDataService.searchTreeData(q, new AsyncCallback<ArrayList<ClientTreeData>>() {
+				@Override
+				public void onFailure(Throwable error) {
+					handleError(error);
+				}
+	
+				@Override
+				public void onSuccess(ArrayList<ClientTreeData> result) {
+					if(result != null){
+						treeList = result;
+						for(ClientTreeData data: result){
+							 System.out.println(data.getCommonName());
+						}
+					}
+				}
+			});
+	  }
+	  
+	  if(treeList.size() == 0){
+		  ClientTreeData tree = new UserTreeData();
+		  treeList.add(tree);
+		  treeList.add(tree);
+	  }
+	 
 	  displaySearchResults(treeList);
   }
  
