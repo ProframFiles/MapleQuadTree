@@ -175,7 +175,7 @@ private void handleError(Throwable error) {
 		  System.out.println("Basic Search:");
 		  System.out.println(basicSearch.getValue());
 		  q = new KeywordSearch();
-		  q.addSearchParam(SearchFieldID.KEYWORD, "mapple");
+		  q.addSearchParam(SearchFieldID.KEYWORD, "MARY");
 		  
 	  } else {
 		  /* perform advanced search */
@@ -207,7 +207,7 @@ private void handleError(Throwable error) {
 	  }
 	  
 	  if(treeList.size() == 0){
-		  ClientTreeData tree = new UserTreeData();
+		  ClientTreeData tree = new ClientTreeData();
 		  treeList.add(tree);
 		  treeList.add(tree);
 	  }
@@ -313,7 +313,7 @@ private void handleError(Throwable error) {
 //  	    for (TextBox tb: addFormList) {
 //          System.out.println(tb.getValue());
 //        }  
-	      UserTreeData addTree = new UserTreeData();
+	      ClientTreeData addTree = new ClientTreeData();
 	      //TODO: set form data to populate UserTreeData
 //	      treeDataService.
 	      treeDataService.addTree(addTree, new AsyncCallback<Void>() {
@@ -430,7 +430,7 @@ private void handleError(Throwable error) {
 		  Button searchButton = Button.wrap(Document.get().getElementById("search-button"));
 		  searchButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
-				ClientTreeData tree = new UserTreeData();		
+				ClientTreeData tree = new ClientTreeData();		
 				ArrayList<ClientTreeData> treeList = new ArrayList<ClientTreeData>();
 				treeList.add(tree);
 				treeList.add(tree);

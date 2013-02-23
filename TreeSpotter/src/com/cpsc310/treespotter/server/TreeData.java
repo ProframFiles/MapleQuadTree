@@ -1,6 +1,7 @@
 package com.cpsc310.treespotter.server;
 
 import java.sql.Date;
+import java.util.HashSet;
 
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
@@ -71,8 +72,12 @@ public class TreeData {
 	@Persistent
 	private String commonName;
 	
+	@Persistent(defaultFetchGroup="true")
+	private HashSet<String> keywords = new HashSet<String>(8, 0.5f);
+	
 	public TreeData(String user, int treeID) {
-		Key key = KeyFactory.createKey(user, treeID);
+		// this wouldn't let me put anything except TreeData in here, so I changed it for now
+		Key key = KeyFactory.createKey("TreeData", treeID);
 		this.treeID = key;
 	}
 	
@@ -95,6 +100,7 @@ public class TreeData {
 		return stdStreet;
 	}
 	public void setStdStreet(String stdStreet) {
+		replaceKeyword(this.stdStreet, stdStreet);
 		this.stdStreet = stdStreet;
 	}
 	
@@ -102,6 +108,7 @@ public class TreeData {
 		return neighbourhood;
 	}
 	public void setNeighbourhood(String neighbourhood) {
+		replaceKeyword(this.neighbourhood, neighbourhood);
 		this.neighbourhood = neighbourhood;
 	}
 	
@@ -116,6 +123,7 @@ public class TreeData {
 		return street;
 	}
 	public void setStreet(String street) {
+		replaceKeyword(this.street, street);
 		this.street = street;
 	}
 	
@@ -186,6 +194,7 @@ public class TreeData {
 		return cultivar;
 	}
 	public void setCultivar(String cultivar) {
+		replaceKeyword(this.cultivar, cultivar);
 		this.cultivar = cultivar;
 	}
 	
@@ -193,6 +202,7 @@ public class TreeData {
 		return genus;
 	}
 	public void setGenus(String genus) {
+		replaceKeyword(this.genus, genus);
 		this.genus = genus;
 	}
 	
@@ -200,6 +210,7 @@ public class TreeData {
 		return species;
 	}
 	public void setSpecies(String species) {
+		replaceKeyword(this.species, species);
 		this.species = species;
 	}
 	
@@ -207,6 +218,30 @@ public class TreeData {
 		return commonName;
 	}
 	public void setCommonName(String commonName) {
+		replaceKeyword(this.commonName, commonName);
 		this.commonName = commonName;
+	}
+	private void replaceKeyword(String kw_old, String kw_new ){
+		if(kw_old != null){
+			int count = numKeywordsMatch(kw_old);
+			if(count <= 1){
+				keywords.remove(kw_old);
+			}
+		}
+		if(kw_new != null){
+			keywords.add(kw_new);
+		}
+	}
+	private int numKeywordsMatch(String s){
+		int count = 0;
+		if(commonName != null && commonName.equals(s)) count++;
+		if(cultivar != null && cultivar.equals(s)) count++;
+		if(genus != null && genus.equals(s)) count++;
+		if(species != null && species.equals(s)) count++;
+		if(neighbourhood != null && neighbourhood.equals(s)) count++;
+		if(street != null && street.equals(s)) count++;
+		if(stdStreet != null && stdStreet.equals(s)) count++;
+		
+		return count;
 	}
 }

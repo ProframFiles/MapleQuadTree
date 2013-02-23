@@ -2,7 +2,9 @@ package com.cpsc310.treespotter.client;
 
 public class AdminTreeData extends ClientTreeData {
   
-  public String getID() {
+	private static final long serialVersionUID = 1108478055979367404L;
+
+public String getID() {
     return null;
   }
   
