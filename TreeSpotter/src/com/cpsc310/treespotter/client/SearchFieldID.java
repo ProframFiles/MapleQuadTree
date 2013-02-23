@@ -2,19 +2,66 @@ package com.cpsc310.treespotter.client;
 
 /**
  * @author maple-quadtree
- * for some reason even an enum has to be in it's own file in Java... I don't get it
+ * these are the enums that accompany each SearchParam that's sent to the server
+ * for single strings, the search is case-insensitive, but otherwise exact.<br>
+ * In other words, to do a keyword search for both maple AND birch, send over two search 
+ * params: (KEYWORD, "maple"), (KEYWORD, "birch"), NOT 1 combined(KEYWORD, "maple birch")<br>
+ * all string searches are case insensitive
  */
 public enum SearchFieldID
 {
-	  KEYWORD, // use for uncategorized strings
-	  ID,
-	  NEIGHBOUR,
-//	  these would work better as range searches, lower priority
-//	  HEIGHT, 
-//	  DIAMETER,
-	  GENUS,
-	  SPECIES,
-	  COMMON,
-	  LOCATION, // is this address or coordinates?
-	  ADD_OTHERS_AS_NEEDED
+	/**
+	 * does an OR search over genus, species, neighbourhood, commonName,
+	 *  cultivar, and street
+	 */
+	KEYWORD,
+	  /**
+	 * Primary tree ID:<br> 
+	 * Format: currently an integer in string form
+	 */
+	ID,
+	/**
+	 * find trees within a given neighbourhood<br>
+	 * Format : exact string 
+	 */
+	NEIGHBOUR,
+	/**
+	 * (not yet implemented)<br>
+	 * Find trees within a given height range (in meters)<br>
+	 * Format: ("%d-%d", range_bottom, range_top)
+	 */
+	HEIGHT,
+	/**
+	 * (not yet implemented)<br>
+	 * Find trees within a given diameter range (in cm)<br>
+	 * Format: ("%d-%d",range_bottom, range_top)
+	 */
+	DIAMETER,
+	/**
+	 * tree genus<br>
+	 * Format: exact string
+	 */
+	GENUS,
+	/**
+	 * tree species<br>
+	 * Format: exact string
+	 */
+	SPECIES,
+	/**
+	 * tree common name<br>
+	 * Format: exact string
+	 */
+	COMMON, 
+	/**
+	 * (not yet implemented)<br>
+	 * find trees within an address range<br>
+	 * Format: ("%d-%d %s",low_address, high_address, street_name)
+	 */
+	ADDRESS,
+	/**
+	 * (sort-of implemented)<br>
+	 * find trees around a given lat/long point<br>
+	 * Format: ("%f,%f,%f",latitude, longitude, radius_meters)
+	 */
+	LOCATION
 }
