@@ -35,7 +35,7 @@ public class StreetBlock {
 	}
 	
 	public StreetBlock(String blockString, List<Double> coords ){
-		blockID = KeyFactory.createKey("TreeData", blockString);
+		blockID = KeyFactory.createKey("StreetBlock", blockString);
 		//TODO (aleksy) actually complete this
 	}
 	
