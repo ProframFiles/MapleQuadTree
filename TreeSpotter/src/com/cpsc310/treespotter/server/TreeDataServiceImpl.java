@@ -202,9 +202,10 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		return "";
 	}
 	private TreeData makeTestTree(String common, int id){
-		TreeData tree = new TreeData("test", id);
+		TreeData tree = new TreeData("TreeData", id);
 		tree.setSpecies("AFAKESPECIES");
 		tree.setStreet("THE CRESCENT");
+		tree.setCivicNumber(240);
 		tree.setNeighbourhood("THE BRONX");
 		tree.setCultivar("GILDED LILY");
 		tree.setGenus("RUGOSA");
