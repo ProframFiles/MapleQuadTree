@@ -19,6 +19,8 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		TreeDataService {
 	private static final long serialVersionUID = 1L;
+	private static double latRange = 1.0;
+	private static double longRange = 1.0;
 
 	public TreeDataServiceImpl(){
 		//place some test trees in the database
@@ -160,7 +162,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 				sb.append('"');
 				break;
 			case LOCATION:
-				sb.append(makeLocationQueryString(param.value));
+				sb.append(makeLocationQueryString(pm, param.value));
 				break;
 			case SPECIES:
 				sb.append("species == \"");
@@ -178,8 +180,26 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		return pm.newQuery(TreeData.class, sb.toString());
 	}
 
-	private String makeLocationQueryString(String location) {
-		return location;
+	private String makeLocationQueryString(PersistenceManager pm, String location) {
+		int commaLocation = location.indexOf(',');
+		double latitude = Double.parseDouble(location.substring(0, commaLocation));
+		double longitude = Double.parseDouble(location.substring(commaLocation+1));
+		Query blockQuery = pm.newQuery(StreetBlock.class
+				, "latitude <= " + Double.toString(latitude + latRange) + "&&"  
+				+ "latitude >= " + Double.toString(latitude - latRange) + "&&"
+				+ "latitude <= " + Double.toString(longitude + longRange) + "&&"
+				+ "latitude >= " + Double.toString(longitude - longRange));
+		@SuppressWarnings("unchecked")
+		Collection<StreetBlock> block_list = (Collection<StreetBlock>)blockQuery.execute();
+		if(block_list.size() > 0){
+			//TODO tune the lat+ long ranges and sort this list based on distances, 
+			//rather than just taking the first value
+			StreetBlock street_block = block_list.iterator().next();
+			return "(civicNumber >= " +  street_block.getBlockStart() 
+					+ " && civicNumber <= " + street_block.getBlockStart()
+					+ " && street == \"" +street_block.getStreetName()+ "\")";
+		}
+		return "";
 	}
 	private TreeData makeTestTree(String common, int id){
 		TreeData tree = new TreeData("test", id);
