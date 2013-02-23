@@ -35,9 +35,9 @@ public class ClientTreeData implements Serializable {
 
 	// depends on if we use the geocoded LatLng data
 	// TODO (someone) turn this into actual coordinates
-	public String getCoordinates(){
+/*	public String getCoordinates(){
 		return getLocation();
-	}
+	}*/
 
 	public int getCivicNumber() {
 		return civicNumber;

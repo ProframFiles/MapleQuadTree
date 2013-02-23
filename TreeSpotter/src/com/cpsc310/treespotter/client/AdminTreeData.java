@@ -13,9 +13,9 @@ public String getID() {
   }
   
   // depends on if we use the geocoded LatLng data
-  public String getCoordinates() {
+/*  public String getCoordinates() {
     return null;
-  }
+  }*/
   
   public String getSpecies() {
     return null;
