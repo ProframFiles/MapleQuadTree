@@ -220,18 +220,14 @@ public class TreeSpotter implements EntryPoint {
                 for (ClientTreeData data : result) {
                   System.out.println(data.getCommonName());
                 }
+                displaySearchResults(treeList);
+                
               }
             }
           });
     }
 
-    if (treeList.size() == 0) {
-      ClientTreeData tree = new ClientTreeData();
-      treeList.add(tree);
-      treeList.add(tree);
-    }
-
-    displaySearchResults(treeList);
+    
   }
 
   /**
@@ -247,8 +243,8 @@ public class TreeSpotter implements EntryPoint {
 
     for (final ClientTreeData tree : rlist) {
       HorizontalPanel panel = new HorizontalPanel();
-      Anchor species = new Anchor("Sudowoodo");
-      Label location = new Label("Route 20");
+      Anchor species = new Anchor(tree.getCommonName());
+      Label location = new Label(tree.getNeighbourhood());
 
       /* add link to the tree info page */
       species.addClickHandler(new ClickHandler() {
