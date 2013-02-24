@@ -3,12 +3,16 @@ package com.cpsc310.treespotter.server;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
 import com.cpsc310.treespotter.client.AdminTreeData;
 import com.cpsc310.treespotter.client.ClientTreeData;
+import com.cpsc310.treespotter.client.KeywordSearch;
+import com.cpsc310.treespotter.client.SearchFieldID;
 import com.cpsc310.treespotter.client.SearchParam;
 import com.cpsc310.treespotter.client.SearchQueryInterface;
 import com.cpsc310.treespotter.client.TreeDataService;
@@ -19,8 +23,10 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		TreeDataService {
 	private static final long serialVersionUID = 1L;
-	private static double latRange = 1.0;
-	private static double longRange = 1.0;
+	// the initial area for the street block search
+	// this works out to ~200 meters
+	private static double latRange = 0.005*0.65;
+	private static double longRange = 0.005;
 
 	public TreeDataServiceImpl(){
 		//place some test trees in the database
@@ -30,6 +36,10 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			pm.makePersistent(makeTestTree("BOB", 2));
 			pm.makePersistent(makeTestTree("MARY", 3));
 			pm.makePersistent(makeTestTree("RASTAPOUPOULOS", 4));
+			TreeData highbury_tree = makeTestTree("HIGHBURY TREE", 5);
+			highbury_tree.setStreet("HIGHBURY ST");
+			highbury_tree.setCivicNumber(2632);
+			pm.makePersistent(highbury_tree);
 		}
 		finally{
 			pm.close();
@@ -62,7 +72,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			Query q = pm.newQuery(TreeData.class, "treeID == id");
 			q.declareParameters("com.google.appengine.api.datastore.Key id");
 			q.setUnique(true);
-			Key lookup_key = KeyFactory.createKey("user", Integer.parseInt(id.trim()));
+			Key lookup_key = KeyFactory.createKey("TreeData", Integer.parseInt(id.trim()));
 			
 			TreeData query_result = (TreeData) q.execute(lookup_key);
 
@@ -86,9 +96,9 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		
 		 PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
-
+			//loc_query.addSearchParam(SearchFieldID.LOCATION, "49.2626,-123.1878,200");
 			Query q = makeDBQueryFromSearch(pm, query);
-
+			
 			@SuppressWarnings("unchecked")
 			Collection<TreeData> tree_list = (Collection<TreeData>)q.execute();
 
@@ -97,13 +107,6 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 				for (TreeData server_tree : tree_list) {
 					results.add(makeUserTreeData(server_tree));
 				}
-			}
-			else{
-				//TODO: get rid of this test stuff
-				results = new ArrayList<ClientTreeData>();
-				results.add(makeUserTreeData(makeTestTree("PERIWINKLE", 1234)));
-				results.add(makeUserTreeData(makeTestTree("PAUL", 2234)));
-				results.add(makeUserTreeData(makeTestTree("PETER", 2224)));
 			}
 		} finally {
 			pm.close();
@@ -187,25 +190,38 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 
 	private String makeLocationQueryString(PersistenceManager pm, String location) {
-		int commaLocation = location.indexOf(',');
-		double latitude = Double.parseDouble(location.substring(0, commaLocation));
-		double longitude = Double.parseDouble(location.substring(commaLocation+1));
-		Query blockQuery = pm.newQuery(StreetBlock.class
+		//TODO tune the lat+ long ranges.
+		//TODO return more than one blocks worth of trees
+		//TODO actually use the given radius
+		System.out.println("Performing block lookup");
+		String address_search = null;
+		int firstCommaLocation = location.indexOf(',');
+		int lastCommaLocation = location.lastIndexOf(',');
+		double latitude = Double.parseDouble(location.substring(0, firstCommaLocation));
+		double longitude = Double.parseDouble(location.substring(firstCommaLocation+1, lastCommaLocation));
+		Query longQuery = pm.newQuery(StreetBlock.class
+				, "longitude <= " + Double.toString(longitude + longRange) + "&&"
+				+ "longitude >= " + Double.toString(longitude - longRange));
+		Query latQuery = pm.newQuery(StreetBlock.class
 				, "latitude <= " + Double.toString(latitude + latRange) + "&&"  
-				+ "latitude >= " + Double.toString(latitude - latRange) + "&&"
-				+ "latitude <= " + Double.toString(longitude + longRange) + "&&"
-				+ "latitude >= " + Double.toString(longitude - longRange));
-		@SuppressWarnings("unchecked")
-		Collection<StreetBlock> block_list = (Collection<StreetBlock>)blockQuery.execute();
-		if(block_list.size() > 0){
-			//TODO tune the lat+ long ranges and sort this list based on distances, 
-			//rather than just taking the first value
-			StreetBlock street_block = block_list.iterator().next();
-			return "(civicNumber >= " +  street_block.getBlockStart() 
-					+ " && civicNumber <= " + street_block.getBlockStart()
+				+ "latitude >= " + Double.toString(latitude - latRange));
+		StreetBlockDistanceComparator comparator = new StreetBlockDistanceComparator(latitude, longitude);
+		SortedSet<StreetBlock> block_set = new TreeSet<StreetBlock>(comparator);
+		block_set.addAll((Collection<StreetBlock>)longQuery.execute());
+		block_set.addAll((Collection<StreetBlock>)latQuery.execute());
+		if(!block_set.isEmpty()){
+			System.out.println(block_set.size() + " blocks found around lat/long point");
+			StreetBlock street_block = block_set.iterator().next();
+			address_search = "(civicNumber >= " +  street_block.getBlockStart() 
+					+ " && civicNumber <= " + street_block.getBlockEnd()
 					+ " && street == \"" +street_block.getStreetName()+ "\")";
 		}
-		return "";
+		else{
+			System.out.println("no blocks found around lat/long point");
+			address_search = "civicNumber == -1";
+		}
+		System.out.println("created tree sub query:" + address_search);
+		return address_search;
 	}
 	private TreeData makeTestTree(String common, int id){
 		TreeData tree = new TreeData("TreeData", id);

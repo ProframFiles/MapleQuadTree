@@ -47,13 +47,13 @@ public class StreetBlock {
 		String address_part = block_string.substring(0, block_name_split);
 		
 
-		if(address_part.matches("\\d+(|-\\d+)")){
+		if(address_part.length() > 0 && address_part.matches("\\d+(|-\\d+)")){
 			String[] address_range = address_part.split("-");
 			int top_index = address_range.length - 1;
 			blockStart = Integer.parseInt(address_range[0]);
 			blockEnd = Integer.parseInt(address_range[top_index]) + 100;
 		}
-		else if(address_part.charAt(0) == '-'){
+		else if(address_part.length() > 0 && address_part.charAt(0) == '-'){
 			blockStart = 0;
 			blockEnd = 10000000;
 		}
@@ -81,10 +81,10 @@ public class StreetBlock {
 				divisor += 1.0;
 			}
 			if(index == 0){
-				lat_sum += coord;
+				long_sum += coord;
 			}
 			else if(index == 1){
-				long_sum += coord;
+				lat_sum += coord;
 			}
 			index++;
 		}
@@ -101,5 +101,11 @@ public class StreetBlock {
 	}
 	public String getStreetName(){
 		return streetName;
+	}
+	public double getLatitudeRadians(){
+		return Math.toRadians(latitude);
+	}
+	public double getLongitudeRadians(){
+		return Math.toRadians(longitude);
 	}
 }
