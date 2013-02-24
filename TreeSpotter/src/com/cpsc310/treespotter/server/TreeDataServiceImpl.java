@@ -19,7 +19,10 @@ import com.cpsc310.treespotter.client.SearchQueryInterface;
 import com.cpsc310.treespotter.client.TreeDataService;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.taskqueue.Queue;
+import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import static com.google.appengine.api.taskqueue.TaskOptions.Builder.*;
 
 public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		TreeDataService {
@@ -52,16 +55,10 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		finally{
 			pm.close();
 		}
-		String location_file = "./public_streets_truncated.kml";
-		try {
-			LOG.info("about to parse location file: " + location_file);
-			int block_count = LocationProcessor.ParseLocationFile(location_file);
-			LOG.info("parsing of " + location_file + " complete:\n\t Read " + block_count + " blocks.");
-		}	
-		catch(RuntimeException e){
-			LOG.warning(e.getMessage());
-			LOG.warning("\tparsing of " + location_file + " was aborted");
-		}
+		
+		//(aleksy) uncomment this to fetch data about street block locations on startup
+		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
+		
 	}
 	
 	@Override
