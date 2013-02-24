@@ -13,20 +13,21 @@ import org.xml.sax.helpers.XMLReaderFactory;
  * 
  */
 public class LocationProcessor {
-	static public void ParseLocationFile(String file) {
+	static public int ParseLocationFile(String file) {
 		PersistenceManager pm = PMF.get().getPersistenceManager();
+		
+		int count = 0;
 		try {
-			
-			XMLReader reader = XMLReaderFactory.createXMLReader();
 			LocationKMLSAXHandler handler = new LocationKMLSAXHandler(pm);
+			XMLReader reader = XMLReaderFactory.createXMLReader();
 			reader.setContentHandler(handler);
-
 			reader.parse("./" + file);
-
+			count = handler.getBlockCount();
 		} catch (Exception e) {
 			throw new RuntimeException("Parsing of " + file + " failed: " + e, e);
 		} finally {
 			pm.close();
 		}
+		return count;
 	}
 }

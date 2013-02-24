@@ -1,6 +1,7 @@
 package com.cpsc310.treespotter.server;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 import javax.jdo.PersistenceManager;
 
@@ -11,10 +12,11 @@ import org.xml.sax.helpers.DefaultHandler;
 public class LocationKMLSAXHandler extends DefaultHandler {
 
 	PersistenceManager cachedPM;
-
+	private static Logger LOG = Logger.getLogger(LocationKMLSAXHandler.class.getName());
 	private boolean inPlacemark = false;
 	private boolean inName = false;
 	private boolean inCoordinates = false;
+	private int blockCount = 0;
 	private ArrayList<Double> blockCoords = new ArrayList<Double>();
 	private String blockName = null;
 	private String placemarkID = null;
@@ -103,8 +105,16 @@ public void characters(char ch[], int start, int length) throws SAXBadDataExcept
 		if( qName.equals("Placemark") ){
 			inPlacemark = false;
 			checkCreateBlockConditions();
-			StreetBlock streetBlock = new StreetBlock(placemarkID, blockName, blockCoords);
-			cachedPM.makePersistent(streetBlock);
+			try{
+				LOG.finer("parsing street block "+ placemarkID +": " + blockName);
+				StreetBlock streetBlock = new StreetBlock(placemarkID, blockName, blockCoords);
+				cachedPM.makePersistent(streetBlock);
+				blockCount++;
+			}
+			catch(RuntimeException e){
+				LOG.warning("Problem parsing:\n\t" + e.getMessage() + ".\n\tIgnoring and resuming." );
+			}
+			resetState();
 		}
 		else if(inPlacemark && qName.equals("name")){
 			inName = false;
@@ -146,6 +156,11 @@ public void characters(char ch[], int start, int length) throws SAXBadDataExcept
 		blockCoords.clear();
 		blockName = null;
 		placemarkID = "kml_";
+	}
+
+
+	public int getBlockCount() {
+		return blockCount;
 	}
 
 }

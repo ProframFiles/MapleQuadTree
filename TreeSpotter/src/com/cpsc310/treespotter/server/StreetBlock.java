@@ -1,5 +1,6 @@
 package com.cpsc310.treespotter.server;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
@@ -25,23 +26,45 @@ public class StreetBlock {
 	private String streetName;
 	
 	@Persistent
-	private double	latitude;
+	private double	latitude = 0.0;
 	
 	@Persistent
-	private double	longitude;
+	private double	longitude = 0.0;
 	
 	public StreetBlock(){
 		
 	}
 	
-	public StreetBlock(String placemarkID, String blockString, List<Double> coords ){
+	public StreetBlock(String placemarkID, String blockString, List<Double> coords){
 		String block_string = blockString.trim();
-		System.out.println("parsing street block "+ placemarkID +": " + block_string);
 		blockID = KeyFactory.createKey("StreetBlock",placemarkID + block_string);
-		
+		parseAddress(block_string);
+		parseCoords(coords);	
+	}
+	public StreetBlock(String blockString){
+		String block_string = blockString.trim();
+		parseAddress(block_string);	
+		blockEnd -= 100;
+	}
+	public String getBlockStart(){
+		return Integer.toString(blockStart);
+	}
+	public String getBlockEnd(){
+		return Integer.toString(blockEnd);
+	}
+	public String getStreetName(){
+		return streetName;
+	}
+	public double getLatitudeRadians(){
+		return Math.toRadians(latitude);
+	}
+	public double getLongitudeRadians(){
+		return Math.toRadians(longitude);
+	}
+	private void parseAddress(String block_string){
 		int block_name_split = block_string.indexOf(' ');
 		if(block_name_split == -1){
-			throw new RuntimeException("Badly formed block string, can't parse");
+			throw new RuntimeException("Badly formed block string:\n\t\"" + block_string + "\"");
 		}
 		// the number part
 		String address_part = block_string.substring(0, block_name_split);
@@ -64,48 +87,31 @@ public class StreetBlock {
 		}
 		//the name part
 		streetName = block_string.substring(block_name_split).trim();
-		
-		// and the coordinates
+	}
+	private void parseCoords(List<Double> coords ){
 		//TODO (aleksy) make this fancier than a simple mean
-		if(coords.size() == 0 || coords.size()%3 != 0){
-			throw new RuntimeException("coordinate list must have 3n coordinates, n > 0");
-		}
-		
-		int index = 0;
-		double lat_sum = 0.0;
-		double long_sum = 0.0;
-		double divisor = 1.0;
-		for(double coord: coords){
-			if(index == 3){
-				index = 0;
-				divisor += 1.0;
-			}
-			if(index == 0){
-				long_sum += coord;
-			}
-			else if(index == 1){
-				lat_sum += coord;
-			}
-			index++;
-		}
-		latitude = lat_sum /= divisor;
-		longitude = long_sum /= divisor;
-		
-	}
-	
-	public String getBlockStart(){
-		return Integer.toString(blockStart);
-	}
-	public String getBlockEnd(){
-		return Integer.toString(blockEnd);
-	}
-	public String getStreetName(){
-		return streetName;
-	}
-	public double getLatitudeRadians(){
-		return Math.toRadians(latitude);
-	}
-	public double getLongitudeRadians(){
-		return Math.toRadians(longitude);
+				if(coords.size() == 0 || coords.size()%3 != 0){
+					throw new RuntimeException("coordinate list must have 3n coordinates, n > 0");
+				}
+				
+				int index = 0;
+				double lat_sum = 0.0;
+				double long_sum = 0.0;
+				double divisor = 1.0;
+				for(double coord: coords){
+					if(index == 3){
+						index = 0;
+						divisor += 1.0;
+					}
+					if(index == 0){
+						long_sum += coord;
+					}
+					else if(index == 1){
+						lat_sum += coord;
+					}
+					index++;
+				}
+				latitude = lat_sum /= divisor;
+				longitude = long_sum /= divisor;
 	}
 }
