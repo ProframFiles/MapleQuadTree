@@ -53,11 +53,17 @@ public class TreeSpotter implements EntryPoint {
 
 	private final TreeDataServiceAsync treeDataService = GWT
 			.create(TreeDataService.class);
+	
+	// variables for loading map view
 	private final VerticalPanel infoMapPanel = new VerticalPanel();
 	private Geocoder geo;
-	private DateTimeFormat dtf = DateTimeFormat.getFormat("d MMM yyyy");
 	private Label invalidLoc = new Label("Tree location could not be displayed");
 	private static final int ZOOM_LVL = 12;
+	
+	// for reverse geocoding
+	private Address geoAddr;
+	
+	private DateTimeFormat dtf = DateTimeFormat.getFormat("d MMM yyyy");
 	private static final String ADMIN = "admin";
 	// in order to be accessed by inner classes this has to be a member
 	private ArrayList<ClientTreeData> treeList = new ArrayList<ClientTreeData>();
@@ -103,13 +109,16 @@ public class TreeSpotter implements EntryPoint {
 		 */
 
 		// Reminder: replace with API key once deployed
+		// Load Google Maps API asynchronously 
 		Maps.loadMapsApi("", "2", true, new Runnable() {
 			public void run() {
-				initHomePage();
-				initButtons();
-				initLoginLogout();
+				geo = new Geocoder();
 			}
 		});
+		
+		initHomePage();
+		initButtons();
+		initLoginLogout();
 
 	}
 
@@ -266,6 +275,14 @@ public class TreeSpotter implements EntryPoint {
 		RootPanel.get("content").add(resultsTable);
 	}
 
+	/**
+	 * Retrieves and displays information on a single tree
+	 * 
+	 * @param id 
+	 * 			ID of the tree
+	 * @param user 
+	 * 			permission of user requesting tree info (admin or user)
+	 */
 	private void getTreeInfo(String id, String user) {
 		treeDataService.getTreeData(id, user,
 				new AsyncCallback<ClientTreeData>() {
@@ -332,30 +349,31 @@ public class TreeSpotter implements EntryPoint {
 		}
 
 		/* add submit button */
-		// TODO: hook up to add tree service
 		Button submitBtn = new Button("Add Tree");
 		submitBtn.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
-				ClientTreeData addTree = populateAddData(addFormMap);
+				try {
+					ClientTreeData addTree = populateAddData(addFormMap);
+					// debugging
+					Window.alert(addTree.getCivicNumber() + ", " + addTree.getStreet() + ", " + addTree.getGenus()
+									+ ", " + addTree.getSpecies() + ", " + addTree.getCommonName());
+					treeDataService.addTree(addTree, new AsyncCallback<Void>() {
+						public void onFailure(Throwable error) {
+							handleError(error);
+						}
 
-				// System.out.println(tb.getValue());
-				// }
-				treeDataService.addTree(addTree, new AsyncCallback<Void>() {
-					public void onFailure(Throwable error) {
-						handleError(error);
-					}
-
-					public void onSuccess(Void v) {
-						// displayTreeInfoPage(data);
-						// TODO
-						// maybe it'd be nice to be redirected to newly added
-						// tree info
-						// page?
-						// would require TreeDataService to return
-						// ClientTreeData from
-						// server
-					}
-				});
+						public void onSuccess(Void v) {
+							Window.alert("Tree added");
+							// displayTreeInfoPage(data);
+							// TODO
+							// maybe it'd be nice to be redirected to newly added tree info page?
+							// would require TreeDataService to return ClientTreeData from server
+						}
+					});
+				}
+				catch (Exception e) {
+					handleError(e);
+				}
 			}
 		});
 
@@ -534,58 +552,93 @@ public class TreeSpotter implements EntryPoint {
 		return row;
 	}
 
-	private ClientTreeData populateAddData(LinkedHashMap<Label, TextBox> list) {
+	
+	/**
+	 * Creates a new ClientTreeData based on info from Add Tree form
+	 * 
+	 * @param list
+	 * 			list of fields/input from form
+	 * @return	ClientTreeData with the corresponding input
+	 * @throws InvalidFieldException
+	 * 			thrown when input is not properly formatted
+	 */
+	private ClientTreeData populateAddData(LinkedHashMap<Label, TextBox> list) 
+			throws InvalidFieldException {
 		ClientTreeData t = new ClientTreeData();
 		for (Map.Entry<Label, TextBox> entry : list.entrySet()) {
 			String key = entry.getKey().getText();
 			String input = entry.getValue().getValue();
 			input = input.trim();
 
+			// TODO: decide to keep or discard coordinate storing in database
 			// this assumes valid location/coords in form
 			// #### Street Name or #, #
 			if (key.equals("Location")) {
-				boolean isAddr = false;
-				String[] loc = input.split("[ ]+", 2);
+				if (input.isEmpty()) {
+					throw new InvalidFieldException("Empty field: Location");
+				}
+				boolean isAddr = true;
+				String[] loc = input.split("[,]");
 				if (loc.length == 2) {
-					// try parsing as street address
-					isAddr = true;
+					isAddr = false;
 				}
 				try {
+					// try parsing as address
 					if (isAddr) {
-						int num = Integer.parseInt(loc[0]);
-						t.setCivicNumber(num);
-						t.setStreet(loc[1].trim());
+						geoAddr = new Address(input);
 					}
 					// try parsing as coordinates
 					else {
 						LatLng pt = LatLng.fromUrlValue(input);
 						if (!validCoordinates(pt)) {
-							return null;
+							throw new InvalidFieldException("Invalid field: Location");
 						}
-						// TODO: reverse geocoding coordinate to address
+						geoAddr = new Address(-1, "");
+						// reverse geocode coordinates -> address
 						geo.getLocations(pt, new LocationCallback() {
 							public void onFailure(int e) {
-
+								geoAddr = new Address(-1, "");
 							}
 
 							public void onSuccess(JsArray<Placemark> p) {
-
+								if (p.length() <= 0) {
+									geoAddr = new Address(-1, "");
+								}
+								// uses first placemark result only
+								// getAddress has format ### Street, Vancouver, BC postal_code, Canada
+								else {
+									geoAddr = new Address(p.get(0).getAddress());
+								}
 							}
 						});
 					}
 				} catch (Exception e) {
-					// TODO: return invalid format
-					return null;
+					throw new InvalidFieldException("Invalid field: Location");
 				}
+				// TODO: issue with race condition here when reverse geocoding
+				if (geoAddr.getNumber() < 0) {
+					throw new InvalidFieldException("Invalid field: Location");
+				}
+				t.setCivicNumber(geoAddr.getNumber());
+				t.setStreet(geoAddr.getStreet());
 			} else if (key.equals("Genus")) {
+				if (input.isEmpty()) {
+					throw new InvalidFieldException("Empty field: Genus");
+				}
 				t.setGenus(input);
 			} else if (key.equals("Species")) {
+				if (input.isEmpty()) {
+					throw new InvalidFieldException("Empty field: Species");
+				}
 				t.setSpecies(input);
 			} else if (key.equals("Common Name")) {
+				if (input.isEmpty()) {
+					throw new InvalidFieldException("Empty field: Common Name");
+				}
 				t.setCommonName(input);
-			} else if (key.equals("Neighbourhood")) {
+			} else if (key.equals("Neighbourhood") && !input.isEmpty()) {
 				t.setNeighbourhood(input);
-			} else if (key.equals("Height")) {
+			} else if (key.equals("Height") && !input.isEmpty()) {
 				try {
 					// TODO: need a setHeight field
 					// t.setHeight(Double.parseDouble(input));
@@ -601,19 +654,19 @@ public class TreeSpotter implements EntryPoint {
 					}
 					t.setHeightRange(range);
 				} catch (Exception e) {
-					return null;
+					throw new InvalidFieldException("Invalid field: Height");
 				}
-			} else if (key.equals("Diameter")) {
+			} else if (key.equals("Diameter") && !input.isEmpty()) {
 				try {
 					t.setDiameter((int) Double.parseDouble(input));
 				} catch (Exception e) {
-					return null;
+					throw new InvalidFieldException("Invalid field: Diameter");
 				}
-			} else if (key.equals("Date Planted")) {
+			} else if (key.equals("Date Planted") && !input.isEmpty()) {
 				try {
 					t.setPlanted(dtf.parse(input));
 				} catch (Exception e) { // invalid date format
-					return null;
+					throw new InvalidFieldException("Invalid field: Date Planted");
 				}
 			}
 		}
@@ -658,4 +711,49 @@ public class TreeSpotter implements EntryPoint {
 			return false;
 		return true;
 	}
+	
+	/**
+	 * Inner class to hold a street number, street address pair
+	 *
+	 */
+	private class Address {
+		private int num;
+		private String street;
+		
+		
+		/**
+		 * Parses String input to get number and street address
+		 * @param input
+		 */
+		public Address(String input) {
+			String[] addr = input.split("[,]", 2);
+			addr = addr[0].split("\\s+", 2);
+			if (addr.length != 2) {
+				num = -1;
+				street = "";
+				return;
+			}
+			try {
+				num = Integer.parseInt(addr[0]);
+				street = addr[1].trim();
+			} catch (Exception e) {
+				num = -1;
+				street = "";
+			}
+		}
+		
+		public Address(int n, String s) {
+			num = n;
+			street = s;
+		}
+		
+		public int getNumber() {
+			return num;
+		}
+		
+		public String getStreet() {
+			return street;
+		}
+	}
+	
 }
