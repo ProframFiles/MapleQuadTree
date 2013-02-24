@@ -34,9 +34,63 @@ public class StreetBlock {
 		
 	}
 	
-	public StreetBlock(String blockString, List<Double> coords ){
-		blockID = KeyFactory.createKey("StreetBlock", blockString);
-		//TODO (aleksy) actually complete this
+	public StreetBlock(String placemarkID, String blockString, List<Double> coords ){
+		String block_string = blockString.trim();
+		System.out.println("parsing street block "+ placemarkID +": " + block_string);
+		blockID = KeyFactory.createKey("StreetBlock",placemarkID + block_string);
+		
+		int block_name_split = block_string.indexOf(' ');
+		if(block_name_split == -1){
+			throw new RuntimeException("Badly formed block string, can't parse");
+		}
+		// the number part
+		String address_part = block_string.substring(0, block_name_split);
+		
+
+		if(address_part.matches("\\d+(|-\\d+)")){
+			String[] address_range = address_part.split("-");
+			int top_index = address_range.length - 1;
+			blockStart = Integer.parseInt(address_range[0]);
+			blockEnd = Integer.parseInt(address_range[top_index]) + 100;
+		}
+		else if(address_part.charAt(0) == '-'){
+			blockStart = 0;
+			blockEnd = 10000000;
+		}
+		else{
+			blockStart = 0;
+			blockEnd =  10000000;
+			block_name_split = 0;
+		}
+		//the name part
+		streetName = block_string.substring(block_name_split).trim();
+		
+		// and the coordinates
+		//TODO (aleksy) make this fancier than a simple mean
+		if(coords.size() == 0 || coords.size()%3 != 0){
+			throw new RuntimeException("coordinate list must have 3n coordinates, n > 0");
+		}
+		
+		int index = 0;
+		double lat_sum = 0.0;
+		double long_sum = 0.0;
+		double divisor = 1.0;
+		for(double coord: coords){
+			if(index == 3){
+				index = 0;
+				divisor += 1.0;
+			}
+			if(index == 0){
+				lat_sum += coord;
+			}
+			else if(index == 1){
+				long_sum += coord;
+			}
+			index++;
+		}
+		latitude = lat_sum /= divisor;
+		longitude = long_sum /= divisor;
+		
 	}
 	
 	public String getBlockStart(){

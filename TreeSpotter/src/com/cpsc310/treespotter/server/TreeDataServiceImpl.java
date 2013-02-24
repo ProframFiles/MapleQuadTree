@@ -34,6 +34,12 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		finally{
 			pm.close();
 		}
+		try {
+			LocationProcessor.ParseLocationFile("./public_streets_truncated.kml");
+		}	
+		catch(RuntimeException e){
+			System.out.println(e.getMessage());
+		}
 	}
 	
 	@Override

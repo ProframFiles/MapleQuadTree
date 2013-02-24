@@ -13,7 +13,7 @@ import org.xml.sax.helpers.XMLReaderFactory;
  * 
  */
 public class LocationProcessor {
-	public void ParseLocationFile(String file) {
+	static public void ParseLocationFile(String file) {
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
 			

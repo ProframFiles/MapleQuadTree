@@ -17,6 +17,7 @@ public class LocationKMLSAXHandler extends DefaultHandler {
 	private boolean inCoordinates = false;
 	private ArrayList<Double> blockCoords = new ArrayList<Double>();
 	private String blockName = null;
+	private String placemarkID = null;
 
 	/**
 	 * Construct a new LocationKMLSAXHandler <br>
@@ -47,6 +48,10 @@ public class LocationKMLSAXHandler extends DefaultHandler {
 		if(qName == null) return;
 		if(!inPlacemark && qName.equals("Placemark")){
 			inPlacemark = true;
+			int id_index = attr.getIndex("id");
+			if(id_index != -1){
+				placemarkID=attr.getValue(id_index);
+			}
 		}
 		else if(inPlacemark && qName.equals("name")){
 			inName = true;
@@ -66,20 +71,25 @@ public class LocationKMLSAXHandler extends DefaultHandler {
 	 * @param length, number of relevant characters after start
 	 */
 public void characters(char ch[], int start, int length) throws SAXBadDataException {
-		if(inName){
-			blockName = new String(ch, start, length);
-		}
-		else if(inCoordinates){
-			int stringStart = start;
-			for (int i = start; i < start+length; i++) {
-				if(ch[i] == ','){
-					blockCoords.add(Double.parseDouble(new String(ch, stringStart, i-stringStart )));
-					stringStart = i + 1;
+		try{
+			if(inName){
+				blockName = new String(ch, start, length);
+			}
+			else if(inCoordinates){
+				int stringStart = start;
+				for (int i = start; i < start+length; i++) {
+					if(ch[i] == ',' || ch[i] == ' '){
+						blockCoords.add(Double.parseDouble(new String(ch, stringStart, i-stringStart )));
+						stringStart = i + 1;
+					}
+				}
+				if (stringStart < start+ length){
+					blockCoords.add(Double.parseDouble(new String(ch, stringStart, start+length-stringStart )));
 				}
 			}
-			if (stringStart < start+ length){
-				blockCoords.add(Double.parseDouble(new String(ch, stringStart, start+length-stringStart )));
-			}
+		}
+		catch(Exception e){
+			throw new SAXBadDataException("error parsing kml file", e);
 		}
 		
 	}
@@ -93,7 +103,7 @@ public void characters(char ch[], int start, int length) throws SAXBadDataExcept
 		if( qName.equals("Placemark") ){
 			inPlacemark = false;
 			checkCreateBlockConditions();
-			StreetBlock streetBlock = new StreetBlock(blockName, blockCoords);
+			StreetBlock streetBlock = new StreetBlock(placemarkID, blockName, blockCoords);
 			cachedPM.makePersistent(streetBlock);
 		}
 		else if(inPlacemark && qName.equals("name")){
@@ -135,6 +145,7 @@ public void characters(char ch[], int start, int length) throws SAXBadDataExcept
 	private void resetState() {
 		blockCoords.clear();
 		blockName = null;
+		placemarkID = "kml_";
 	}
 
 }

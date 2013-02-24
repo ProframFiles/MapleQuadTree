@@ -15,6 +15,8 @@ public class SAXBadDataException extends SAXException {
 	public SAXBadDataException(String string) {
 		super("BAD DATA:" + string);
 	}
-	
+	public SAXBadDataException(String string, Exception e) {
+		super("BAD DATA:" + string, e);
+	}
 	private static final long serialVersionUID = -7426039804697434148L;
 }
