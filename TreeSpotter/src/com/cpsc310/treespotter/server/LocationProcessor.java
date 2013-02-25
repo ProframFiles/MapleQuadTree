@@ -69,7 +69,7 @@ public class LocationProcessor extends HttpServlet {
 					&& !zip_entry.getName().equalsIgnoreCase(FILE_NAME)) {
 				unzipper.getNextEntry();
 			}
-			if (!zip_entry.getName().equalsIgnoreCase(FILE_NAME)) {
+			if(zip_entry == null || !zip_entry.getName().equalsIgnoreCase(FILE_NAME)){
 				throw new FileNotFoundException(FILE_NAME);
 			}
 
