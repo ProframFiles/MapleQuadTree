@@ -8,15 +8,12 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
-
 @PersistenceCapable
 public class TreeData {
 
 	@PrimaryKey
 	@Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
-	private Key treeID;
+	private String treeID;
 	
 	@Persistent
 	private int civicNumber;
@@ -77,15 +74,19 @@ public class TreeData {
 	
 	public TreeData(String user, int treeID) {
 		// this wouldn't let me put anything except TreeData in here, so I changed it for now
-		Key key = KeyFactory.createKey("TreeData", treeID);
-		this.treeID = key;
+		setID(user, treeID);
 	}
 	
-	public Key getID() {
+	public String getID() {
 		return treeID;
 	}
 	public void setID(String user, int treeID) {
-		Key key = KeyFactory.createKey(user, treeID);
+		String key;
+		if (user == "admin") {
+			key = "V" + String.valueOf(treeID);
+		}
+		else
+			key = "U" + String.valueOf(treeID);
 		this.treeID = key;
 	}
 	

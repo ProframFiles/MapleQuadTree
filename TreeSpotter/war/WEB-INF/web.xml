@@ -20,6 +20,16 @@
 		<servlet-name>treeDataService</servlet-name>
 		<url-pattern>/treespotter/treedata</url-pattern>
 	</servlet-mapping>
+	
+  <servlet>
+    <servlet-name>importDataServlet</servlet-name>
+    <servlet-class>com.cpsc310.treespotter.server.DataFetcher</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>importDataServlet</servlet-name>
+    <url-pattern>/treespotter/import</url-pattern>
+  </servlet-mapping>
 
 	<!-- Default page to serve -->
 	<welcome-file-list>
