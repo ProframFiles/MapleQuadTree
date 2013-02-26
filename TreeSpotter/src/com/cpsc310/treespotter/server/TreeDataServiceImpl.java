@@ -57,7 +57,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		}
 		
 		//(aleksy) uncomment this to fetch data about street block locations on startup
-		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
+		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
 		
 	}
 	
@@ -74,7 +74,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public ClientTreeData getTreeData(String id, String userType) {
 		ClientTreeData ret = null;
-		
+		//TODO: fix this to work with new string id setup
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
 			Query q = pm.newQuery(TreeData.class, "treeID == id");
@@ -109,9 +109,9 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
-			//KeywordSearch loc_query = new KeywordSearch();
-			//loc_query.addSearchParam(SearchFieldID.LOCATION, "49.2626,-123.1878,200");
-			//query = loc_query;
+			KeywordSearch loc_query = new KeywordSearch();
+			loc_query.addSearchParam(SearchFieldID.LOCATION, "49.2626,-123.1878,200");
+			query = loc_query;
 			Query q = makeDBQueryFromSearch(pm, query);
 			
 			LOG.fine("About to execute query:\n\t" + q.toString());
@@ -254,7 +254,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		StreetBlockDistanceComparator comparator = new StreetBlockDistanceComparator(latitude, longitude);
 		SortedSet<StreetBlock> block_set = new TreeSet<StreetBlock>(comparator);
 		block_set.addAll((Collection<StreetBlock>)longQuery.execute());
-		block_set.addAll((Collection<StreetBlock>)latQuery.execute());
+		//block_set.addAll((Collection<StreetBlock>)latQuery.execute());
 		if(!block_set.isEmpty()){
 			LOG.fine(block_set.size() + " blocks found around lat/long point");
 			StreetBlock street_block = block_set.iterator().next();
