@@ -12,14 +12,10 @@ import javax.jdo.Query;
 
 import com.cpsc310.treespotter.client.AdminTreeData;
 import com.cpsc310.treespotter.client.ClientTreeData;
-import com.cpsc310.treespotter.client.KeywordSearch;
-import com.cpsc310.treespotter.client.SearchFieldID;
 import com.cpsc310.treespotter.client.SearchParam;
 import com.cpsc310.treespotter.client.SearchQueryInterface;
 import com.cpsc310.treespotter.client.TreeDataService;
-import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import static com.google.appengine.api.taskqueue.TaskOptions.Builder.*;
@@ -40,30 +36,16 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 
 	public TreeDataServiceImpl(){
 		LOG.setLevel(Level.FINER);
-		//place some test trees in the database
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try {
-			pm.makePersistent(makeTestTree("JIM", 1));
-			pm.makePersistent(makeTestTree("BOB", 2));
-			pm.makePersistent(makeTestTree("MARY", 3));
-			pm.makePersistent(makeTestTree("RASTAPOUPOULOS", 4));
-			TreeData highbury_tree = makeTestTree("HIGHBURY TREE", 5);
-			highbury_tree.setStreet("HIGHBURY ST");
-			highbury_tree.setCivicNumber(2632);
-			pm.makePersistent(highbury_tree);
-		}
-		finally{
-			pm.close();
-		}
-		
+	
 		//(aleksy) uncomment this to fetch data about street block locations on startup
-		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
+		//it will only do the full parse if the current data isn't up to date
+		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
 		
 	}
 	
 	@Override
 	public void importFromSite(String url) {
-
+		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
 	}
 
 	@Override
@@ -72,21 +54,20 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public ClientTreeData getTreeData(String id, String userType) {
+	public ClientTreeData getTreeData(String queryID, String userType) {
 		ClientTreeData ret = null;
-		//TODO: fix this to work with new string id setup
+		LOG.fine("Trying to find tree with id " + queryID);
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
 			Query q = pm.newQuery(TreeData.class, "treeID == id");
-			q.declareParameters("com.google.appengine.api.datastore.Key id");
-			q.setUnique(true);
-			LOG.fine("Trying to find tree with id " + id);
-			Key lookup_key = KeyFactory.createKey("TreeData", Integer.parseInt(id.trim()));
+			q.declareParameters("string id");
+			q.setUnique(true); 
+			
 			LOG.fine("about to  make query: " + q.toString());
-			TreeData query_result = (TreeData) q.execute(lookup_key);
+			TreeData query_result = (TreeData) q.execute(queryID);
 
 			if (query_result != null) {
-				LOG.info("tree " + id + " found, creating ClientTreeData");
+				LOG.info("tree " + queryID + " found, creating ClientTreeData");
 				if (userType != null && userType.equals("user")) {
 					ret = makeUserTreeData(query_result);
 				}
@@ -95,7 +76,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 				}
 			}
 			else{
-				LOG.info("tree " + id + " not found in DB");
+				LOG.info("tree " + queryID + " not found in DB");
 			}
 		} finally {
 			pm.close();
@@ -105,13 +86,12 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public ArrayList<ClientTreeData> searchTreeData(SearchQueryInterface query) {
+		LOG.setLevel(Level.FINER);
 		ArrayList<ClientTreeData> results = null;
 		
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
-			KeywordSearch loc_query = new KeywordSearch();
-			loc_query.addSearchParam(SearchFieldID.LOCATION, "49.2626,-123.1878,200");
-			query = loc_query;
+			
 			Query q = makeDBQueryFromSearch(pm, query);
 			
 			LOG.fine("About to execute query:\n\t" + q.toString());
@@ -248,9 +228,9 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		Query longQuery = pm.newQuery(StreetBlock.class
 				, "longitude <= " + Double.toString(longitude + LONGRANGE) + "&&"
 				+ "longitude >= " + Double.toString(longitude - LONGRANGE));
-		Query latQuery = pm.newQuery(StreetBlock.class
-				, "latitude <= " + Double.toString(latitude + LATRANGE) + "&&"  
-				+ "latitude >= " + Double.toString(latitude - LATRANGE));
+		//Query latQuery = pm.newQuery(StreetBlock.class
+		//		, "latitude <= " + Double.toString(latitude + LATRANGE) + "&&"  
+		//		+ "latitude >= " + Double.toString(latitude - LATRANGE));
 		StreetBlockDistanceComparator comparator = new StreetBlockDistanceComparator(latitude, longitude);
 		SortedSet<StreetBlock> block_set = new TreeSet<StreetBlock>(comparator);
 		block_set.addAll((Collection<StreetBlock>)longQuery.execute());
@@ -270,16 +250,5 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		return "civicNumber >= " +  street_block.getBlockStart() 
 		+ " && civicNumber <= " + street_block.getBlockEnd()
 		+ " && street == \"" +street_block.getStreetName()+ "\"";
-	}
-	private TreeData makeTestTree(String common, int id){
-		TreeData tree = new TreeData("TreeData", id);
-		tree.setSpecies("AFAKESPECIES");
-		tree.setStreet("THE CRESCENT");
-		tree.setCivicNumber(240);
-		tree.setNeighbourhood("THE BRONX");
-		tree.setCultivar("GILDED LILY");
-		tree.setGenus("RUGOSA");
-		tree.setCommonName(common);
-		return tree;
 	}
 }

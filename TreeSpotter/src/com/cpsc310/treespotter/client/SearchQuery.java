@@ -11,6 +11,8 @@ public abstract class SearchQuery implements SearchQueryInterface {
 
 	private static final long serialVersionUID = 1L;
 	private ArrayList<SearchParam> paramList = new ArrayList<SearchParam>();
+	private int numResults = 100;
+	private int firstResultOffset = 100;
 
 	public SearchQuery() {
 	}
@@ -22,7 +24,23 @@ public abstract class SearchQuery implements SearchQueryInterface {
 	public Iterator<SearchParam> iterator() {
 		return Collections.unmodifiableList(paramList).iterator();
 	}
-
+	
+	public int getNumResults(){
+		return numResults;
+	}
+	
+	public void setNumResults(int num){
+		numResults = num;
+	}
+	public int getResultsOffset(){
+		return firstResultOffset;
+	}
+	
+	public void setResultsOffset(int offset){
+		firstResultOffset = offset;
+	}
+	
+	
 	/**
 	 * to be used like: addSearchParam(new SearchParam(SearchFieldID::SPECIES,
 	 * species_string));

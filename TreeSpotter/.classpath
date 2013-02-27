@@ -6,5 +6,10 @@
 	<classpathentry kind="con" path="com.google.gwt.eclipse.core.GWT_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-maps.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="var" path="ECLIPSE_HOME/plugins/com.google.appengine.eclipse.sdkbundle_1.7.4/appengine-java-sdk-1.7.4/lib/testing/appengine-testing.jar"/>
+	<classpathentry kind="var" path="ECLIPSE_HOME/plugins/com.google.appengine.eclipse.sdkbundle_1.7.4/appengine-java-sdk-1.7.4/lib/impl/appengine-api.jar"/>
+	<classpathentry kind="var" path="ECLIPSE_HOME/plugins/com.google.appengine.eclipse.sdkbundle_1.7.4/appengine-java-sdk-1.7.4/lib/impl/appengine-api-labs.jar"/>
+	<classpathentry kind="var" path="ECLIPSE_HOME/plugins/com.google.appengine.eclipse.sdkbundle_1.7.4/appengine-java-sdk-1.7.4/lib/impl/appengine-api-stubs.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

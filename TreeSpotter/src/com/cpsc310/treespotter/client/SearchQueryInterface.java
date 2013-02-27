@@ -15,5 +15,7 @@ import com.cpsc310.treespotter.client.SearchParam;
 public interface SearchQueryInterface extends Iterable<SearchParam>, Serializable {
 
 	  public List<SearchParam> getSearchParams();
+	  public int getNumResults();
+	  public int getResultsOffset();
 
 }
