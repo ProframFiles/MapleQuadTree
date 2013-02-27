@@ -1,6 +1,6 @@
 package com.cpsc310.treespotter.server;
 
-import java.sql.Date;
+import java.util.Date;
 import java.util.HashSet;
 
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -43,7 +43,7 @@ public class TreeData {
 	private int heightRange;
 	
 	@Persistent
-	private int diameter;
+	private float diameter;
 	
 	@Persistent
 	private Date planted;
@@ -73,21 +73,50 @@ public class TreeData {
 	private HashSet<String> keywords = new HashSet<String>(8, 0.5f);
 	
 	public TreeData(String user, int treeID) {
-		// this wouldn't let me put anything except TreeData in here, so I changed it for now
 		setID(user, treeID);
 	}
 	
-	public String getID() {
-		return treeID;
+	public TreeData(String user, int treeID, int civicNumber, String stdStreet, 
+			String neighbourhood, int cell, String street, String streetBlock,
+			String streetSideName, Boolean assigned, int heightRange, float diameter,
+			Date planted, String plantArea, Boolean rootBarrier, Boolean curb,
+			String cultivar, String genus, String species, String commonName) {
+		this.treeID = dataToID(user, treeID);
+		this.civicNumber = civicNumber;
+		this.stdStreet = stdStreet;
+		this.neighbourhood = neighbourhood;
+		this.cell = cell;
+		this.street = street;
+		this.streetBlock = streetBlock;
+		this.streetSideName = streetSideName;
+		this.assigned = assigned;
+		this.heightRange = heightRange;
+		this.diameter = diameter;
+		this.planted = planted;
+		this.plantArea = plantArea;
+		this.rootBarrier = rootBarrier;
+		this.curb = curb;
+		this.cultivar = cultivar;
+		this.genus = genus;
+		this.species = species;
+		this.commonName = commonName;
 	}
-	public void setID(String user, int treeID) {
+
+	private String dataToID(String user, int treeID) {
 		String key;
-		if (user == "admin") {
+		if (user.equals("admin")) {
 			key = "V" + String.valueOf(treeID);
 		}
 		else
 			key = "U" + String.valueOf(treeID);
-		this.treeID = key;
+		return key;
+	}
+
+	public String getID() {
+		return treeID;
+	}
+	public void setID(String user, int treeID) {
+		this.treeID = dataToID(user, treeID);
 	}
 	
 	public int getCivicNumber() {
@@ -156,10 +185,10 @@ public class TreeData {
 		this.heightRange = heightRange;
 	}
 	
-	public int getDiameter() {
+	public float getDiameter() {
 		return diameter;
 	}
-	public void setDiameter(int diameter) {
+	public void setDiameter(float diameter) {
 		this.diameter = diameter;
 	}
 	

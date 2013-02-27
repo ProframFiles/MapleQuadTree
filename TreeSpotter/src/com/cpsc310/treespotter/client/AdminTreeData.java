@@ -21,7 +21,7 @@ public class AdminTreeData extends ClientTreeData {
 		return null;
 	}
 
-	public int getDiameter() {
+	public float getDiameter() {
 		return 0;
 	}
 

@@ -14,7 +14,7 @@ public class ClientTreeData implements Serializable {
 	private String neighbourhood;
 	private String street;
 	private int heightRange;
-	private int diameter;
+	private float diameter;
 	private Date planted;
 	private String cultivar;
 	private String genus;
@@ -79,11 +79,11 @@ public class ClientTreeData implements Serializable {
 		this.heightRange = heightRange;
 	}
 
-	public int getDiameter() {
+	public float getDiameter() {
 		return diameter;
 	}
 
-	public void setDiameter(int diameter) {
+	public void setDiameter(float diameter) {
 		this.diameter = diameter;
 	}
 
