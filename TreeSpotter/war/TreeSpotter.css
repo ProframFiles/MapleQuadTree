@@ -4,6 +4,7 @@ body {
 	width:		100%;
 	margin: 	0px 0px 0px 0px;
 	background-color: #dbeadc;
+	font-family:'Helvetica Neue',sans-serif;
 }
 
 header{
@@ -30,10 +31,18 @@ header{
   background: #08C;
   border: thin solid #08C;
   width: 30%;
+  opacity: 0.8;
 
   /* Font styles */
   color: white;
   text-decoration: none;
+  font-size: 14px;
+  letter-spacing: 8px;
+}
+
+.nav-button:hover {
+	text-transform: uppercase;	
+	opacity: 1;
 }
 
 #main {
@@ -59,8 +68,9 @@ header{
 
 #right-side p {
 	display: block;
-	font: 18px Garamond;
+	font-size: 18px;
 	margin: 10px;
+	line-height: 25px;
 }
 
 #right-side img {
@@ -160,10 +170,6 @@ a.main-search {
 	background-color: #F0FAF5;
 }
 
-.map {
-	background-color: green;
-}
-
 table.treedata{
 	padding: 20px;
 	height: 30px;
@@ -176,5 +182,16 @@ table.treedata{
 	border: thin solid black;
 	border-radius: 3px;
 	padding: 20px;
+	font-size: 15px;
+}
+
+.add-popup input{
+	border: thin black solid;
+	width: 100%;
+	height: 20px;
+}
+
+.add-popup input:focus {
+	background-color: #F0FAF5;
 }
 
