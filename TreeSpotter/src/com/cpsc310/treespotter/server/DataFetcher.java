@@ -4,7 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -19,27 +20,38 @@ import com.cpsc310.treespotter.server.TreeData;
 
 public class DataFetcher extends HttpServlet {
 	
-	final private String urlString = "https://dl.dropbox.com/u/23948817/maple%20quadtree/test.zip"; // change here
+	private static final long serialVersionUID = 1L;
+	final static private String URL_STRING = "https://dl.dropbox.com/u/23948817/maple%20quadtree/test.zip"; // change here
+	final static private Logger LOG = Logger.getLogger(DataFetcher.class.getName());
+	
+	private ArrayList<TreeData> curr_trees;
+	private int MAX_BLOCK_SIZE = 256;
 	
 	public void doGet(HttpServletRequest req, HttpServletResponse res) 
 			throws ServletException, IOException {
+		LOG.info("Attemping to update tree database");
+		
 		try {
-			final URL url = new URL(urlString);
+			final URL url = new URL(URL_STRING);
 			ZipInputStream zis = new ZipInputStream(url.openStream());
 			
 			ZipEntry zip;
 			
+			LOG.info("Unzipping files");
+			
 			while ((zip = zis.getNextEntry()) != null) {
 				parseFile(zis);
-				res.getWriter().write("Parsed file: "+zip.getName()+"\n");
+				LOG.info("Parsed file: "+zip.getName());
 			}
 			
 			zis.close();
 		} catch (final Exception e){
-				res.getWriter().write("Error with paring"+"\n");
+			
+			LOG.info("Error with update: "+e);
+			
 		}
 		
-		res.getWriter().write("Update Complete"+"\n");
+		LOG.info("Updating tree data base is complete");
 		
 	}
 	
@@ -62,41 +74,46 @@ public class DataFetcher extends HttpServlet {
 	
 	
 	private void addTree(String[] values) {
-		PersistenceManager pm = PMF.get().getPersistenceManager();
+		LOG.info("Parsing tree: treeID "+values[0]);
 		TreeData tree = createNewTree(values);
+		curr_trees.add(tree);
 		
-	    try {
-	        pm.makePersistent(tree);
-	    } finally {
-	        pm.close();
-	    }
+		if (curr_trees.size() == MAX_BLOCK_SIZE) {
+			PersistenceManager pm = PMF.get().getPersistenceManager();
+			try {
+				pm.makePersistentAll(curr_trees);
+				curr_trees.clear();
+			} finally {
+				pm.close();
+			}
+		}
 	}
 	
 	private TreeData createNewTree(String[] values) {
+
 		int treeID = Integer.parseInt(values[0]);
-		int civicNumber = Integer.parseInt(values[1]);
-		String stdStreet = values[2];
-		String neighbourhood = values[3];
-		int cell = Integer.parseInt(values[4]); 
-		String street = values[5]; 
-		String streetBlock = values[6];
-		String streetSideName = values[7]; 
-		Boolean assigned = valueToBoolean(values[8]); 
-		int heightRange = Integer.parseInt(values[9]);
-		float diameter = Float.parseFloat(values[10]);
-		Date planted = null; 
-		String plantArea = values[12];
-		Boolean rootBarrier = valueToBoolean(values[13]); 
-		Boolean curb = valueToBoolean(values[14]);
-		String cultivar = values[15];
-		String genus = values[16];
-		String species = values[17]; 
-		String commonName = values[18];
+		TreeData tree = new TreeData("admin", treeID);
 		
-		return new TreeData("admin", treeID, civicNumber, stdStreet, neighbourhood,
-				cell, street, streetBlock, streetSideName, assigned, heightRange,
-				diameter, planted, plantArea, rootBarrier, curb, cultivar, genus,
-				species, commonName);
+		tree.setCivicNumber(Integer.parseInt(values[1]));
+		tree.setStdStreet(values[2]);
+		tree.setNeighbourhood(values[3]);
+		tree.setCell(Integer.parseInt(values[4]));
+		tree.setStreet(values[5]);
+		tree.setStreetBlock(values[6]);
+		tree.setStreetSideName(values[7]);
+		tree.setAssigned(valueToBoolean(values[8]));
+		tree.setHeightRange(Integer.parseInt(values[9]));
+		tree.setDiameter(Float.parseFloat(values[10]));
+		tree.setPlanted(null);
+		tree.setPlantArea(values[12]);
+		tree.setRootBarrier(valueToBoolean(values[13]));
+		tree.setCurb(valueToBoolean(values[14]));
+		tree.setCultivar(values[15]);
+		tree.setGenus(values[16]);
+		tree.setSpecies(values[17]);
+		tree.setCommonName(values[18]);
+		
+		return tree;
 	}
 
 

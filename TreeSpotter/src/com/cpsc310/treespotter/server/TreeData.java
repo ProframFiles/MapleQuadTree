@@ -75,32 +75,6 @@ public class TreeData {
 	public TreeData(String user, int treeID) {
 		setID(user, treeID);
 	}
-	
-	public TreeData(String user, int treeID, int civicNumber, String stdStreet, 
-			String neighbourhood, int cell, String street, String streetBlock,
-			String streetSideName, Boolean assigned, int heightRange, float diameter,
-			Date planted, String plantArea, Boolean rootBarrier, Boolean curb,
-			String cultivar, String genus, String species, String commonName) {
-		this.treeID = dataToID(user, treeID);
-		this.civicNumber = civicNumber;
-		this.stdStreet = stdStreet;
-		this.neighbourhood = neighbourhood;
-		this.cell = cell;
-		this.street = street;
-		this.streetBlock = streetBlock;
-		this.streetSideName = streetSideName;
-		this.assigned = assigned;
-		this.heightRange = heightRange;
-		this.diameter = diameter;
-		this.planted = planted;
-		this.plantArea = plantArea;
-		this.rootBarrier = rootBarrier;
-		this.curb = curb;
-		this.cultivar = cultivar;
-		this.genus = genus;
-		this.species = species;
-		this.commonName = commonName;
-	}
 
 	private String dataToID(String user, int treeID) {
 		String key;
