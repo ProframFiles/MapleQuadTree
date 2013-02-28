@@ -26,7 +26,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		TreeDataService {
 	private static final long serialVersionUID = 1L; 
 	
-	private static final Key LAST_USER_TREE_IDSTRING = KeyFactory.createKey("String", "last user tree id");;
+	private static final Key LAST_USER_TREE_STAMP_KEY = KeyFactory.createKey("UserTreeUpdateStamp", "last user tree id");
 	private static final Logger LOG = Logger.getLogger(TreeDataServiceImpl.class.getName());
 	
 	// the initial area for the street block search
@@ -56,29 +56,67 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public ClientTreeData addTree(ClientTreeData info) {
+		LOG.info("\n\trecieved call to create new user tree.");
 		ClientTreeData return_tree = null;
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
-			TreeData new_tree = makeTreeDataFromClient(info);
-			Query last_user_id_query = pm.newQuery(String.class, "key == id");
-			last_user_id_query.setUnique(true);
-			last_user_id_query.declareParameters("com.google.appengine.api.datastore.Key id");
-			String last_id = (String)last_user_id_query.execute(LAST_USER_TREE_IDSTRING);
+
+			// find the last update stamp, if there is one
+			Query last_update_query = pm.newQuery(UserTreeUpdateStamp.class, "key == id");
+			last_update_query.setUnique(true);
+			last_update_query.declareParameters("com.google.appengine.api.datastore.Key id");
+			LOG.info("\n\tFetching last user id from datastore.");
+			LOG.fine("\n\tAbout to execute query\n\t"+last_update_query.toString());
 			
-			if(last_id == null){
-				last_id = "U0";
+			UserTreeUpdateStamp last_stamp = (UserTreeUpdateStamp)last_update_query.execute(LAST_USER_TREE_STAMP_KEY);
+			
+			// create a new stamp if we didn't find one, die if we found a malformed stamp
+			if(last_stamp == null){
+				LOG.info("\n\tNo user tree adds found. This will be the first.");
+				last_stamp = new UserTreeUpdateStamp(LAST_USER_TREE_STAMP_KEY);
 			}
-			else if(last_id.toUpperCase().matches("U\\d+")){
-				throw new RuntimeException("something is wrong with the stored last user id: \"" + last_id +"\"");
+			else if(!last_stamp.getTreeID().toUpperCase().matches("U\\d+")){
+				throw new RuntimeException("something is wrong with the stored last user id: \"" + last_stamp.getTreeID() +"\"");
+			}
+			else{
+				LOG.info("\n\tFound: last id = \"" + last_stamp.getTreeID() + "\" added " + last_stamp.getTimeStamp() );
 			}
 			
 			//increment the last ID
-			int id_number = Integer.parseInt(last_id.substring(1));
-			new_tree.setID("U", id_number);
+			int id_number = Integer.parseInt(last_stamp.getTreeID().substring(1)) + 1;
+			
+			//make the new tree, server style
+			TreeData new_tree;
+			if(info != null){
+				new_tree = makeTreeDataFromClient(info, id_number);
+			}
+			else{
+				throw new RuntimeException("Can't create an empty tree (null tree data)");
+			}
+			
+			//persist the new tree
 			pm.makePersistent(new_tree);
+			
+			//refresh the update stamp 
+			last_stamp.setTreeID(new_tree.getID());
+			last_stamp.updateTimeStamp();
+			pm.makePersistent(last_stamp);
+			
+			LOG.info("\n\tDone adding new tree \"" +new_tree.getID() + "\"");
 			
 			//everything went better than expected, set return to non-null
 			return_tree = makeUserTreeData(new_tree);
+		}
+		catch (Exception e){
+			LOG.severe("Unexpected exception during adding of user tree:\n\t\"" + e.getMessage() + "\"\n\tStack trace follows.");
+			StringBuilder sb = new StringBuilder();
+			for(StackTraceElement ste: e.getStackTrace()){
+				sb.append("\n" + ste.toString());
+				if(ste.getMethodName() == "addTree"){
+					break;
+				}
+			}
+			LOG.severe("StackTrace from this method:\n" + sb.toString() + "\n");
 		}
 		finally{
 			pm.close();
@@ -187,9 +225,8 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		user_data.setCommonName(tree_data.getCommonName());
 		return user_data;
 	}
-	private TreeData makeTreeDataFromClient(ClientTreeData tree_data) {
-		TreeData server_data = new TreeData(tree_data.getID().toString());
-		server_data.setID(tree_data.getID().toString());
+	private TreeData makeTreeDataFromClient(ClientTreeData tree_data, int id_number) {
+		TreeData server_data = new TreeData("U", id_number);
 		server_data.setCivicNumber(tree_data.getCivicNumber());
 		server_data.setNeighbourhood(tree_data.getNeighbourhood());
 		server_data.setStreet(tree_data.getStreet());
