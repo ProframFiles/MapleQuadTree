@@ -63,10 +63,13 @@ public class TreeSpotter implements EntryPoint {
 	private final VerticalPanel infoMapPanel = new VerticalPanel();
 	private Geocoder geo;
 	private Label invalidLoc = new Label("Tree location could not be displayed");
-	private static final int ZOOM_LVL = 12;
+	private static final int ZOOM_LVL = 15;
 	
-	// for reverse geocoding
+	// for adding tree
 	private Address geoAddr;
+	private ClientTreeData addTree;
+	private boolean doneParse = true;
+	private boolean asyncCall = false;
 	
 	private DateTimeFormat dtf = DateTimeFormat.getFormat("d MMM yyyy");
 	private static final String ADMIN = "admin";
@@ -337,9 +340,9 @@ public class TreeSpotter implements EntryPoint {
 		data.setHeight("400px");
 
 		// TODO: replace values with t.getSpecies()
-		data.add(createResultDataRow("Species", "Sudowoodo"));
+		data.add(createResultDataRow("Species", t.getSpecies()));
 		data.add(createResultDataRow("Type", "Rock"));
-		data.add(createResultDataRow("Location", "Route 20"));
+		data.add(createResultDataRow("Location", t.getCivicNumber() + " " + t.getStreet()));
 		data.add(createResultDataRow("Height", "1.2m"));
 		data.add(createResultDataRow("Weight", "38.0kg"));
 
@@ -361,6 +364,7 @@ public class TreeSpotter implements EntryPoint {
 
 		final PopupPanel addPanel = new PopupPanel();
 		VerticalPanel addForm = new VerticalPanel();
+		addFormMap.clear();
 
 		/* create text box and label for each field */
 		for (String fld : basicFields) {
@@ -385,11 +389,13 @@ public class TreeSpotter implements EntryPoint {
 					String input = addFormMap.get(fld).getValue();
 					String name = fld.getText();
 					if (name.equalsIgnoreCase("Location")) {
+						// kchen: location checking is tricky, let backend code handle it
+						/*
 						// check for valid location
 						LatLng pt = LatLng.fromUrlValue(input);
 						if (!validCoordinates(pt)) {
 							invalidFields.add(name);
-						}						
+						}*/						
 					} else if (name.equalsIgnoreCase("Height") || name.equalsIgnoreCase("Diameter")) {
 						// check that height/diameter is a number
 						String a = input.trim();
@@ -413,19 +419,7 @@ public class TreeSpotter implements EntryPoint {
 				if (invalidFields.isEmpty()) {
 					try {
 						Window.alert("Valid.");
-						ClientTreeData addTree = populateAddData(addFormMap);
-						treeDataService.addTree(addTree, new AsyncCallback<Void>() {
-							public void onFailure(Throwable error) {
-								handleError(error);							
-							}
-							public void onSuccess(Void result) {
-								Window.alert("Tree added.");
-								//displayTreeInfoPage(data);
-								// TODO
-								// maybe it'd be nice to be redirected to newly added tree info page?
-								// would require TreeDataService to return ClientTreeData from server								
-							}					
-						});
+						populateAddData(addFormMap);						
 					} catch (Exception e) {
 						handleError(e);
 					}
@@ -640,9 +634,11 @@ public class TreeSpotter implements EntryPoint {
 	 * @throws InvalidFieldException
 	 * 			thrown when input is not properly formatted
 	 */
-	private ClientTreeData populateAddData(LinkedHashMap<Label, TextBox> list) 
+	private void populateAddData(LinkedHashMap<Label, TextBox> list) 
 			throws InvalidFieldException {
-		ClientTreeData t = new ClientTreeData();
+		addTree = new ClientTreeData();
+		asyncCall = false;
+		doneParse = false;
 		for (Map.Entry<Label, TextBox> entry : list.entrySet()) {
 			String key = entry.getKey().getText();
 			String input = entry.getValue().getValue();
@@ -657,59 +653,60 @@ public class TreeSpotter implements EntryPoint {
 				if (loc.length == 2) {
 					isAddr = false;
 				}
-				try {
-					// try parsing as address
-					if (isAddr) {
-						geoAddr = new Address(input);
+				// try parsing as address
+				if (isAddr) {
+					geoAddr = new Address(input);
+					if (geoAddr.getNumber() < 0) {
+						throw new InvalidFieldException("Invalid field: Location");
 					}
-					// try parsing as coordinates
-					else {
+					addTree.setCivicNumber(geoAddr.getNumber());
+					addTree.setStreet(geoAddr.getStreet());
+				}
+				// try parsing as coordinates
+				else {
+					try {
 						LatLng pt = LatLng.fromUrlValue(input);
 						if (!validCoordinates(pt)) {
 							throw new InvalidFieldException("Invalid field: Location");
 						}
-						geoAddr = new Address(-1, "");
 						// reverse geocode coordinates -> address
+						asyncCall = true;
 						geo.getLocations(pt, new LocationCallback() {
 							public void onFailure(int e) {
-								geoAddr = new Address(-1, "");
+								handleError(new InvalidFieldException("Invalid field: Location"));
 							}
 
 							public void onSuccess(JsArray<Placemark> p) {
 								if (p.length() <= 0) {
-									geoAddr = new Address(-1, "");
+									handleError(new InvalidFieldException("Invalid field: Location"));
 								}
 								// uses first placemark result only
 								// getAddress has format ### Street, Vancouver, BC postal_code, Canada
 								else {
 									geoAddr = new Address(p.get(0).getAddress());
+									addTree.setCivicNumber(geoAddr.getNumber());
+									addTree.setStreet(geoAddr.getStreet());
+									sendAddTreeData(addTree);
 								}
 							}
 						});
+					} catch (Exception e) {
+						throw new InvalidFieldException("Invalid field: Location");
 					}
-				} catch (Exception e) {
-					throw new InvalidFieldException("Invalid field: Location");
 				}
-				// TODO: issue with race condition here when reverse geocoding
-				if (geoAddr.getNumber() < 0) {
-					throw new InvalidFieldException("Invalid field: Location");
-				}
-				t.setCivicNumber(geoAddr.getNumber());
-				t.setStreet(geoAddr.getStreet());
 			} else if (key.equals("Genus")) {
-				t.setGenus(input);
+				addTree.setGenus(input);
 			} else if (key.equals("Species")) {
-				t.setSpecies(input);
+				addTree.setSpecies(input);
 			} else if (key.equals("Common Name")) {
-				t.setCommonName(input);
+				addTree.setCommonName(input);
 			} else if (key.equals("Neighbourhood")) {
-				t.setNeighbourhood(input);
+				addTree.setNeighbourhood(input);
 			} else if (key.equals("Height")) {
 				try {
 					// TODO: need a setHeight field
 					// t.setHeight(Double.parseDouble(input));
-					int h = (int) Double.parseDouble(input); // just in case
-																// it's a float
+					int h = (int) Double.parseDouble(input); // just in case it's a float
 					int range = -1;
 					if (h < 0) {
 						range = 0;
@@ -718,21 +715,44 @@ public class TreeSpotter implements EntryPoint {
 					} else {
 						range = 10;
 					}
-					t.setHeightRange(range);
+					addTree.setHeightRange(range);
 				} catch (Exception e) {
 					throw new InvalidFieldException("Invalid field: Height");
 				}
 			} else if (key.equals("Diameter")) {
 				try {
-					t.setDiameter((int) Double.parseDouble(input));
+					addTree.setDiameter((int) Double.parseDouble(input));
 				} catch (Exception e) {
 					throw new InvalidFieldException("Invalid field: Diameter");
 				}
 			} else if (key.equals("Date Planted")) {
-				t.setPlanted(dtf.parse(input));
+				addTree.setPlanted(dtf.parse(input));
 			}
 		}
-		return t;
+		doneParse = true;
+		if (!asyncCall) {
+			sendAddTreeData(addTree);
+		}
+	}
+	
+	private void sendAddTreeData(ClientTreeData t) {
+		// only execute if done parsing
+		if (!doneParse) {
+			asyncCall = false;
+			return;
+		}
+		treeDataService.addTree(t, new AsyncCallback<Void>() {
+			public void onFailure(Throwable error) {
+				handleError(error);
+			}
+			public void onSuccess(Void result) {
+				Window.alert("Tree added.");
+				displayTreeInfoPage(addTree); // debugging
+				// TODO
+				// maybe it'd be nice to be redirected to newly added tree info page?
+				// would require TreeDataService to return ClientTreeData from server								
+			}					
+		});
 	}
 
 	private void setTreeInfoMap(ClientTreeData data) {
@@ -743,8 +763,9 @@ public class TreeSpotter implements EntryPoint {
 			infoMapPanel.add(invalidLoc);
 			return;
 		}
-
-		String loc = data.getCivicNumber() + " " + data.getStreet();
+		// just in case city is required in search
+		String loc =  ((data.getCivicNumber() == 0) ? data.getCivicNumber() + " " : "")
+						+ data.getStreet() + ", Vancouver, BC"; 
 		System.out.println("location: " + loc);
 		geo.getLatLng(loc, new LatLngCallback() {
 			public void onFailure() {
@@ -765,6 +786,7 @@ public class TreeSpotter implements EntryPoint {
 		}
 		MapWidget map = new MapWidget(pt, ZOOM_LVL);
 		map.setSize("400px", "400px");
+	    map.setUIToDefault();
 		infoMapPanel.add(map);
 	}
 
@@ -799,8 +821,8 @@ public class TreeSpotter implements EntryPoint {
 				num = Integer.parseInt(addr[0]);
 				street = addr[1].trim();
 			} catch (Exception e) {
-				num = -1;
-				street = "";
+				num = 0;  // possibly no street number
+				street = addr[0] + " " + addr[1];
 			}
 		}
 		
