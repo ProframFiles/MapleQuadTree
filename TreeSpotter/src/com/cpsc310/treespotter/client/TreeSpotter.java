@@ -31,6 +31,7 @@ import com.google.gwt.maps.client.geocode.LatLngCallback;
 import com.google.gwt.maps.client.geocode.LocationCallback;
 import com.google.gwt.maps.client.geocode.Placemark;
 import com.google.gwt.maps.client.geom.LatLng;
+import com.google.gwt.maps.client.overlay.Marker;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Random;
 import com.google.gwt.user.client.Timer;
@@ -71,6 +72,7 @@ public class TreeSpotter implements EntryPoint {
 	private Geocoder geo;
 	private Label invalidLoc = new Label("Tree location could not be displayed");
 	private static final int ZOOM_LVL = 15;
+	private TreeSearchMap searchMap;
 	
 	// for adding tree
 	private Address geoAddr;
@@ -113,6 +115,7 @@ public class TreeSpotter implements EntryPoint {
 		Maps.loadMapsApi("", "2", true, new Runnable() {
 			public void run() {
 				geo = new Geocoder();
+				searchMap = new TreeSearchMap();
 			}
 		});
 		
@@ -302,6 +305,7 @@ public class TreeSpotter implements EntryPoint {
 			Label noResults = new Label("No results were found.");
 			content.add(noResults);
 		} else {
+			searchMap.setPoints(rlist);
 			FlexTable resultsTable = new FlexTable();
 			resultsTable.setWidth("100%");
 
@@ -324,7 +328,8 @@ public class TreeSpotter implements EntryPoint {
 				int rows = resultsTable.getRowCount();
 				resultsTable.setWidget(rows, 0, panel);
 			}
-
+			MapWidget sMap = searchMap.getMap(); // race cond?
+			content.add(sMap);
 			content.add(resultsTable);	
 		}
 	}
@@ -682,7 +687,7 @@ public class TreeSpotter implements EntryPoint {
 		asyncCall = false;
 		doneParse = false;
 		for (Map.Entry<Label, TextBox> entry : list.entrySet()) {
-			String key = entry.getKey().getText();
+			String key = entry.getKey().getText().split("\\s[*]")[0];
 			String input = entry.getValue().getValue().trim();
 
 			// TODO: decide to keep or discard coordinate storing in database
@@ -816,7 +821,7 @@ public class TreeSpotter implements EntryPoint {
 			return;
 		}
 		// just in case city is required in search
-		String loc =  ((data.getCivicNumber() == 0) ? data.getCivicNumber() + " " : "")
+		String loc =  ((data.getCivicNumber() != 0) ? data.getCivicNumber() + " " : "")
 						+ data.getStreet() + ", Vancouver, BC"; 
 		System.out.println("location: " + loc);
 		geo.getLatLng(loc, new LatLngCallback() {
@@ -839,6 +844,8 @@ public class TreeSpotter implements EntryPoint {
 		MapWidget map = new MapWidget(pt, ZOOM_LVL);
 		map.setSize("400px", "400px");
 	    map.setUIToDefault();
+	    Marker m = new Marker(pt);
+	    map.addOverlay(m);
 		infoMapPanel.add(map);
 	}
 
