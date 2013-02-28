@@ -9,12 +9,12 @@ public class ClientTreeData implements Serializable {
 	 */
 	private static final long serialVersionUID = -1953579997954856450L;
 	
-	private int civicNumber;
+	private int civicNumber = -1;
 	private String treeID;
 	private String neighbourhood;
 	private String street;
-	private int heightRange;
-	private float diameter;
+	private int heightRange = -1;
+	private float diameter = -1.0f;
 	private Date planted;
 	private String cultivar;
 	private String genus;

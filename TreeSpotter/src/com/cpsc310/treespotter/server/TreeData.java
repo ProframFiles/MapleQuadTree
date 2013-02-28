@@ -76,13 +76,21 @@ public class TreeData {
 		setID(user, treeID);
 	}
 
+	public TreeData(String treeID) {
+		setID(treeID);
+	}
+	
 	private String dataToID(String user, int treeID) {
 		String key;
-		if (user.equals("admin")) {
+		if (user.equals("admin") || user.toUpperCase().equals("V")) {
 			key = "V" + String.valueOf(treeID);
 		}
-		else
+		else if(user.equals("user") || user.toUpperCase().equals("U")){
 			key = "U" + String.valueOf(treeID);
+		}
+		else {
+			throw new RuntimeException("Invalid tree ID prefix: " + user);
+		}
 		return key;
 	}
 
@@ -92,7 +100,12 @@ public class TreeData {
 	public void setID(String user, int treeID) {
 		this.treeID = dataToID(user, treeID);
 	}
-	
+	public void setID(String treeID) {
+		if(!treeID.toUpperCase().matches("(U|V)\\d+")){
+			throw new RuntimeException("Invalid tree ID string: " + treeID);
+		}
+		this.treeID = treeID.toUpperCase();
+	}
 	public int getCivicNumber() {
 		return civicNumber;
 	}
@@ -105,7 +118,7 @@ public class TreeData {
 	}
 	public void setStdStreet(String stdStreet) {
 		replaceKeyword(this.stdStreet, stdStreet);
-		this.stdStreet = stdStreet;
+		this.stdStreet = upperOrNull(stdStreet);
 	}
 	
 	public String getNeighbourhood() {
@@ -113,7 +126,7 @@ public class TreeData {
 	}
 	public void setNeighbourhood(String neighbourhood) {
 		replaceKeyword(this.neighbourhood, neighbourhood);
-		this.neighbourhood = neighbourhood;
+		this.neighbourhood = upperOrNull(neighbourhood);
 	}
 	
 	public int getCell() {
@@ -128,21 +141,21 @@ public class TreeData {
 	}
 	public void setStreet(String street) {
 		replaceKeyword(this.street, street);
-		this.street = street;
+		this.street = upperOrNull(street);
 	}
 	
 	public String getStreetBlock() {
 		return streetBlock;
 	}
 	public void setStreetBlock(String streetBlock) {
-		this.streetBlock = streetBlock;
+		this.streetBlock = upperOrNull(streetBlock);
 	}
 	
 	public String getStreetSideName() {
 		return streetSideName;
 	}
 	public void setStreetSideName(String streetSideName) {
-		this.streetSideName = streetSideName;
+		this.streetSideName = upperOrNull(streetSideName);
 	}
 	
 	public Boolean getAssigned() {
@@ -177,7 +190,7 @@ public class TreeData {
 		return plantArea;
 	}
 	public void setPlantArea(String plantArea) {
-		this.plantArea = plantArea;
+		this.plantArea = upperOrNull(plantArea);
 	}
 	
 	public Boolean getRootBarrier() {
@@ -199,7 +212,7 @@ public class TreeData {
 	}
 	public void setCultivar(String cultivar) {
 		replaceKeyword(this.cultivar, cultivar);
-		this.cultivar = cultivar;
+		this.cultivar = upperOrNull(cultivar);
 	}
 	
 	public String getGenus() {
@@ -207,7 +220,7 @@ public class TreeData {
 	}
 	public void setGenus(String genus) {
 		replaceKeyword(this.genus, genus);
-		this.genus = genus;
+		this.genus = upperOrNull(genus);
 	}
 	
 	public String getSpecies() {
@@ -215,7 +228,7 @@ public class TreeData {
 	}
 	public void setSpecies(String species) {
 		replaceKeyword(this.species, species);
-		this.species = species;
+		this.species = upperOrNull(species);
 	}
 	
 	public String getCommonName() {
@@ -223,17 +236,17 @@ public class TreeData {
 	}
 	public void setCommonName(String commonName) {
 		replaceKeyword(this.commonName, commonName);
-		this.commonName = commonName;
+		this.commonName = upperOrNull(commonName);
 	}
 	private void replaceKeyword(String kw_old, String kw_new ){
 		if(kw_old != null){
-			int count = numKeywordsMatch(kw_old);
+			int count = numKeywordsMatch(kw_old.toUpperCase());
 			if(count <= 1){
-				keywords.remove(kw_old);
+				keywords.remove(kw_old.toUpperCase());
 			}
 		}
 		if(kw_new != null){
-			keywords.add(kw_new);
+			keywords.add(kw_new.toUpperCase());
 		}
 	}
 	private int numKeywordsMatch(String s){
@@ -247,5 +260,11 @@ public class TreeData {
 		if(stdStreet != null && stdStreet.equals(s)) count++;
 		
 		return count;
+	}
+	private String upperOrNull(String s){
+		if(s == null){
+			return null;
+		}
+		return s.toUpperCase();
 	}
 }
