@@ -179,7 +179,6 @@ public class TreeSpotter implements EntryPoint {
 		final VerticalPanel advancedForm = new VerticalPanel();
 		advancedForm.setStyleName("main-search");
 		for (String field : basicFields) {
-			// TODO: (kchen) removed semicolon to ease parsing
 			HorizontalPanel advtb = createSearchPanel(field); 
 			advancedForm.add(advtb);
 		}
@@ -274,7 +273,7 @@ public class TreeSpotter implements EntryPoint {
 				public void onSuccess(ArrayList<ClientTreeData> result) {
 					if (result == null) {
 						RootPanel.get("content").clear();
-						RootPanel.get("content").add(new Label("No matches were found."));
+						RootPanel.get("content").add(new Label("No results were found."));
 					}
 					if (result != null) {
 						treeList = result;
@@ -301,7 +300,6 @@ public class TreeSpotter implements EntryPoint {
 		content.clear();
 		if (rlist.isEmpty()) {
 			Label noResults = new Label("No results were found.");
-			noResults.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			content.add(noResults);
 		} else {
 			FlexTable resultsTable = new FlexTable();
@@ -359,7 +357,6 @@ public class TreeSpotter implements EntryPoint {
 	 *            ClientTreeData to display details of
 	 */
 	private void displayTreeInfoPage(ClientTreeData t) {
-		System.out.println("ID number: " + t.getID());
 		HTMLPanel panel = new HTMLPanel("");
 		panel.setStyleName("treeinfo");
 		
@@ -369,16 +366,22 @@ public class TreeSpotter implements EntryPoint {
 		/* create table with all the data */
 		treeInfoTable = new FlexTable();
 		treeInfoTable.setStyleName("treedata");
+		treeInfoTable.setCellPadding(10);
 		treeInfoTable.setWidth("400px");
-		treeInfoTable.setHeight("400px");
 
-		// TODO: replace values with t.getSpecies()
 		createResultDataRow("Species", t.getSpecies());
+		createResultDataRow("Genus", t.getGenus());
+		createResultDataRow("Common Name", t.getCommonName());
 		createResultDataRow("Location", t.getCivicNumber() + " " + t.getStreet());
 		createResultDataRow("Neighbourhood", t.getNeighbourhood());
-		createResultDataRow("Common Name", t.getCommonName());
+		createResultDataRow("Height", Integer.toString(t.getHeightRange()));
+		// TODO: actually convert it....units?
 		createResultDataRow("Diameter", Integer.toString(t.getHeightRange()));
-
+		//createResultDataRow("Date Planted", t.getPlanted().toString());
+		// can be null?
+		
+		
+		
 		panel.add(infoMapPanel);
 		panel.add(treeInfoTable);
 		
@@ -401,12 +404,11 @@ public class TreeSpotter implements EntryPoint {
 
 		/* create text box and label for each field */
 		for (String fld : basicFields) {
-			// TODO: (kchen) I removed the * for now to ease parsing
-			VerticalPanel addtb = createAddTreeRow(fld);
+			VerticalPanel addtb = createAddTreeRow(fld, true);
 			addForm.add(addtb);
 		}
 		for (String fld : optionalFields) {
-			VerticalPanel addtb = createAddTreeRow(fld);
+			VerticalPanel addtb = createAddTreeRow(fld, false);
 			addForm.add(addtb);
 		}
 
@@ -451,7 +453,7 @@ public class TreeSpotter implements EntryPoint {
 
 				if (invalidFields.isEmpty()) {
 					try {
-						Window.alert("Valid.");
+						addPanel.hide();
 						populateAddData(addFormMap);						
 					} catch (Exception e) {
 						handleError(e);
@@ -470,10 +472,6 @@ public class TreeSpotter implements EntryPoint {
 						} else if (fld.equalsIgnoreCase("Diameter")) {
 							errorMsg = errorMsg + "Diameter must be a number.\n";
 						} else {
-							// TODO: (kchen) no longer has *
-							if (fld.contains("*")) {
-								fld = fld.substring(0, fld.indexOf("*")).trim();
-							}
 							errorMsg = errorMsg + fld + " cannot be empty.\n";				
 						}
 					}
@@ -636,7 +634,7 @@ public class TreeSpotter implements EntryPoint {
 	 * @return
 	 */
 	private void createResultDataRow(String field, String value) {
-		int rowNum = treeInfoTable.getRowCount();	
+		int rowNum = treeInfoTable.getRowCount();
 		Label fld = new Label(field);
 		fld.setStyleName("info-field");
 		treeInfoTable.setWidget(rowNum, 0, fld);
@@ -649,10 +647,15 @@ public class TreeSpotter implements EntryPoint {
 	 * @param text
 	 * @return
 	 */
-	private VerticalPanel createAddTreeRow(String text) {
+	private VerticalPanel createAddTreeRow(String text, boolean req) {
 		VerticalPanel row = new VerticalPanel();
 		row.setWidth("100%");
-		Label lbl = new Label(text);
+		
+		if (req) {
+			text = "<b>" + text + " * </b>";
+		}
+		
+		HTML lbl = new HTML(text);
 		TextBox tb = new TextBox();
 		addFormMap.put(lbl, tb);
 
@@ -800,6 +803,7 @@ public class TreeSpotter implements EntryPoint {
 
 	private void setTreeInfoMap(ClientTreeData data) {
 		infoMapPanel.clear();
+		infoMapPanel.setStyleName("map");
 		infoMapPanel.setSize("400px", "400px");
 
 		if (data == null) {

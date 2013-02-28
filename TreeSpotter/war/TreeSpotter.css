@@ -172,8 +172,7 @@ a.main-search {
 	display: block;
 	margin-left: auto;
 	margin-right: auto;
-	padding: 20px;
-	
+	width: 900px;	
 }
 
 .map {
@@ -182,7 +181,7 @@ a.main-search {
 }
 
 .treedata {
-	float: left;
+	float: right;
 	margin-right: 5%;
 	padding: 20px;
 }
