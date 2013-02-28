@@ -1,7 +1,9 @@
 package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +82,9 @@ public class TreeSpotter implements EntryPoint {
 	private static final String ADMIN = "admin";
 	// in order to be accessed by inner classes this has to be a member
 	private ArrayList<ClientTreeData> treeList = new ArrayList<ClientTreeData>();
+	
+	// table for TreeInfo
+	private FlexTable treeInfoTable = null;
 
 	// is there a way to get a list of neighbourhoods from the dataset?
 	// from the file names or do a batch query on everything (ugh)
@@ -161,6 +166,7 @@ public class TreeSpotter implements EntryPoint {
 		final TextBox searchInput = new TextBox();
 		Button searchBtn = new Button("Find my tree!");
 		searchInput.setStyleName("main-search");
+		searchInput.setWidth("450px");
 		searchBtn.setStyleName("main-search");
 
 		searchPanel.add(searchInput);
@@ -173,7 +179,7 @@ public class TreeSpotter implements EntryPoint {
 		final VerticalPanel advancedForm = new VerticalPanel();
 		advancedForm.setStyleName("main-search");
 		for (String field : basicFields) {
-			// kchen: removed semicolon to ease parsing
+			// TODO: (kchen) removed semicolon to ease parsing
 			HorizontalPanel advtb = createSearchPanel(field); 
 			advancedForm.add(advtb);
 		}
@@ -208,6 +214,8 @@ public class TreeSpotter implements EntryPoint {
 		searchDiv.add(searchPanel);
 		searchDiv.add(advancedLink);
 		searchDiv.add(advancedForm);
+		
+		loadHomePage();
 	}
 
 	/*
@@ -291,9 +299,9 @@ public class TreeSpotter implements EntryPoint {
 	private void displaySearchResults(ArrayList<ClientTreeData> rlist) {
 		RootPanel content = RootPanel.get("content");
 		content.clear();
-		
-		if (rlist == null) {
+		if (rlist.isEmpty()) {
 			Label noResults = new Label("No results were found.");
+			noResults.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			content.add(noResults);
 		} else {
 			FlexTable resultsTable = new FlexTable();
@@ -302,7 +310,7 @@ public class TreeSpotter implements EntryPoint {
 			for (final ClientTreeData tree : rlist) {
 				HorizontalPanel panel = new HorizontalPanel();
 				Anchor species = new Anchor(tree.getCommonName());
-				Label location = new Label(tree.getNeighbourhood());
+				Label location = new Label(tree.getLocation());
 
 				/* add link to the tree info page */
 				species.addClickHandler(new ClickHandler() {
@@ -352,27 +360,27 @@ public class TreeSpotter implements EntryPoint {
 	 */
 	private void displayTreeInfoPage(ClientTreeData t) {
 		System.out.println("ID number: " + t.getID());
-		HorizontalPanel panel = new HorizontalPanel();
-		panel.setSpacing(50);
-
+		HTMLPanel panel = new HTMLPanel("");
+		panel.setStyleName("treeinfo");
+		
 		/* create the map */
 		setTreeInfoMap(t);
 
-		/* create panel with all the data */
-		VerticalPanel data = new VerticalPanel();
-		data.setStyleName("treedata");
-		data.setWidth("400px");
-		data.setHeight("400px");
+		/* create table with all the data */
+		treeInfoTable = new FlexTable();
+		treeInfoTable.setStyleName("treedata");
+		treeInfoTable.setWidth("400px");
+		treeInfoTable.setHeight("400px");
 
 		// TODO: replace values with t.getSpecies()
-		data.add(createResultDataRow("Species", t.getSpecies()));
-		data.add(createResultDataRow("Type", "Rock"));
-		data.add(createResultDataRow("Location", t.getCivicNumber() + " " + t.getStreet()));
-		data.add(createResultDataRow("Height", "1.2m"));
-		data.add(createResultDataRow("Weight", "38.0kg"));
+		createResultDataRow("Species", t.getSpecies());
+		createResultDataRow("Location", t.getCivicNumber() + " " + t.getStreet());
+		createResultDataRow("Neighbourhood", t.getNeighbourhood());
+		createResultDataRow("Common Name", t.getCommonName());
+		createResultDataRow("Diameter", Integer.toString(t.getHeightRange()));
 
 		panel.add(infoMapPanel);
-		panel.add(data);
+		panel.add(treeInfoTable);
 		
 		RootPanel.get("content").clear();
 		RootPanel.get("content").add(panel);
@@ -393,6 +401,7 @@ public class TreeSpotter implements EntryPoint {
 
 		/* create text box and label for each field */
 		for (String fld : basicFields) {
+			// TODO: (kchen) I removed the * for now to ease parsing
 			VerticalPanel addtb = createAddTreeRow(fld);
 			addForm.add(addtb);
 		}
@@ -408,38 +417,37 @@ public class TreeSpotter implements EntryPoint {
 				// only sends if all required fields are not empty
 				// and location is valid
 				Set<Label> addFields = addFormMap.keySet();
-				ArrayList<String> invalidFields = new ArrayList<String>();
+				List<String> optional = Arrays.asList(optionalFields);
+				ArrayList<String> invalidFields = new ArrayList<String>();		
 			
 				for (Label fld : addFields) {
 					String input = addFormMap.get(fld).getValue();
 					String name = fld.getText();
-					if (name.equalsIgnoreCase(LOCATION)) {
-						// kchen: location checking is tricky, let backend code handle it
-						/*
-						// check for valid location
-						LatLng pt = LatLng.fromUrlValue(input);
-						if (!validCoordinates(pt)) {
-							invalidFields.add(name);
-						}*/						
-					} else if (name.equalsIgnoreCase("Height") || name.equalsIgnoreCase("Diameter")) {
-						// check that height/diameter is a number
+					if (optional.contains(name)) {
+						// optional field, so don't add it as invalid if its empty
 						String a = input.trim();
-						if (!a.matches("[0-9]+(\\.[0-9]+)?")) {
-							invalidFields.add(name);
-						}	
-					} else if (name.contains("Date")) {
-						try {
-							dtf.parse(input);
-						} catch (Exception e) {
-							invalidFields.add(name);
+						if (a == "") {
+							// do nothing for optional fields
+						}
+						else if (name.equalsIgnoreCase(HEIGHT) || name.equalsIgnoreCase(DIAMETER)) {
+							// check that height/diameter is a number
+							if (!a.matches("[0-9]+(\\.[0-9]+)?")) {
+								invalidFields.add(name);
+							}	
+						} else if (name.contains("Date")) {
+							try {
+								dtf.parse(input);
+							} catch (Exception e) {
+								invalidFields.add(name);
+							}
 						}
 					} else {
-						// check for non-empty input
-						if (input.trim() == "") {
-							invalidFields.add(name);
+							// check for non-empty input
+							if (input.trim() == "") {
+								invalidFields.add(name);
+							}
 						}
 					}
-				}
 
 				if (invalidFields.isEmpty()) {
 					try {
@@ -462,6 +470,10 @@ public class TreeSpotter implements EntryPoint {
 						} else if (fld.equalsIgnoreCase("Diameter")) {
 							errorMsg = errorMsg + "Diameter must be a number.\n";
 						} else {
+							// TODO: (kchen) no longer has *
+							if (fld.contains("*")) {
+								fld = fld.substring(0, fld.indexOf("*")).trim();
+							}
 							errorMsg = errorMsg + fld + " cannot be empty.\n";				
 						}
 					}
@@ -570,7 +582,7 @@ public class TreeSpotter implements EntryPoint {
 				"home-button"));
 		homeButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
-				// TODO: call home page
+				loadHomePage();
 			}
 		});
 
@@ -583,11 +595,6 @@ public class TreeSpotter implements EntryPoint {
 				"search-button"));
 		searchButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
-				ClientTreeData tree = new ClientTreeData();
-				ArrayList<ClientTreeData> treeList = new ArrayList<ClientTreeData>();
-				treeList.add(tree);
-				treeList.add(tree);
-
 				displaySearchResults(treeList);
 			}
 		});
@@ -609,6 +616,15 @@ public class TreeSpotter implements EntryPoint {
 			}
 		});
 	}
+	
+	/**
+	 *  Loads home.html into the content panel
+	 */
+	private void loadHomePage() {
+		HTMLPanel htmlPanel = new HTMLPanel(HTMLResource.INSTANCE.getHomeHtml().getText());
+		RootPanel.get("content").clear();
+		RootPanel.get("content").add(htmlPanel);
+	}
 
 	/**
 	 * Helper function to create rows of data for the TreeInfoPage
@@ -619,18 +635,12 @@ public class TreeSpotter implements EntryPoint {
 	 *            Data value
 	 * @return
 	 */
-	private HorizontalPanel createResultDataRow(String field, String value) {
-		HorizontalPanel panel = new HorizontalPanel();
+	private void createResultDataRow(String field, String value) {
+		int rowNum = treeInfoTable.getRowCount();	
 		Label fld = new Label(field);
-		fld.addStyleName("field");
-		fld.setWidth("150px");
-
-		Label val = new Label(value);
-
-		panel.add(fld);
-		panel.add(val);
-		panel.addStyleName("treedata");
-		return panel;
+		fld.setStyleName("info-field");
+		treeInfoTable.setWidget(rowNum, 0, fld);
+		treeInfoTable.setWidget(rowNum, 1, new Label(value));
 	}
 
 	/**
@@ -728,9 +738,9 @@ public class TreeSpotter implements EntryPoint {
 				addTree.setSpecies(input);
 			} else if (key.equalsIgnoreCase(COMMON)) {
 				addTree.setCommonName(input);
-			} else if (key.equalsIgnoreCase(NEIGHBOUR)) {
+			} else if (key.equalsIgnoreCase(NEIGHBOUR) && !input.isEmpty()) {
 				addTree.setNeighbourhood(input);
-			} else if (key.equalsIgnoreCase(HEIGHT)) {
+			} else if (key.equalsIgnoreCase(HEIGHT) && !input.isEmpty()) {
 				try {
 					// TODO: need a setHeight field
 					// t.setHeight(Double.parseDouble(input));
@@ -747,14 +757,19 @@ public class TreeSpotter implements EntryPoint {
 				} catch (Exception e) {
 					throw new InvalidFieldException("Invalid field: Height");
 				}
-			} else if (key.equalsIgnoreCase(DIAMETER)) {
+			} else if (key.equalsIgnoreCase(DIAMETER) && !input.isEmpty()) {
 				try {
 					addTree.setDiameter((int) Double.parseDouble(input));
 				} catch (Exception e) {
 					throw new InvalidFieldException("Invalid field: Diameter");
 				}
-			} else if (key.equalsIgnoreCase(PLANTED)) {
-				addTree.setPlanted(dtf.parse(input));
+			} else if (key.equalsIgnoreCase(PLANTED) && !input.isEmpty()) {
+				try {
+					Date d = dtf.parse(input);
+					addTree.setPlanted(d);
+				} catch (Exception e) {
+					throw new InvalidFieldException("Invalid field: Date Planted");
+				}
 			}
 		}
 		doneParse = true;

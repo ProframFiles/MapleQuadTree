@@ -24,7 +24,7 @@ public class DataFetcher extends HttpServlet {
 	final static private String URL_STRING = "https://dl.dropbox.com/u/23948817/maple%20quadtree/test.zip"; // change here
 	final static private Logger LOG = Logger.getLogger(DataFetcher.class.getName());
 	
-	private ArrayList<TreeData> curr_trees;
+	private ArrayList<TreeData> curr_trees = new ArrayList<TreeData>();
 	private int MAX_BLOCK_SIZE = 256;
 	
 	public void doGet(HttpServletRequest req, HttpServletResponse res) 
@@ -61,7 +61,7 @@ public class DataFetcher extends HttpServlet {
 		
 		String line;
 		in.readLine(); // to skip header row
-		
+
 		while((line = in.readLine()) != null) {
 			parseLine(line);
 		}

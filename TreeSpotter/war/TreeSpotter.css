@@ -8,6 +8,7 @@ body {
 }
 
 header{
+	display: block;
 	position: relative;
 	margin-top: 20px;
 	margin-left: auto;
@@ -18,6 +19,7 @@ header{
 }
 
 #button-bar {
+	display: block;
 	position: relative;
 	width: 95%;
 	margin: 0 auto 0 auto;
@@ -48,8 +50,8 @@ header{
 #main {
 	display: table;
     width:	95%;
-    min-height: 500px;
-	max-height: 900px;
+    min-width: 600px;
+    max-height: 500px;
 	border: thin solid #DEDCDD;
 	background-color: white;	
 	margin-left: auto;
@@ -59,7 +61,8 @@ header{
 #right-side {
 	display: table-cell;
 	width:	20%;
-	margin-top: 0;
+	top: 0;
+	right: 0;
     height: 900px;
 	background-color: #DEDCDD;	
 	float: right;
@@ -91,18 +94,18 @@ header{
 }
 
 #content {
-	display: block;
+	width: 95%;
+	padding: 20px;
 }
 
 #left-side {
 	display: table-cell;
-	float: left;
 	width: 80%;
+	float: left;
 }
 
 #main-search {
-	display: block;
-	padding: 10px 100px 10px 100px;
+	padding: 10px 100px 10px;
 	margin-left: auto;
 	margin-right: auto;
 }
@@ -113,7 +116,6 @@ input.main-search {
 	border: 2px solid #F1B720;
 	border-radius: 1px;
 	color: #333;
-	width: 500px;
 	height: 20px;
 	margin: 10px;
 }
@@ -158,7 +160,7 @@ a.main-search {
 	width: 100px;
 }
 
-.result {
+.result{
 	border-bottom: thin black dashed;
 	padding: 20px;
 	width: 80%;
@@ -166,14 +168,31 @@ a.main-search {
 	margin-left: 5%;
 }
 
-.result:hover {
-	background-color: #F0FAF5;
+.treeinfo {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	padding: 20px;
+	
 }
 
-table.treedata{
+.map {
+	float: left;
+	margin-left: 5%;
+}
+
+.treedata {
+	float: left;
+	margin-right: 5%;
 	padding: 20px;
-	height: 30px;
-	width: 100%;
+}
+
+.info-field {
+	font-weight: bold;
+}
+
+.info-value {
+		
 }
 
 .add-popup {

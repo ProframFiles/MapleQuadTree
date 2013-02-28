@@ -17,12 +17,13 @@ import com.cpsc310.treespotter.client.SearchQueryInterface;
 import com.cpsc310.treespotter.client.TreeDataService;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import static com.google.appengine.api.taskqueue.TaskOptions.Builder.*;
 
 public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		TreeDataService {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L; 
 	
 	private static final Logger LOG = Logger.getLogger(TreeDataServiceImpl.class.getName());
 	
@@ -41,12 +42,14 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		//it will only do the full parse if the current data isn't up to date
 		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
 		
+		//and uncomment this to force tree data parsing on server start  
+		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/import").method(TaskOptions.Method.GET));
 	}
 	
 	@Override
 	public void importFromSite(String url) {
 		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
-		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/import"));
+		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/import").method(TaskOptions.Method.GET));
 	}
 
 	@Override
@@ -89,6 +92,11 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	public ArrayList<ClientTreeData> searchTreeData(SearchQueryInterface query) {
 		LOG.setLevel(Level.FINER);
 		ArrayList<ClientTreeData> results = null;
+		
+		if(query == null || query.getSearchParams().isEmpty()){
+			LOG.info("recieved empty search query, returning.");
+			return null;
+		}
 		
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
