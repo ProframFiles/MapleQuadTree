@@ -43,17 +43,22 @@ public class TreeSpotter implements EntryPoint {
 	private LoginInfo loginInfo = null;
 
 	// list of fields, used for the Add Tree Form and the Advanced Search
-	private String[] basicFields = { "Location", "Genus", "Species",
-			"Common Name" };
-	private String[] optionalFields = { "Neighbourhood", "Height", "Diameter",
-			"Date Planted" };
+	private static final String LOCATION = "Location";
+	private static final String GENUS = "Genus";
+	private static final String SPECIES = "Species";
+	private static final String COMMON = "Common Name";
+	private static final String NEIGHBOUR = "Neighbourhood";
+	private static final String HEIGHT = "Height";
+	private static final String DIAMETER = "Diameter";
+	private static final String PLANTED = "Date Planted";
+	private String[] basicFields = { LOCATION, GENUS, SPECIES, COMMON };
+	private String[] optionalFields = { NEIGHBOUR, HEIGHT, DIAMETER, PLANTED };
 
 	private boolean isBasicSearch = true;
 	private TextBox basicSearch = null;
 
 	// list of the input boxes, so the values can be retrieved
-	private List<TextBox> advancedSearchList = new ArrayList<TextBox>();
-	// private List<TextBox> addFormList = new ArrayList<TextBox>();
+	private LinkedHashMap<Label, TextBox> advancedSearchMap = new LinkedHashMap<Label, TextBox>();
 	private LinkedHashMap<Label, TextBox> addFormMap = new LinkedHashMap<Label, TextBox>();
 
 	private final TreeDataServiceAsync treeDataService = GWT
@@ -168,7 +173,8 @@ public class TreeSpotter implements EntryPoint {
 		final VerticalPanel advancedForm = new VerticalPanel();
 		advancedForm.setStyleName("main-search");
 		for (String field : basicFields) {
-			HorizontalPanel advtb = createSearchPanel(field + ":");
+			// kchen: removed semicolon to ease parsing
+			HorizontalPanel advtb = createSearchPanel(field); 
 			advancedForm.add(advtb);
 		}
 		advancedForm.setVisible(false);
@@ -217,15 +223,34 @@ public class TreeSpotter implements EntryPoint {
 			System.out.println("Basic Search:");
 			System.out.println(basicSearch.getValue());
 			q = new KeywordSearch();			
-			q.addSearchParam(SearchFieldID.KEYWORD, "MARY");
+			q.addSearchParam(SearchFieldID.KEYWORD, basicSearch.getValue());
 
 		} else {
 			/* perform advanced search */
 			System.out.println("Advanced Search:");
-			for (TextBox tb : advancedSearchList) {
-				if (!tb.getValue().equals(""))
-					System.out.println(tb.getValue());
+			q = new AdvancedSearch();
+			String input = basicSearch.getValue().trim();
+			if (!input.isEmpty()) {
+				q.addSearchParam(SearchFieldID.KEYWORD, input);
+				System.out.println("Keyword: " + input);
 			}
+
+			for (Map.Entry<Label, TextBox> entry : advancedSearchMap.entrySet()) {
+				String key = entry.getKey().getText();
+				input = entry.getValue().isEnabled() ? entry.getValue().getValue().trim() : "";
+				if (!input.isEmpty()) {
+					System.out.println(key + ": " + input);
+					if (key.equalsIgnoreCase(LOCATION)) {
+						q.addSearchParam(SearchFieldID.LOCATION, input);
+					} else if (key.equalsIgnoreCase(GENUS)) {
+						q.addSearchParam(SearchFieldID.GENUS, input);
+					} else if (key.equalsIgnoreCase(SPECIES)) {
+						q.addSearchParam(SearchFieldID.SPECIES, input);
+					} else if (key.equalsIgnoreCase(COMMON)) {
+						q.addSearchParam(SearchFieldID.COMMON, input);
+					}
+				}
+			}			
 		}
 
 		// (aleksy) this is just a fake test search: remove as desired
@@ -388,7 +413,7 @@ public class TreeSpotter implements EntryPoint {
 				for (Label fld : addFields) {
 					String input = addFormMap.get(fld).getValue();
 					String name = fld.getText();
-					if (name.equalsIgnoreCase("Location")) {
+					if (name.equalsIgnoreCase(LOCATION)) {
 						// kchen: location checking is tricky, let backend code handle it
 						/*
 						// check for valid location
@@ -427,7 +452,7 @@ public class TreeSpotter implements EntryPoint {
 				} else {
 					String errorMsg = "";
 					for (String fld : invalidFields) {
-						if (fld.equalsIgnoreCase("Location")) {
+						if (fld.equalsIgnoreCase(LOCATION)) {
 							errorMsg = errorMsg + "Location must be a valid address or coordinates.\n";
 						} else if (fld.contains("Date")) {
 							errorMsg = errorMsg + "Date must be in format: 31 January 2012.\n";
@@ -478,6 +503,8 @@ public class TreeSpotter implements EntryPoint {
 		final CheckBox cb = new CheckBox();
 		final TextBox tb = new TextBox();
 		tb.setStyleName("disabled");
+		tb.setEnabled(false);
+		tb.setReadOnly(true);
 
 		Label label = new Label();
 		label.setText(text);
@@ -488,17 +515,19 @@ public class TreeSpotter implements EntryPoint {
 			public void onClick(ClickEvent event) {
 				if (!cb.getValue()) {
 					tb.setEnabled(false);
+					tb.setReadOnly(true);
 					tb.setText("");
 					tb.setStyleName("disabled");
 				} else {
 					tb.setEnabled(true);
+					tb.setReadOnly(false);
 					tb.setStyleName("enabled");
 				}
 			}
 		});
 
 		/* add text box to the list */
-		advancedSearchList.add(tb);
+		advancedSearchMap.put(label, tb);
 
 		/* add all elements to the panel */
 		panel.add(cb);
@@ -641,13 +670,12 @@ public class TreeSpotter implements EntryPoint {
 		doneParse = false;
 		for (Map.Entry<Label, TextBox> entry : list.entrySet()) {
 			String key = entry.getKey().getText();
-			String input = entry.getValue().getValue();
-			input = input.trim();
+			String input = entry.getValue().getValue().trim();
 
 			// TODO: decide to keep or discard coordinate storing in database
 			// this assumes valid location/coords in form
 			// #### Street Name or #, #
-			if (key.equals("Location")) {
+			if (key.equalsIgnoreCase(LOCATION)) {
 				boolean isAddr = true;
 				String[] loc = input.split("[,]");
 				if (loc.length == 2) {
@@ -694,15 +722,15 @@ public class TreeSpotter implements EntryPoint {
 						throw new InvalidFieldException("Invalid field: Location");
 					}
 				}
-			} else if (key.equals("Genus")) {
+			} else if (key.equalsIgnoreCase(GENUS)) {
 				addTree.setGenus(input);
-			} else if (key.equals("Species")) {
+			} else if (key.equalsIgnoreCase(SPECIES)) {
 				addTree.setSpecies(input);
-			} else if (key.equals("Common Name")) {
+			} else if (key.equalsIgnoreCase(COMMON)) {
 				addTree.setCommonName(input);
-			} else if (key.equals("Neighbourhood")) {
+			} else if (key.equalsIgnoreCase(NEIGHBOUR)) {
 				addTree.setNeighbourhood(input);
-			} else if (key.equals("Height")) {
+			} else if (key.equalsIgnoreCase(HEIGHT)) {
 				try {
 					// TODO: need a setHeight field
 					// t.setHeight(Double.parseDouble(input));
@@ -719,13 +747,13 @@ public class TreeSpotter implements EntryPoint {
 				} catch (Exception e) {
 					throw new InvalidFieldException("Invalid field: Height");
 				}
-			} else if (key.equals("Diameter")) {
+			} else if (key.equalsIgnoreCase(DIAMETER)) {
 				try {
 					addTree.setDiameter((int) Double.parseDouble(input));
 				} catch (Exception e) {
 					throw new InvalidFieldException("Invalid field: Diameter");
 				}
-			} else if (key.equals("Date Planted")) {
+			} else if (key.equalsIgnoreCase(PLANTED)) {
 				addTree.setPlanted(dtf.parse(input));
 			}
 		}
