@@ -15,6 +15,7 @@ import com.cpsc310.treespotter.client.ClientTreeData;
 import com.cpsc310.treespotter.client.SearchParam;
 import com.cpsc310.treespotter.client.SearchQueryInterface;
 import com.cpsc310.treespotter.client.TreeDataService;
+import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
@@ -25,6 +26,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		TreeDataService {
 	private static final long serialVersionUID = 1L; 
 	
+	private static final Key LAST_USER_TREE_IDSTRING = KeyFactory.createKey("String", "last user tree id");;
 	private static final Logger LOG = Logger.getLogger(TreeDataServiceImpl.class.getName());
 	
 	// the initial area for the street block search
@@ -53,8 +55,36 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public void addTree(ClientTreeData info) {
-
+	public ClientTreeData addTree(ClientTreeData info) {
+		ClientTreeData return_tree = null;
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try {
+			TreeData new_tree = makeTreeDataFromClient(info);
+			Query last_user_id_query = pm.newQuery(String.class, "key == id");
+			last_user_id_query.setUnique(true);
+			last_user_id_query.declareParameters("com.google.appengine.api.datastore.Key id");
+			String last_id = (String)last_user_id_query.execute(LAST_USER_TREE_IDSTRING);
+			
+			if(last_id == null){
+				last_id = "U0";
+			}
+			else if(last_id.toUpperCase().matches("U\\d+")){
+				throw new RuntimeException("something is wrong with the stored last user id: \"" + last_id +"\"");
+			}
+			
+			//increment the last ID
+			int id_number = Integer.parseInt(last_id.substring(1));
+			new_tree.setID("U", id_number);
+			pm.makePersistent(new_tree);
+			
+			//everything went better than expected, set return to non-null
+			return_tree = makeUserTreeData(new_tree);
+		}
+		finally{
+			pm.close();
+		}
+		
+		return return_tree;
 	}
 
 	@Override
@@ -122,7 +152,20 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 					}
 				}
 			}
-		} finally {
+		} 
+		catch(Exception e){
+			LOG.severe("Unexpected exception during search process:\n\t\"" + e.getMessage() + "\"\n\tReturning no results, stack trace follows.");
+			StringBuilder sb = new StringBuilder();
+			for(StackTraceElement ste: e.getStackTrace()){
+				sb.append("\n" + ste.toString());
+				if(ste.getMethodName() == "searchTreeData"){
+					break;
+				}
+			}
+			LOG.severe("StackTrace from this method:\n" + sb.toString() + "\n");
+			results = null;
+		}
+		finally {
 			pm.close();
 		}
 		
@@ -143,6 +186,21 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		user_data.setSpecies(tree_data.getSpecies());
 		user_data.setCommonName(tree_data.getCommonName());
 		return user_data;
+	}
+	private TreeData makeTreeDataFromClient(ClientTreeData tree_data) {
+		TreeData server_data = new TreeData(tree_data.getID().toString());
+		server_data.setID(tree_data.getID().toString());
+		server_data.setCivicNumber(tree_data.getCivicNumber());
+		server_data.setNeighbourhood(tree_data.getNeighbourhood());
+		server_data.setStreet(tree_data.getStreet());
+		server_data.setHeightRange(tree_data.getHeightRange());
+		server_data.setDiameter(tree_data.getDiameter());
+		server_data.setPlanted(tree_data.getPlanted());
+		server_data.setCultivar(tree_data.getCultivar());
+		server_data.setGenus(tree_data.getGenus());
+		server_data.setSpecies(tree_data.getSpecies());
+		server_data.setCommonName(tree_data.getCommonName());
+		return server_data;
 	}
 
 	private AdminTreeData makeAdminTreeData(TreeData tree_data) {

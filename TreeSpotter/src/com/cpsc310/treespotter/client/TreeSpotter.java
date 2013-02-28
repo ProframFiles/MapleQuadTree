@@ -787,12 +787,17 @@ public class TreeSpotter implements EntryPoint {
 			asyncCall = false;
 			return;
 		}
-		treeDataService.addTree(t, new AsyncCallback<Void>() {
+		treeDataService.addTree(t, new AsyncCallback<ClientTreeData>() {
 			public void onFailure(Throwable error) {
 				handleError(error);
 			}
-			public void onSuccess(Void result) {
-				Window.alert("Tree added.");
+			public void onSuccess(ClientTreeData result) {
+				if(result != null){
+					Window.alert("Tree " + result.getID() + " added.");
+				}
+				else{
+					Window.alert("Tree not added");
+				}
 				displayTreeInfoPage(addTree); // debugging
 				// TODO
 				// maybe it'd be nice to be redirected to newly added tree info page?

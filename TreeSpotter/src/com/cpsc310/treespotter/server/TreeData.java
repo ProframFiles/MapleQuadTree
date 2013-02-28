@@ -76,13 +76,21 @@ public class TreeData {
 		setID(user, treeID);
 	}
 
+	public TreeData(String treeID) {
+		setID(treeID);
+	}
+	
 	private String dataToID(String user, int treeID) {
 		String key;
-		if (user.equals("admin")) {
+		if (user.equals("admin") || user.toUpperCase().equals("V")) {
 			key = "V" + String.valueOf(treeID);
 		}
-		else
+		else if(user.equals("user") || user.toUpperCase().equals("U")){
 			key = "U" + String.valueOf(treeID);
+		}
+		else {
+			throw new RuntimeException("Invalid tree ID prefix: " + user);
+		}
 		return key;
 	}
 
@@ -92,7 +100,12 @@ public class TreeData {
 	public void setID(String user, int treeID) {
 		this.treeID = dataToID(user, treeID);
 	}
-	
+	public void setID(String treeID) {
+		if(!treeID.toUpperCase().matches("(U|V)\\d+")){
+			throw new RuntimeException("Invalid tree ID string: " + treeID);
+		}
+		this.treeID = treeID.toUpperCase();
+	}
 	public int getCivicNumber() {
 		return civicNumber;
 	}
