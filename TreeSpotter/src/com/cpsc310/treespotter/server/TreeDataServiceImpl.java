@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import javax.jdo.Transaction;
 
 import com.cpsc310.treespotter.client.AdminTreeData;
 import com.cpsc310.treespotter.client.ClientTreeData;
@@ -59,8 +60,9 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		LOG.info("\n\trecieved call to create new user tree.");
 		ClientTreeData return_tree = null;
 		PersistenceManager pm = PMF.get().getPersistenceManager();
+		Transaction tx = pm.currentTransaction();
 		try {
-
+			tx.begin();
 			// find the last update stamp, if there is one
 			Query last_update_query = pm.newQuery(UserTreeUpdateStamp.class, "key == id");
 			last_update_query.setUnique(true);
@@ -101,7 +103,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			last_stamp.setTreeID(new_tree.getID());
 			last_stamp.updateTimeStamp();
 			pm.makePersistent(last_stamp);
-			
+			tx.commit();
 			LOG.info("\n\tDone adding new tree \"" +new_tree.getID() + "\"");
 			
 			//everything went better than expected, set return to non-null
@@ -118,7 +120,10 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			}
 			LOG.severe("StackTrace from this method:\n" + sb.toString() + "\n");
 		}
-		finally{
+		finally {
+			if (tx.isActive()) {
+				tx.rollback();
+			}
 			pm.close();
 		}
 		
