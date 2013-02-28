@@ -16,6 +16,7 @@ public enum SearchFieldID
 	 */
 	KEYWORD,
 	  /**
+	 * (a bit broken at the moment)
 	 * Primary tree ID:<br> 
 	 * Format: currently an integer in string form
 	 */
@@ -26,13 +27,11 @@ public enum SearchFieldID
 	 */
 	NEIGHBOUR,
 	/**
-	 * (not yet implemented)<br>
 	 * Find trees within a given height range (in meters)<br>
 	 * Format: ("%d-%d", range_bottom, range_top)
 	 */
 	HEIGHT,
 	/**
-	 * (not yet implemented)<br>
 	 * Find trees within a given diameter range (in cm)<br>
 	 * Format: ("%d-%d",range_bottom, range_top)
 	 */
@@ -53,13 +52,11 @@ public enum SearchFieldID
 	 */
 	COMMON, 
 	/**
-	 * (not yet implemented)<br>
 	 * find trees within an address range<br>
 	 * Format: ("%d-%d %s",low_address, high_address, street_name)
 	 */
 	ADDRESS,
 	/**
-	 * (sort-of implemented)<br>
 	 * find trees around a given lat/long point<br>
 	 * Format: ("%f,%f,%f",latitude, longitude, radius_meters)
 	 */

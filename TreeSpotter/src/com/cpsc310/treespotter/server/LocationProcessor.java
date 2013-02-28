@@ -10,10 +10,14 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Logger;
+import java.util.zip.CRC32;
+import java.util.zip.CheckedInputStream;
+import java.util.zip.Checksum;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,22 +39,51 @@ public class LocationProcessor extends HttpServlet {
 	private static final String FILE_NAME = "public_streets.kml";
 	private static final Key LAST_TIMESTAMP_KEY = KeyFactory.createKey("StreetBlockUpdateTimeStamp", "last update");
 	private static final Logger LOG = Logger.getLogger(LocationProcessor.class.getName());
+	// days before we should try fetching the file again
+	private static int UPDATE_PERIOD = 6;
+	
 	public LocationProcessor(){
 		
 	}
 	public void doPost(HttpServletRequest request, HttpServletResponse response){
 		LOG.info("LocationProcessor:\n\tRecieved request to update street block data. Executing.");
 		
-		LOG.info("LocationProcessor:\n\tFetching and unpacking .kmz file.");
-		InputStream in_stream = FetchLocationFile();
-		
-		LOG.info("LocationProcessor:\n\tParsing .kml file.");
-		int blocks_parsed = ParseLocationFile(in_stream);
-		
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try{
-			StreetBlockUpdateTimeStamp time_stamp = new StreetBlockUpdateTimeStamp(LAST_TIMESTAMP_KEY, blocks_parsed);
-			pm.makePersistent(time_stamp);
+			
+			Query time_stamp_query = pm.newQuery(StreetBlockUpdateTimeStamp.class, "key == id");
+			time_stamp_query.setUnique(true);
+			time_stamp_query.declareParameters("com.google.appengine.api.datastore.Key id");
+			StreetBlockUpdateTimeStamp time_stamp = (StreetBlockUpdateTimeStamp)time_stamp_query.execute(LAST_TIMESTAMP_KEY);
+			// only fetch the file if enough time has passed since the last time we tried
+			if(time_stamp == null || time_stamp.getDaysPassed() > UPDATE_PERIOD){
+								
+				LOG.info("LocationProcessor:\n\tFetching and unpacking .kmz file.");
+				CheckedInputStream in_stream = FetchLocationFile();
+				
+				// only update the data if the file it's different than the last one we parsed
+				if(time_stamp == null || !time_stamp.isChecksumEqual(in_stream.getChecksum().getValue()) ){
+				
+					LOG.info("LocationProcessor:\n\tParsing .kml file.");
+					int blocks_parsed = ParseLocationFile(in_stream);
+					
+					LOG.info("LocationProcessor:\n\tDone Parsing " + blocks_parsed + " entries.");
+					
+					
+					if(time_stamp == null){
+						time_stamp = new StreetBlockUpdateTimeStamp(LAST_TIMESTAMP_KEY);
+					}
+				
+					time_stamp.Update(blocks_parsed,in_stream.getChecksum().getValue() );
+					pm.makePersistent(time_stamp);
+				}
+				else{
+					LOG.info("LocationProcessor:\n\t.kml file has not changed since last parse; skipping parse.");
+				}
+			}
+			else{
+				LOG.info("LocationProcessor:\n\tData is only " + time_stamp.getDaysPassed() + " days old, no update needed");
+			}
 		}
 		finally{
 			pm.close();
@@ -58,9 +91,10 @@ public class LocationProcessor extends HttpServlet {
 		
 	}
 	
-	public InputStream FetchLocationFile() {
+	
+	public CheckedInputStream FetchLocationFile() {
 
-		InputStream ret = null;
+		CheckedInputStream ret = null;
 		try {
 			URL url = new URL(URL_STRING);
 			ZipInputStream unzipper = new ZipInputStream(url.openStream());
@@ -87,7 +121,7 @@ public class LocationProcessor extends HttpServlet {
 				last_bytes_read = unzipper.read(b, bytes_read, file_size
 						- bytes_read);
 			}
-			ret = new ByteArrayInputStream(b);
+			ret = new CheckedInputStream( new ByteArrayInputStream(b), new CRC32());
 		} catch (MalformedURLException e) {
 			LOG.severe(e.getMessage());
 			throw new RuntimeException("Fetching of " + URL_STRING
@@ -120,7 +154,7 @@ public class LocationProcessor extends HttpServlet {
 
 		} catch (IOException e) {
 			LOG.severe(e.getMessage());
-			throw new RuntimeException("Unpacking of " + URL_STRING
+			throw new RuntimeException("REading of " + FILE_NAME
 					+ " failed: " + e, e);
 		} catch (Exception e) {
 			LOG.severe(e.getMessage());
