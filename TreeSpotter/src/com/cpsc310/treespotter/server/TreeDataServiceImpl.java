@@ -156,6 +156,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	private Query makeDBQueryFromSearch(PersistenceManager pm, SearchQueryInterface search_params) {
 		//TODO aleksy: implement extra search query enums once they're there
 		StringBuilder sb = new StringBuilder();
+		String sort_order = "";
 		String prefix = "(";
 		for (SearchParam param : search_params) {
 			LOG.finer("search param:\n\t(" + param.fieldID.toString() +", " + param.value + ")");
@@ -167,14 +168,14 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 				sb.append('"');
 			case KEYWORD:
 				sb.append("keywords.contains(\"");
-				sb.append(param.value);
+				sb.append(param.value.toUpperCase());
 				sb.append("\")");
 				break;
 			case COMMON:
-				sb.append("commonName == \"" + param.value + "\"");
+				sb.append("commonName == \"" + param.value.toUpperCase() + "\"");
 				break;
 			case NEIGHBOUR:
-				sb.append("neighbourhood == \"" + param.value + "\"");
+				sb.append("neighbourhood == \"" + param.value.toUpperCase() + "\"");
 				break;
 			case DIAMETER:
 				IntegerRange d_range = new IntegerRange(param.value);
@@ -182,6 +183,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 				sb.append(d_range.getBottom());
 				sb.append(" && diameter <= ");
 				sb.append(d_range.getTop());
+				sort_order = "diameter ascending,";
 				break;
 			case HEIGHT:
 				IntegerRange h_range = new IntegerRange(param.value);
@@ -189,19 +191,22 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 				sb.append(h_range.getBottom());
 				sb.append(" && height <= ");
 				sb.append(h_range.getTop());
+				sort_order = "height ascending,";
 				break;
 			case GENUS:
-				sb.append("genus == \"" + param.value + "\"");
+				sb.append("genus == \"" + param.value.toUpperCase() + "\"");
 				break;
 			case LOCATION:
 				sb.append(makeLocationQueryString(pm, param.value));
+				sort_order = "civicNumber ascending,";
 				break;
 			case ADDRESS:
 				StreetBlock address_block = new StreetBlock(param.value);
 				sb.append(makeStreetBlockQuery(address_block));
+				sort_order = "civicNumber ascending,";
 				break;
 			case SPECIES:
-				sb.append("species == \"" + param.value + "\"");
+				sb.append("species == \"" + param.value.toUpperCase() + "\"");
 				break;
 			default:
 				break;
@@ -211,7 +216,10 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			LOG.finer("current query string:\n\t" + sb.toString());
 			prefix = " && (";
 		}
-		return pm.newQuery(TreeData.class, sb.toString());
+		Query q = pm.newQuery(TreeData.class, sb.toString());
+		q.setOrdering(sort_order + "treeID descending");
+		q.setRange(search_params.getResultsOffset(), search_params.getResultsOffset() + search_params.getNumResults());
+		return q;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -249,6 +257,6 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	private String makeStreetBlockQuery(StreetBlock street_block){
 		return "civicNumber >= " +  street_block.getBlockStart() 
 		+ " && civicNumber <= " + street_block.getBlockEnd()
-		+ " && street == \"" +street_block.getStreetName()+ "\"";
+		+ " && street == \"" +street_block.getStreetName().toUpperCase()+ "\"";
 	}
 }

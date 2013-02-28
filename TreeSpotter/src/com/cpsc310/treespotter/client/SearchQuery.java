@@ -12,7 +12,7 @@ public abstract class SearchQuery implements SearchQueryInterface {
 	private static final long serialVersionUID = 1L;
 	private ArrayList<SearchParam> paramList = new ArrayList<SearchParam>();
 	private int numResults = 100;
-	private int firstResultOffset = 100;
+	private int firstResultOffset = 0;
 
 	public SearchQuery() {
 	}

@@ -54,11 +54,33 @@ public class ServerSearchTest {
 
 	@Test
 	public void testKeywordSearch() {
-		KeywordSearch q = new KeywordSearch();
-		q.addSearchParam(SearchFieldID.KEYWORD, "MARY");
-		ArrayList<ClientTreeData> results = dataService.searchTreeData(q);
+		ArrayList<ClientTreeData> results;
+		results = testKeywordSearch("MARY");
+		
 		assertEquals(1,results.size() );
 		assertTrue(results.get(0).getCommonName().equalsIgnoreCase("MARY") );
+		results.clear();
+		
+		results = testKeywordSearch("mary");
+		assertEquals(1,results.size() );
+		assertTrue(results.get(0).getCommonName().equalsIgnoreCase("MARY") );
+		
+		results = testKeywordSearch("AFAKESPECIES");
+		assertEquals(5,results.size() );
+		assertTrue(results.get(0).getSpecies().equalsIgnoreCase("AFAKESPECIES") );
+		
+		results = testKeywordSearch("afakespecies");
+		assertEquals(5,results.size() );
+		assertTrue(results.get(0).getSpecies().equalsIgnoreCase("AFAKESPECIES") );
+		
+		results = testKeywordSearch("THE CRESCENT");
+		assertEquals(4,results.size() );
+		assertTrue(results.get(0).getStreet().equalsIgnoreCase("THE CRESCENT") );
+		
+		results = testKeywordSearch("the crescent");
+		assertEquals(4,results.size() );
+		assertTrue(results.get(0).getStreet().equalsIgnoreCase("THE CRESCENT") );
+		
 	}
 	
 	@Test
@@ -85,6 +107,12 @@ public class ServerSearchTest {
 		tree.setGenus("RUGOSA");
 		tree.setCommonName(common);
 		return tree;
+	}
+	
+	private ArrayList<ClientTreeData> testKeywordSearch(String keyword){
+		KeywordSearch q_lower = new KeywordSearch();
+		q_lower.addSearchParam(SearchFieldID.KEYWORD, keyword);
+		return dataService.searchTreeData(q_lower);
 	}
 	
 }
