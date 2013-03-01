@@ -61,7 +61,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		ClientTreeData return_tree = null;
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		Transaction tx = pm.currentTransaction();
-		try {
+		try { 
 			tx.begin();
 			// find the last update stamp, if there is one
 			Query last_update_query = pm.newQuery(UserTreeUpdateStamp.class, "key == id");
@@ -71,7 +71,6 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			LOG.fine("\n\tAbout to execute query\n\t"+last_update_query.toString());
 			
 			UserTreeUpdateStamp last_stamp = (UserTreeUpdateStamp)last_update_query.execute(LAST_USER_TREE_STAMP_KEY);
-			
 			// create a new stamp if we didn't find one, die if we found a malformed stamp
 			if(last_stamp == null){
 				LOG.info("\n\tNo user tree adds found. This will be the first.");
@@ -95,9 +94,9 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			else{
 				throw new RuntimeException("Can't create an empty tree (null tree data)");
 			}
-			
 			//persist the new tree
 			pm.makePersistent(new_tree);
+
 			
 			//refresh the update stamp 
 			last_stamp.setTreeID(new_tree.getID());
