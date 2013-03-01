@@ -2,7 +2,6 @@ package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,15 +14,9 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.Maps;
 import com.google.gwt.maps.client.geocode.Geocoder;
@@ -32,12 +25,23 @@ import com.google.gwt.maps.client.geocode.LocationCallback;
 import com.google.gwt.maps.client.geocode.Placemark;
 import com.google.gwt.maps.client.geom.LatLng;
 import com.google.gwt.maps.client.overlay.Marker;
+import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.Random;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TabPanel;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -84,6 +88,9 @@ public class TreeSpotter implements EntryPoint {
 	private static final String ADMIN = "admin";
 	// in order to be accessed by inner classes this has to be a member
 	private ArrayList<ClientTreeData> treeList = new ArrayList<ClientTreeData>();
+	
+	// tab panel for search results
+	private TabPanel searchResultsPanel = null;
 	
 	// table for TreeInfo
 	private FlexTable treeInfoTable = null;
@@ -185,6 +192,16 @@ public class TreeSpotter implements EntryPoint {
 			HorizontalPanel advtb = createSearchPanel(field); 
 			advancedForm.add(advtb);
 		}
+		for (String field : optionalFields) {
+			// except for Date Planted
+			if (field.equals(PLANTED)) {
+				// do nothing
+			}
+			else {
+				HorizontalPanel advtb = createSearchPanel(field);
+				advancedForm.add(advtb);
+			}
+		}
 		advancedForm.setVisible(false);
 
 		/* set up advanced search link */
@@ -226,7 +243,7 @@ public class TreeSpotter implements EntryPoint {
 	 * displaySearchResults to display the returned list of results
 	 */
 	private void doSearch() {
-		treeList.clear();
+		treeList.clear(); 
 		SearchQuery q = null;
 		if (isBasicSearch) {
 			/* perform basic search */
@@ -258,6 +275,14 @@ public class TreeSpotter implements EntryPoint {
 						q.addSearchParam(SearchFieldID.SPECIES, input);
 					} else if (key.equalsIgnoreCase(COMMON)) {
 						q.addSearchParam(SearchFieldID.COMMON, input);
+					} else if (key.equalsIgnoreCase(NEIGHBOUR)) {
+						q.addSearchParam(SearchFieldID.NEIGHBOUR, input);
+					} else if (key.equalsIgnoreCase(DIAMETER)) {
+						q.addSearchParam(SearchFieldID.DIAMETER, input);
+					} else if (key.equalsIgnoreCase(HEIGHT)) {
+						// get the height range, then turn it back into a string
+						String range = Integer.toString(feetToHeightRange((int) Double.parseDouble(input)));
+						q.addSearchParam(SearchFieldID.HEIGHT, range);
 					}
 				}
 			}			
@@ -304,6 +329,7 @@ public class TreeSpotter implements EntryPoint {
 		if (rlist.isEmpty()) {
 			Label noResults = new Label("No results were found.");
 			content.add(noResults);
+			
 		} else {
 			searchMap.setPoints(rlist);
 			FlexTable resultsTable = new FlexTable();
@@ -311,6 +337,7 @@ public class TreeSpotter implements EntryPoint {
 
 			for (final ClientTreeData tree : rlist) {
 				HorizontalPanel panel = new HorizontalPanel();
+				HTML num = new HTML(Integer.toString(rlist.indexOf(tree) + 1));
 				Anchor species = new Anchor(tree.getCommonName());
 				Label location = new Label(tree.getLocation());
 
@@ -321,6 +348,7 @@ public class TreeSpotter implements EntryPoint {
 					}
 				});
 
+				panel.add(num);
 				panel.add(species);
 				panel.add(location);
 				panel.setStyleName("result");
@@ -378,14 +406,13 @@ public class TreeSpotter implements EntryPoint {
 		createResultDataRow("Genus", t.getGenus());
 		createResultDataRow("Common Name", t.getCommonName());
 		createResultDataRow("Location", t.getCivicNumber() + " " + t.getStreet());
-		createResultDataRow("Neighbourhood", t.getNeighbourhood());
-		createResultDataRow("Height", Integer.toString(t.getHeightRange()));
-		// TODO: actually convert it....units?
-		createResultDataRow("Diameter", Integer.toString(t.getHeightRange()));
-		//createResultDataRow("Date Planted", t.getPlanted().toString());
-		// can be null?
+		createResultDataRow("Neighbourhood", t.getNeighbourhood());	
 		
-		
+		// need to check if the date is null
+		String planted = t.getPlanted() == null ? null : t.getPlanted().toString();
+		createResultDataRow("Date Planted", planted);	
+		createResultDataRow("Height", t.getHeightRange());
+		createResultDataRow("Diameter", Double.toString(t.getDiameter()));
 		
 		panel.add(infoMapPanel);
 		panel.add(treeInfoTable);
@@ -550,7 +577,7 @@ public class TreeSpotter implements EntryPoint {
 		panel.add(tb);
 		return panel;
 	}
-
+	
 	private void initLoginLogout() {
 		final Anchor loginLink = Anchor.wrap(Document.get().getElementById(
 				"login-link"));
@@ -607,7 +634,16 @@ public class TreeSpotter implements EntryPoint {
 				"about-button"));
 		aboutButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
-				// call about page
+				ClientTreeData t = new ClientTreeData();
+				t.setSpecies("Legendary");
+				t.setGenus("Something"); 
+				t.setCivicNumber(1234);
+				t.setCommonName("Maple Tree");
+				t.setNeighbourhood("Yaletown");
+				
+				for (int i=0; i<=100; i++) {
+					sendAddTreeData(t);
+				}
 			}
 		});
 
@@ -643,6 +679,34 @@ public class TreeSpotter implements EntryPoint {
 		Label fld = new Label(field);
 		fld.setStyleName("info-field");
 		treeInfoTable.setWidget(rowNum, 0, fld);
+		
+		if (value == "-1" || value == null) {
+			value = "Not available";
+		} 
+		treeInfoTable.setWidget(rowNum, 1, new Label(value));
+	}
+	
+	/**
+	 * Helper function to create height data row for the TreeInfoPage
+	 * 
+	 * @param range Tree height range
+	 *            
+	 * @return String of height range ie. "0 - 10 ft"
+	 */
+	private void createResultDataRow(String field, int range) {
+		int rowNum = treeInfoTable.getRowCount();
+		Label fld = new Label(field);
+		String value = "";
+		fld.setStyleName("info-field");
+		treeInfoTable.setWidget(rowNum, 0, fld);
+		
+		if (range == -1) {
+			value = "Not available";
+		} else if (range == 10){
+			value = "Over 10 ft";
+		} else {
+			value = Integer.toString(range * 10) + " - " + Integer.toString((range + 1) * 10) + " ft";
+		}
 		treeInfoTable.setWidget(rowNum, 1, new Label(value));
 	}
 
@@ -753,14 +817,7 @@ public class TreeSpotter implements EntryPoint {
 					// TODO: need a setHeight field
 					// t.setHeight(Double.parseDouble(input));
 					int h = (int) Double.parseDouble(input); // just in case it's a float
-					int range = -1;
-					if (h < 0) {
-						range = 0;
-					} else if (h < 100) {
-						range = h / 10;
-					} else {
-						range = 10;
-					}
+					int range = feetToHeightRange(h);
 					addTree.setHeightRange(range);
 				} catch (Exception e) {
 					throw new InvalidFieldException("Invalid field: Height");
@@ -854,6 +911,24 @@ public class TreeSpotter implements EntryPoint {
 			return false;
 		return true;
 	}
+	
+	/**
+	 * Method to convert height to height range
+	 * @param h int of tree height in feet
+	 * @return Height range for every 10 feet ie. 0 means 0-10ft
+	 */
+	private int feetToHeightRange(int h) {
+		int range = -1;
+		if (h < 0) {
+			range = 0;
+		} else if (h < 100) {
+			range = h / 10;
+		} else {
+			range = 10;
+		} 
+		return range;
+	}
+	
 	
 	/**
 	 * Inner class to hold a street number, street address pair
