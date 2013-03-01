@@ -14,7 +14,7 @@ public class IntegerRange {
 		int split = pair.indexOf('-');
 		if( split > 0 ){
 			setBottom(Integer.parseInt(pair.substring(0, split)));
-			setTop(Integer.parseInt(pair.substring(split)));
+			setTop(Integer.parseInt(pair.substring(split+1)));
 		}
 	}
 	public int getTop() {

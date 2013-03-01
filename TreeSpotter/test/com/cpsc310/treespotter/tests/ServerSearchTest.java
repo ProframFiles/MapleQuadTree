@@ -47,7 +47,7 @@ public class ServerSearchTest {
 		dataService = new TreeDataServiceImpl();
 	}
 
-	@After
+	//@After
 	public void tearDown() throws Exception {
 		helper.tearDown();
 	}
