@@ -55,6 +55,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  */
 public class TreeSpotter implements EntryPoint {
 	private LoginInfo loginInfo = null;
+	private static final String wikipediaSearchURL = "http://en.wikipedia.org/wiki/Special:Search/";
 
 	// list of fields, used for the Add Tree Form and the Advanced Search
 	private static final String LOCATION = "Location";
@@ -104,9 +105,6 @@ public class TreeSpotter implements EntryPoint {
 	// in order to be accessed by inner classes this has to be a member
 	private ArrayList<ClientTreeData> treeList = new ArrayList<ClientTreeData>();
 	
-	// tab panel for search results
-	private TabPanel searchResultsPanel = null;
-	
 	// table for TreeInfo
 	private FlexTable treeInfoTable = null;
 
@@ -148,7 +146,8 @@ public class TreeSpotter implements EntryPoint {
 		initHomePage();
 		initButtons();
 		initLoginLogout();
-
+		
+		/*
 		History.addValueChangeHandler(new ValueChangeHandler<String>() {
 		      public void onValueChange(ValueChangeEvent<String> event) {
 		        String historyToken = event.getValue();
@@ -161,18 +160,18 @@ public class TreeSpotter implements EntryPoint {
 	            
 	            // TODO: not working yet, need to check getTreeInfo()
 		        // Parse the history token
-//		        try {
-//		          if (historyToken.substring(0, 4).equals("tree")) {
-//		            String treeId = historyToken.substring(4);
-//		            getTreeInfo(treeId, role);		            		        	
-//		          }
-//		        } catch (Exception e) {
-//		        	// what exception is returned if no tree matches ID? 
-//		        	Window.alert("Tree ID is invalid. Please check your URL.");
-//		        }
+		        try {
+		          if (historyToken.substring(0, 4).equals("tree")) {
+		            String treeId = historyToken.substring(4);
+		            getTreeInfo(treeId, role);		            		        	
+		          }
+		        } catch (Exception e) {
+		        	// what exception is returned if no tree matches ID? 
+		        	Window.alert("Tree ID is invalid. Please check your URL.");
+		        }
 		      }
 		    });
-		
+			*/
 	}
 
 	private void handleError(Throwable error) {
@@ -212,13 +211,8 @@ public class TreeSpotter implements EntryPoint {
 			advancedForm.add(advtb);
 		}
 		for (String field : optionalFields) {
-			// except for Date Planted
-			if (field.equals(PLANTED)) {
-				// do nothing
-			}
-			else if (field.equals(DIAMETER) || field.equals(HEIGHT)) {
-				
-				
+			if (field.equals(PLANTED) ||field.equals(DIAMETER) || field.equals(HEIGHT)) {
+				// not supported for now				
 			}
 			else {
 				HorizontalPanel advtb = createSearchPanel(field);
@@ -300,12 +294,6 @@ public class TreeSpotter implements EntryPoint {
 						q.addSearchParam(SearchFieldID.COMMON, input);
 					} else if (key.equalsIgnoreCase(NEIGHBOUR)) {
 						q.addSearchParam(SearchFieldID.NEIGHBOUR, input);
-					} else if (key.equalsIgnoreCase(DIAMETER)) {
-						q.addSearchParam(SearchFieldID.DIAMETER, input);
-					} else if (key.equalsIgnoreCase(HEIGHT)) {
-						// get the height range, then turn it back into a string
-						String range = Integer.toString(feetToHeightRange((int) Double.parseDouble(input)));
-						q.addSearchParam(SearchFieldID.HEIGHT, range);
 					}
 				}
 			}			
@@ -426,7 +414,7 @@ public class TreeSpotter implements EntryPoint {
 
 		createResultDataRow("Species", t.getSpecies());
 		createResultDataRow("Genus", t.getGenus());
-		createResultDataRow("Common Name", t.getCommonName());
+		createResultDataRow("Common Name", "<a href='" + wikipediaSearchURL + t.getCommonName() + "'>" + t.getCommonName() + "</a>");
 		createResultDataRow("Location", t.getCivicNumber() + " " + t.getStreet());
 		createResultDataRow("Neighbourhood", t.getNeighbourhood());	
 		
@@ -434,7 +422,7 @@ public class TreeSpotter implements EntryPoint {
 		String planted = t.getPlanted() == null ? null : t.getPlanted().toString();
 		createResultDataRow("Date Planted", planted);	
 		createResultDataRow("Height", t.getHeightRange());
-		createResultDataRow("Diameter", Double.toString(t.getDiameter()));
+		createResultDataRow("Diameter", Double.toString(t.getDiameter()) + " inches");
 		
 		panel.add(infoMapPanel);
 		panel.add(treeInfoTable);
@@ -656,16 +644,7 @@ public class TreeSpotter implements EntryPoint {
 				"about-button"));
 		aboutButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
-				ClientTreeData t = new ClientTreeData();
-				t.setSpecies("Legendary");
-				t.setGenus("Something"); 
-				t.setCivicNumber(1234);
-				t.setCommonName("Maple Tree");
-				t.setNeighbourhood("Yaletown");
-				
-				for (int i=0; i<=100; i++) {
-					sendAddTreeData(t);
-				}
+				loadAboutPage();
 			}
 		});
 
@@ -683,6 +662,21 @@ public class TreeSpotter implements EntryPoint {
 	 */
 	private void loadHomePage() {
 		HTMLPanel htmlPanel = new HTMLPanel(HTMLResource.INSTANCE.getHomeHtml().getText());
+		RootPanel.get("content").clear();
+		RootPanel.get("content").add(htmlPanel);
+	}
+	
+	private void loadAboutPage() {
+		HTMLPanel htmlPanel = new HTMLPanel(HTMLResource.INSTANCE.getAboutHtml().getText());
+		RootPanel.get("content").clear();
+		RootPanel.get("content").add(htmlPanel);
+	}
+	
+	/**
+	 * Replaces main content panel with a loading bar
+	 */
+	private void loadLoadingBar() {
+		HTMLPanel htmlPanel = new HTMLPanel(HTMLResource.INSTANCE.getLoadingbar().getText());
 		RootPanel.get("content").clear();
 		RootPanel.get("content").add(htmlPanel);
 	}
@@ -705,7 +699,7 @@ public class TreeSpotter implements EntryPoint {
 		if (value == "-1" || value == null) {
 			value = "Not available";
 		} 
-		treeInfoTable.setWidget(rowNum, 1, new Label(value));
+		treeInfoTable.setWidget(rowNum, 1, new HTML(value));
 	}
 	
 	/**
@@ -839,7 +833,14 @@ public class TreeSpotter implements EntryPoint {
 					// TODO: need a setHeight field
 					// t.setHeight(Double.parseDouble(input));
 					int h = (int) Double.parseDouble(input); // just in case it's a float
-					int range = feetToHeightRange(h);
+					int range = -1;
+					if (h < 0) {
+						range = 0;
+					} else if (h < 100) {
+						range = h / 10;
+					} else {
+						range = 10;
+					} 
 					addTree.setHeightRange(range);
 				} catch (Exception e) {
 					throw new InvalidFieldException("Invalid field: Height");
@@ -1002,24 +1003,6 @@ public class TreeSpotter implements EntryPoint {
 			return false;
 		return true;
 	}
-	
-	/**
-	 * Method to convert height to height range
-	 * @param h int of tree height in feet
-	 * @return Height range for every 10 feet ie. 0 means 0-10ft
-	 */
-	private int feetToHeightRange(int h) {
-		int range = -1;
-		if (h < 0) {
-			range = 0;
-		} else if (h < 100) {
-			range = h / 10;
-		} else {
-			range = 10;
-		} 
-		return range;
-	}
-	
 	
 	/**
 	 * Inner class to hold a street number, street address pair

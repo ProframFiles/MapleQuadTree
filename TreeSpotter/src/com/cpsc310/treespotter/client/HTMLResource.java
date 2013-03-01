@@ -7,6 +7,12 @@ import com.google.gwt.resources.client.TextResource;
 public interface HTMLResource extends ClientBundle {
 	public static final HTMLResource INSTANCE = GWT.create(HTMLResource.class);
 
-	@Source("/home.html")
+	@Source("/res/home.html")
 	public TextResource getHomeHtml();
+	
+	@Source("/res/about.html")
+	public TextResource getAboutHtml();
+	
+	@Source("/res/loadingbar.html")
+	public TextResource getLoadingbar();
 }
