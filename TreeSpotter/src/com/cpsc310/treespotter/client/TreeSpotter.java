@@ -12,18 +12,19 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
-
-import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.maps.client.InfoWindowContent;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.Maps;
 import com.google.gwt.maps.client.event.MarkerClickHandler;
-import com.google.gwt.maps.client.event.MarkerClickHandler.MarkerClickEvent;
 import com.google.gwt.maps.client.geocode.Geocoder;
 import com.google.gwt.maps.client.geocode.LatLngCallback;
 import com.google.gwt.maps.client.geocode.LocationCallback;
@@ -38,7 +39,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -46,6 +46,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -92,7 +93,7 @@ public class TreeSpotter implements EntryPoint {
 	private final String greenIconURL = "http://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_green.png";
 	private ArrayList<Marker> markers = new ArrayList<Marker>();
 	private LatLng start;
-	private ArrayList<ClientTreeData> treeResults = new ArrayList<ClientTreeData>();
+	private List<ClientTreeData> treeResults = new ArrayList<ClientTreeData>();
 	
 	// for adding tree
 	private Address geoAddr;
@@ -107,6 +108,9 @@ public class TreeSpotter implements EntryPoint {
 	
 	// table for TreeInfo
 	private FlexTable treeInfoTable = null;
+	
+	// tab panel container for search results
+	private TabPanel searchResultsPanel = null;
 
 	// is there a way to get a list of neighbourhoods from the dataset?
 	// from the file names or do a batch query on everything (ugh)
@@ -222,7 +226,7 @@ public class TreeSpotter implements EntryPoint {
 		advancedForm.setVisible(false);
 
 		/* set up advanced search link */
-		Anchor advancedLink = new Anchor("Advanced Search");
+		Anchor advancedLink = new Anchor("Advanced Options");
 		advancedLink.setStyleName("main-search");
 		advancedLink.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
@@ -334,42 +338,92 @@ public class TreeSpotter implements EntryPoint {
 	 * @param rlist
 	 *            List of ClientTreeData search results from the server
 	 */
-	private void displaySearchResults(ArrayList<ClientTreeData> rlist) {
+	private void displaySearchResults(final ArrayList<ClientTreeData> rlist) {
 		RootPanel content = RootPanel.get("content");
 		content.clear();
+		
 		if (rlist.isEmpty()) {
 			Label noResults = new Label("No results were found.");
-			content.add(noResults);
+			content.add(noResults);	
+			
+		} else if (rlist.size() <= 25) {	
+			// don't bother with tabs if less than 25 results
+			FlexTable resultsTable = createSearchPage(0, rlist);
+			setPoints(rlist);		
+			content.add(searchMapPanel);
+			content.add(resultsTable);		
 			
 		} else {
-			setPoints(rlist);
-			FlexTable resultsTable = new FlexTable();
-			resultsTable.setWidth("100%");
-
-			for (final ClientTreeData tree : rlist) {
-				HorizontalPanel panel = new HorizontalPanel();
-				HTML num = new HTML(Integer.toString(rlist.indexOf(tree) + 1));
-				Anchor species = new Anchor(tree.getCommonName());
-				Label location = new Label(tree.getLocation());
-
-				/* add link to the tree info page */
-				species.addClickHandler(new ClickHandler() {
-					public void onClick(ClickEvent event) {
-						displayTreeInfoPage(tree);
-					}
-				});
-
-				panel.add(num);
-				panel.add(species);
-				panel.add(location);
-				panel.setStyleName("result");
-
-				int rows = resultsTable.getRowCount();
-				resultsTable.setWidget(rows, 0, panel);
-			}
+			searchResultsPanel = new TabPanel();
+			
+			for (int i=0; i<rlist.size(); i=i+25) {
+				// create the table for each set of 25 results
+				int end = Math.min(rlist.size(), i+25);
+				List<ClientTreeData> rsublist = rlist.subList(i, end);
+				FlexTable resultsTable = createSearchPage(i, rsublist);
+				searchResultsPanel.add(resultsTable, Integer.toString((i/25)+1));
+				}
+			
+			// set map points to the same set
+			searchResultsPanel.addSelectionHandler(new SelectionHandler<Integer>() {
+				public void onSelection(SelectionEvent<Integer> event) {
+					int start = event.getSelectedItem() * 25;
+					int end = Math.min(rlist.size(), start + 24);
+					List<ClientTreeData> pageList = rlist.subList(start, end);
+					setPoints(pageList);					
+				}
+			});
+			
+			// add the  tree search map
 			content.add(searchMapPanel);
-			content.add(resultsTable);	
+			searchResultsPanel.selectTab(0);
+			content.add(searchResultsPanel);
+		}			
+	}
+	
+	private FlexTable createSearchPage(int start, List<ClientTreeData> rlist) {
+		FlexTable resultsTable = new FlexTable();
+		resultsTable.setWidth("600px");
+		resultsTable.setCellPadding(2);
+		int index = start;
+		
+		// set table headers
+		resultsTable.setWidget(0, 0, new HTML("Result"));
+		resultsTable.setWidget(0, 1, new HTML("Common Name"));
+		resultsTable.setWidget(0, 2, new HTML("Address"));
+		resultsTable.setWidget(0, 3, new HTML("Neighbourhood"));
+		
+		for (final ClientTreeData tree : rlist) {
+			Anchor num = new Anchor(Integer.toString(++index));
+			HTML common = new HTML(tree.getCommonName());
+			HTML addr = new HTML(tree.getCivicNumber() + " " + tree.getStreet());
+			HTML hood = new HTML(tree.getNeighbourhood());
+
+			/* add link to the tree info page */
+			num.addClickHandler(new ClickHandler() {
+				public void onClick(ClickEvent event) {
+					displayTreeInfoPage(tree);
+				}
+			});
+			common.setWordWrap(true);
+			addr.setWordWrap(true);
+			int rows = resultsTable.getRowCount();
+			resultsTable.setWidget(rows, 0, num);
+			resultsTable.setWidget(rows, 1, common);
+			resultsTable.setWidget(rows, 2, addr);
+			resultsTable.setWidget(rows, 3, hood);
+			
+			if (rlist.indexOf(tree) % 2 != 0) {
+				resultsTable.getRowFormatter().setStyleName(rows, "results-row-alt");
+			}
+
 		}
+		
+		// set styles
+		resultsTable.setStyleName("results-table");
+		resultsTable.getRowFormatter().setStyleName(0, "results-header");
+		
+		return resultsTable;
 	}
 
 	/**
@@ -411,6 +465,7 @@ public class TreeSpotter implements EntryPoint {
 		treeInfoTable.setStyleName("treedata");
 		treeInfoTable.setCellPadding(10);
 		treeInfoTable.setWidth("400px");
+		treeInfoTable.setHeight("400px");
 
 		createResultDataRow("Species", t.getSpecies());
 		createResultDataRow("Genus", t.getGenus());
@@ -422,7 +477,10 @@ public class TreeSpotter implements EntryPoint {
 		String planted = t.getPlanted() == null ? null : t.getPlanted().toString();
 		createResultDataRow("Date Planted", planted);	
 		createResultDataRow("Height", t.getHeightRange());
-		createResultDataRow("Diameter", Double.toString(t.getDiameter()) + " inches");
+		
+		// need to check if the diameter is -1
+		String dm = t.getDiameter() == -1.0 ? null : Double.toString(t.getDiameter()) + " inches";
+		createResultDataRow("Diameter", dm);
 		
 		panel.add(infoMapPanel);
 		panel.add(treeInfoTable);
@@ -552,37 +610,34 @@ public class TreeSpotter implements EntryPoint {
 	 */
 	private HorizontalPanel createSearchPanel(String text) {
 		HorizontalPanel panel = new HorizontalPanel();
-		final CheckBox cb = new CheckBox();
 		final TextBox tb = new TextBox();
 		tb.setStyleName("disabled");
-		tb.setEnabled(false);
-		tb.setReadOnly(true);
 
-		Label label = new Label();
-		label.setText(text);
+		HTML label = new HTML(text);
 		label.setStyleName("advanced-search");
 
-		/* add handler to enable/disable text box based on check box */
-		cb.addClickHandler(new ClickHandler() {
-			public void onClick(ClickEvent event) {
-				if (!cb.getValue()) {
-					tb.setEnabled(false);
-					tb.setReadOnly(true);
-					tb.setText("");
-					tb.setStyleName("disabled");
-				} else {
-					tb.setEnabled(true);
-					tb.setReadOnly(false);
-					tb.setStyleName("enabled");
+		// textbox will be enabled when clicked
+		// disabled if empty when clicking away
+		tb.addFocusHandler(new FocusHandler() {
+			public void onFocus(FocusEvent event) {
+				tb.setStyleName("enabled");			
+			}
+		});
+
+		tb.addBlurHandler(new BlurHandler() {
+			@Override
+			public void onBlur(BlurEvent event) {
+				if (tb.getValue().trim().equals("")) {
+					tb.setStyleName("disabled");			
 				}
 			}
+
 		});
 
 		/* add text box to the list */
 		advancedSearchMap.put(label, tb);
 
 		/* add all elements to the panel */
-		panel.add(cb);
 		panel.add(label);
 		panel.add(tb);
 		return panel;
@@ -944,7 +999,7 @@ public class TreeSpotter implements EntryPoint {
 		searchMapPanel.add(searchMap);
 	}
 	
-	public void setPoints(ArrayList<ClientTreeData> list) {
+	public void setPoints(List<ClientTreeData> list) {
 		treeResults = list;
 		listIndex = 0;
 		markers.clear();

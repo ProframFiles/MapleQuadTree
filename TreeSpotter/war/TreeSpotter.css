@@ -32,6 +32,7 @@ header{
   margin:	10px;
   background: #08C;
   border: thin solid #08C;
+  border-radius: 5px;
   width: 30%;
   opacity: 0.8;
 
@@ -188,6 +189,7 @@ a.main-search {
 
 .info-field {
 	font-weight: bold;
+	height: 20px;
 }
 
 .info-value {
@@ -211,5 +213,36 @@ a.main-search {
 
 .add-popup input:focus {
 	background-color: #F0FAF5;
+}
+
+.gwt-TabBarItem {
+	width: 20px;
+	cursor: pointer;
+	color: blue;
+	text-decoration: underline;
+}
+
+.gwt-TabBarItem.gwt-TabBarItem-selected {
+	color: black;
+	text-decoration: none;
+}
+
+.results-table {
+	text-align: center;
+	margin-top: 10px;
+}
+
+.results-table tr{
+	height: 35px;
+}
+
+.results-header {
+	background-color: #A8DEE1;
+	font-weight: bold;
+	height: 15px;
+}
+
+.results-row-alt {
+	background-color: #EEEEEE;	
 }
 
