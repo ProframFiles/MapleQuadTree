@@ -30,7 +30,8 @@ public class ClientTreeData implements Serializable {
 	}
 
 	public String getLocation(){
-		return Integer.toString(civicNumber) + " " + street;
+		String num = civicNumber < 0 ? "" : civicNumber + " ";
+		return num + street;
 	}
 
 	// depends on if we use the geocoded LatLng data

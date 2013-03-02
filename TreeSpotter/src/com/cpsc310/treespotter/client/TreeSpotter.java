@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.WordUtils;
+
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -29,6 +31,7 @@ import com.google.gwt.maps.client.geocode.LatLngCallback;
 import com.google.gwt.maps.client.geocode.LocationCallback;
 import com.google.gwt.maps.client.geocode.Placemark;
 import com.google.gwt.maps.client.geom.LatLng;
+import com.google.gwt.maps.client.geom.LatLngBounds;
 import com.google.gwt.maps.client.geom.Point;
 import com.google.gwt.maps.client.overlay.Icon;
 import com.google.gwt.maps.client.overlay.Marker;
@@ -93,6 +96,7 @@ public class TreeSpotter implements EntryPoint {
 	private ArrayList<Marker> markers = new ArrayList<Marker>();
 	private LatLng start;
 	private ArrayList<ClientTreeData> treeResults = new ArrayList<ClientTreeData>();
+	private LatLngBounds searchMapBound;
 	
 	// for adding tree
 	private Address geoAddr;
@@ -135,11 +139,9 @@ public class TreeSpotter implements EntryPoint {
 		Maps.loadMapsApi("", "2", true, new Runnable() {
 			public void run() {
 				geo = new Geocoder();
-//				searchMap = new TreeSearchMap();
 				icon = Icon.newInstance(greenIconURL);
 				icon.setIconAnchor(Point.newInstance(6, 20));
 			    start = LatLng.newInstance(49.26102, -123.249339);
-
 			}
 		});
 		
@@ -349,8 +351,8 @@ public class TreeSpotter implements EntryPoint {
 			for (final ClientTreeData tree : rlist) {
 				HorizontalPanel panel = new HorizontalPanel();
 				HTML num = new HTML(Integer.toString(rlist.indexOf(tree) + 1));
-				Anchor species = new Anchor(tree.getCommonName());
-				Label location = new Label(tree.getLocation());
+				Anchor species = new Anchor(capitalize(tree.getCommonName(), false));
+				Label location = new Label(capitalize(tree.getLocation(), false));
 
 				/* add link to the tree info page */
 				species.addClickHandler(new ClickHandler() {
@@ -412,11 +414,12 @@ public class TreeSpotter implements EntryPoint {
 		treeInfoTable.setCellPadding(10);
 		treeInfoTable.setWidth("400px");
 
-		createResultDataRow("Species", t.getSpecies());
-		createResultDataRow("Genus", t.getGenus());
-		createResultDataRow("Common Name", "<a href='" + wikipediaSearchURL + t.getCommonName() + "'>" + t.getCommonName() + "</a>");
-		createResultDataRow("Location", t.getCivicNumber() + " " + t.getStreet());
-		createResultDataRow("Neighbourhood", t.getNeighbourhood());	
+		createResultDataRow("Species", capitalize(t.getSpecies(), true));
+		createResultDataRow("Genus", capitalize(t.getGenus(), false));
+		String capName = capitalize(t.getCommonName(), false);
+		createResultDataRow("Common Name", "<a href='" + wikipediaSearchURL + capName + "'>" + capName + "</a>");
+		createResultDataRow("Location", capitalize(t.getLocation(), false));
+		createResultDataRow("Neighbourhood", t.getNeighbourhood().toUpperCase());	
 		
 		// need to check if the date is null
 		String planted = t.getPlanted() == null ? null : t.getPlanted().toString();
@@ -696,7 +699,7 @@ public class TreeSpotter implements EntryPoint {
 		fld.setStyleName("info-field");
 		treeInfoTable.setWidget(rowNum, 0, fld);
 		
-		if (value == "-1" || value == null) {
+		if (value == null || value.equals("-1") || value.equals("-1.0 inches")) {
 			value = "Not available";
 		} 
 		treeInfoTable.setWidget(rowNum, 1, new HTML(value));
@@ -770,7 +773,6 @@ public class TreeSpotter implements EntryPoint {
 			String key = entry.getKey().getText().split("\\s[*]")[0];
 			String input = entry.getValue().getValue().trim();
 
-			// TODO: decide to keep or discard coordinate storing in database
 			// this assumes valid location/coords in form
 			// #### Street Name or #, #
 			if (key.equalsIgnoreCase(LOCATION)) {
@@ -883,10 +885,7 @@ public class TreeSpotter implements EntryPoint {
 				else{
 					Window.alert("Tree not added");
 				}
-				displayTreeInfoPage(result); // debugging
-				// TODO
-				// maybe it'd be nice to be redirected to newly added tree info page?
-				// would require TreeDataService to return ClientTreeData from server								
+				displayTreeInfoPage(result);						
 			}					
 		});
 	}
@@ -901,8 +900,7 @@ public class TreeSpotter implements EntryPoint {
 			return;
 		}
 		// just in case city is required in search
-		String loc =  ((data.getCivicNumber() >= 0) ? data.getCivicNumber() + " " : "")
-						+ data.getStreet() + ", Vancouver, BC"; 
+		String loc =  data.getLocation() + ", Vancouver, BC"; 
 		System.out.println("location: " + loc);
 		geo.getLatLng(loc, new LatLngCallback() {
 			public void onFailure() {
@@ -934,12 +932,20 @@ public class TreeSpotter implements EntryPoint {
 		searchMap = new MapWidget();
 		searchMap.setSize("400px", "400px");
 		searchMap.setUIToDefault();
+	    searchMapBound = LatLngBounds.newInstance();
 
-		// TODO: find middle of all points for centre
+	    // set this as default, should be updated in loop
 		searchMap.setCenter(start, ZOOM_LVL);
 		
 		for (Marker m : markers) {
 			searchMap.addOverlay(m);
+			searchMapBound.extend(m.getLatLng());
+		}
+		if (!searchMapBound.isEmpty()) {
+			// getBoundsZoomLevel returns ridiculously zoomed out values
+			int zoom = searchMap.getBoundsZoomLevel(searchMapBound) + 8;
+			zoom = ZOOM_LVL < zoom ? ZOOM_LVL : zoom;
+			searchMap.setCenter(searchMapBound.getCenter(), zoom);
 		}
 		searchMapPanel.add(searchMap);
 	}
@@ -960,8 +966,7 @@ public class TreeSpotter implements EntryPoint {
 		}
 		
 		ClientTreeData t = treeResults.get(idx);
-		String loc = ((t.getCivicNumber() >= 0) ? t.getCivicNumber() + " " : "")
-				+ t.getStreet() + ", Vancouver, BC";
+		String loc = t.getLocation() + ", Vancouver, BC";
 		geo.getLatLng(loc, new LatLngCallback() {
 			public void onFailure() {
 				// skip to next marker
@@ -977,8 +982,7 @@ public class TreeSpotter implements EntryPoint {
 	private void addPoint(LatLng pt) {
 		MarkerOptions options = MarkerOptions.newInstance();
 		options.setIcon(icon);
-		// TODO: replace with tree info
-		options.setTitle("index: " + listIndex++);
+		options.setTitle(Integer.toString(++listIndex));
 		Marker mark = new Marker(pt, options);
 		mark.addMarkerClickHandler(new MarkerClickHandler() {
 			public void onClick(MarkerClickEvent event) {
@@ -992,16 +996,41 @@ public class TreeSpotter implements EntryPoint {
 
 	private void clickMarker(Marker m) {
 		LatLng pt = m.getLatLng();
-		searchMap.getInfoWindow().open(
-				pt,
-				new InfoWindowContent("<p>" + pt.getLatitude() + ", "
-						+ pt.getLongitude() + "<br/>" + m.getTitle() + "</p>"));
+		try {
+			int idx = Integer.parseInt(m.getTitle());
+			ClientTreeData t = treeResults.get(idx-1);
+			searchMap.getInfoWindow().open(
+					pt,
+					new InfoWindowContent("<p>" + idx + ". " + capitalize(t.getCommonName(), false)
+							+ "<br/>" + capitalize(t.getLocation(), false)
+							+ "<br/>" + pt.getLatitude() + ", " + pt.getLongitude() + "</p>"));
+		} catch (Exception e) {
+			handleError(e);
+		}
 	}
 
 	private boolean validCoordinates(LatLng c) {
 		if (Double.isNaN(c.getLatitude()) || Double.isNaN(c.getLongitude()))
 			return false;
 		return true;
+	}
+	
+	private String capitalize(String str, boolean species) {
+		String cap = str.toLowerCase();
+		if (!species) {
+			String[] words = cap.split("\\s+");
+			cap = "";
+			for (String w : words) {
+				String first = w.substring(0, 1);
+				String rest = w.substring(1);
+				cap += first.toUpperCase() + rest + " ";
+			}
+		} else {
+			String first = cap.substring(0, 1);
+			String rest = cap.substring(1);
+			cap = first.toUpperCase() + rest + " ";
+		}
+		return cap;
 	}
 	
 	/**

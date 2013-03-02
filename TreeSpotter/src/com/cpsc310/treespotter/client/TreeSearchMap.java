@@ -70,8 +70,7 @@ public class TreeSearchMap {
 		}
 		
 		ClientTreeData t = treeList.get(idx);
-		String loc = ((t.getCivicNumber() >= 0) ? t.getCivicNumber() + " " : "")
-				+ t.getStreet() + ", Vancouver, BC";
+		String loc = t.getLocation() + ", Vancouver, BC";
 		geo.getLatLng(loc, new LatLngCallback() {
 			public void onFailure() {
 				// skip to next marker
