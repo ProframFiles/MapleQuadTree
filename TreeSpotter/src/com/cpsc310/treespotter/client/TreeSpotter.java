@@ -90,7 +90,6 @@ public class TreeSpotter implements EntryPoint {
 	private static final int ZOOM_LVL = 15;
 	private MapWidget searchMap;
 	private int listIndex;
-	private boolean isPopulated = true;
 	private Icon icon;
 	private final String greenIconURL = "http://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_green.png";
 	private ArrayList<Marker> markers = new ArrayList<Marker>();
@@ -101,8 +100,6 @@ public class TreeSpotter implements EntryPoint {
 	// for adding tree
 	private Address geoAddr;
 	private ClientTreeData addTree;
-	private boolean doneParse = true;
-	private boolean asyncCall = false;
 	
 	private DateTimeFormat dtf = DateTimeFormat.getFormat("d MMM yyyy");
 	private static final String ADMIN = "admin";
@@ -499,7 +496,7 @@ public class TreeSpotter implements EntryPoint {
 				if (invalidFields.isEmpty()) {
 					try {
 						addPanel.hide();
-						populateAddData(addFormMap);						
+						populateAddData(null);						
 					} catch (Exception e) {
 						handleError(e);
 					}
@@ -764,12 +761,17 @@ public class TreeSpotter implements EntryPoint {
 	 * @throws InvalidFieldException
 	 * 			thrown when input is not properly formatted
 	 */
-	private void populateAddData(LinkedHashMap<Label, TextBox> list) 
+	private void populateAddData(ClientTreeData t) 
 			throws InvalidFieldException {
-		addTree = new ClientTreeData();
-		asyncCall = false;
-		doneParse = false;
-		for (Map.Entry<Label, TextBox> entry : list.entrySet()) {
+		boolean parseLoc = true;
+		if (t == null) {
+			addTree = new ClientTreeData();
+		} else {
+			addTree = t;
+			parseLoc = false;
+		}
+		
+		for (Map.Entry<Label, TextBox> entry : addFormMap.entrySet()) {
 			String key = entry.getKey().getText().split("\\s[*]")[0];
 			String input = entry.getValue().getValue().trim();
 
@@ -791,14 +793,13 @@ public class TreeSpotter implements EntryPoint {
 					addTree.setStreet(geoAddr.getStreet());
 				}
 				// try parsing as coordinates
-				else {
+				else if (parseLoc){
 					try {
 						LatLng pt = LatLng.fromUrlValue(input);
 						if (!validCoordinates(pt)) {
 							throw new InvalidFieldException("Invalid field: Location");
 						}
 						// reverse geocode coordinates -> address
-						asyncCall = true;
 						geo.getLocations(pt, new LocationCallback() {
 							public void onFailure(int e) {
 								handleError(new InvalidFieldException("Invalid field: Location"));
@@ -814,10 +815,15 @@ public class TreeSpotter implements EntryPoint {
 									geoAddr = new Address(p.get(0).getAddress());
 									addTree.setCivicNumber(geoAddr.getNumber());
 									addTree.setStreet(geoAddr.getStreet());
-									sendAddTreeData(addTree);
+									try {
+										populateAddData(addTree);
+									} catch (Exception e) {
+										handleError(e);
+									}
 								}
 							}
 						});
+						return;
 					} catch (Exception e) {
 						throw new InvalidFieldException("Invalid field: Location");
 					}
@@ -862,18 +868,10 @@ public class TreeSpotter implements EntryPoint {
 				}
 			}
 		}
-		doneParse = true;
-		if (!asyncCall) {
-			sendAddTreeData(addTree);
-		}
+		sendAddTreeData(addTree);
 	}
 	
 	private void sendAddTreeData(ClientTreeData t) {
-		// only execute if done parsing
-		if (!doneParse) {
-			asyncCall = false;
-			return;
-		}
 		treeDataService.addTree(t, new AsyncCallback<ClientTreeData>() {
 			public void onFailure(Throwable error) {
 				handleError(error);
@@ -954,13 +952,11 @@ public class TreeSpotter implements EntryPoint {
 		treeResults = list;
 		listIndex = 0;
 		markers.clear();
-		isPopulated = false;
 		getNextPoint(listIndex);
 	}
 	
 	private void getNextPoint(int idx) {
 		if (idx >= treeResults.size()) {
-			isPopulated = true;
 			setSearchInfoMap();
 			return;
 		}
