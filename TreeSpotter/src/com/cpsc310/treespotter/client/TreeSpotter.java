@@ -469,7 +469,9 @@ public class TreeSpotter implements EntryPoint {
 		String capName = capitalize(t.getCommonName(), false);
 		createResultDataRow("Common Name", "<a href='" + wikipediaSearchURL + capName + "'>" + capName + "</a>");
 		createResultDataRow("Location", capitalize(t.getLocation(), false));
-		createResultDataRow("Neighbourhood", t.getNeighbourhood().toUpperCase());	
+		String neighbour = t.getNeighbourhood();
+		neighbour = (neighbour == null) ? neighbour : neighbour.toUpperCase();
+		createResultDataRow("Neighbourhood", neighbour);	
 		
 		// need to check if the date is null
 		String planted = t.getPlanted() == null ? null : t.getPlanted().toString();
