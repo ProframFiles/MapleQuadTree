@@ -1,11 +1,14 @@
 package com.cpsc310.treespotter.tests;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.jdo.PersistenceManager;
+import javax.servlet.ServletException;
 
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig;
 import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
+import com.cpsc310.treespotter.server.DataFetcher;
 import com.cpsc310.treespotter.server.LocationProcessor;
 import com.cpsc310.treespotter.server.TreeData;
 import com.cpsc310.treespotter.server.TreeDataServiceImpl;
@@ -131,6 +134,21 @@ public class ServerSearchTest {
 		query.addSearchParam(SearchFieldID.HEIGHT, "7-6");
 		results = dataService.searchTreeData(query);
 		assertEquals(0,results.size());
+	}
+	
+	@Test
+	public void importDataWithoutDyingTest() {
+		//LocationProcessor lp = new LocationProcessor();
+		//lp.doPost(null, null);
+		
+		try{
+			DataFetcher df = new DataFetcher();
+			df.doGet(null, null);
+		}
+		catch(Exception e)
+		{
+			fail(e.getMessage());
+		}
 	}
 	
 	@Test

@@ -21,7 +21,7 @@ import com.cpsc310.treespotter.server.TreeData;
 public class DataFetcher extends HttpServlet {
 	
 	private static final long serialVersionUID = 1L;
-	final static private String URL_STRING = "https://dl.dropbox.com/u/23948817/maple%20quadtree/test.zip"; // change here
+	final static private String URL_STRING = "http://www.ugrad.cs.ubc.ca/~q0b7/csv_street_trees.zip"; // change here
 	final static private Logger LOG = Logger.getLogger(DataFetcher.class.getName());
 	
 	private ArrayList<TreeData> curr_trees = new ArrayList<TreeData>();
@@ -64,6 +64,13 @@ public class DataFetcher extends HttpServlet {
 
 		while((line = in.readLine()) != null) {
 			parseLine(line);
+			if (curr_trees.size() == MAX_BLOCK_SIZE) {
+				persistBlock(curr_trees);
+			}
+		}
+		// catch the trees left in the unfilled buffer at the end
+		if(!curr_trees.isEmpty()){
+			persistBlock(curr_trees);
 		}
 	} 
 	
@@ -74,18 +81,18 @@ public class DataFetcher extends HttpServlet {
 	
 	
 	private void addTree(String[] values) {
-		LOG.info("Parsing tree: treeID "+values[0]);
+		LOG.finer("Parsing tree: treeID "+values[0]);
 		TreeData tree = createNewTree(values);
 		curr_trees.add(tree);
-		
-		if (curr_trees.size() == MAX_BLOCK_SIZE) {
-			PersistenceManager pm = PMF.get().getPersistenceManager();
-			try {
-				pm.makePersistentAll(curr_trees);
-				curr_trees.clear();
-			} finally {
-				pm.close();
-			}
+	}
+	
+	private void persistBlock(ArrayList<TreeData> trees){
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try {
+			pm.makePersistentAll(curr_trees);
+			curr_trees.clear();
+		} finally {
+			pm.close();
 		}
 	}
 	
