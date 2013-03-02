@@ -181,9 +181,8 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			Collection<TreeData> tree_list = (Collection<TreeData>)q.execute();
 			int total_results = tree_list.size();
 			LOG.info("\tFound " + total_results + " tree results in the DB");
-			
+			results = new ArrayList<ClientTreeData>();
 			if (total_results > 0) {
-				results = new ArrayList<ClientTreeData>();
 				int result_count = 0;
 				for (TreeData server_tree : tree_list) {
 					results.add(makeUserTreeData(server_tree));
@@ -286,20 +285,21 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 				sb.append("neighbourhood == \"" + param.value.toUpperCase() + "\"");
 				break;
 			case DIAMETER:
+				//
 				IntegerRange d_range = new IntegerRange(param.value);
 				sb.append("diameter >= ");
-				sb.append(d_range.getBottom());
+				sb.append((double)d_range.getBottom());
 				sb.append(" && diameter <= ");
-				sb.append(d_range.getTop());
+				sb.append((double)d_range.getTop());
 				sort_order = "diameter ascending,";
 				break;
 			case HEIGHT:
 				IntegerRange h_range = new IntegerRange(param.value);
-				sb.append("height >= ");
+				sb.append("heightRange >= ");
 				sb.append(h_range.getBottom());
-				sb.append(" && height <= ");
+				sb.append(" && heightRange <= ");
 				sb.append(h_range.getTop());
-				sort_order = "height ascending,";
+				sort_order = "heightRange ascending,";
 				break;
 			case GENUS:
 				sb.append("genus == \"" + param.value.toUpperCase() + "\"");

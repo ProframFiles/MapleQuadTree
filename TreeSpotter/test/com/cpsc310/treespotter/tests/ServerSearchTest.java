@@ -18,7 +18,9 @@ import com.cpsc310.treespotter.client.SearchFieldID;
 import static org.junit.Assert.*;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ServerSearchTest {
@@ -45,9 +47,10 @@ public class ServerSearchTest {
 			pm.close();
 		}
 		dataService = new TreeDataServiceImpl();
+		
 	}
 
-	//@After
+	@After
 	public void tearDown() throws Exception {
 		helper.tearDown();
 	}
@@ -55,29 +58,29 @@ public class ServerSearchTest {
 	@Test
 	public void testKeywordSearch() {
 		ArrayList<ClientTreeData> results;
-		results = testKeywordSearch("MARY");
+		results = doKeywordSearch("MARY");
 		
 		assertEquals(1,results.size() );
 		assertTrue(results.get(0).getCommonName().equalsIgnoreCase("MARY") );
 		results.clear();
 		
-		results = testKeywordSearch("mary");
+		results = doKeywordSearch("mary");
 		assertEquals(1,results.size() );
 		assertTrue(results.get(0).getCommonName().equalsIgnoreCase("MARY") );
 		
-		results = testKeywordSearch("AFAKESPECIES");
+		results = doKeywordSearch("AFAKESPECIES");
 		assertEquals(5,results.size() );
 		assertTrue(results.get(0).getSpecies().equalsIgnoreCase("AFAKESPECIES") );
 		
-		results = testKeywordSearch("afakespecies");
+		results = doKeywordSearch("afakespecies");
 		assertEquals(5,results.size() );
 		assertTrue(results.get(0).getSpecies().equalsIgnoreCase("AFAKESPECIES") );
 		
-		results = testKeywordSearch("THE CRESCENT");
+		results = doKeywordSearch("THE CRESCENT");
 		assertEquals(4,results.size() );
 		assertTrue(results.get(0).getStreet().equalsIgnoreCase("THE CRESCENT") );
 		
-		results = testKeywordSearch("the crescent");
+		results = doKeywordSearch("the crescent");
 		assertEquals(4,results.size() );
 		assertTrue(results.get(0).getStreet().equalsIgnoreCase("THE CRESCENT") );
 		
@@ -85,11 +88,8 @@ public class ServerSearchTest {
 	
 	@Test
 	public void testLocationSearch() {
-		
 		LocationProcessor lp = new LocationProcessor();
 		lp.doPost(null, null);
-		
-		
 		AdvancedSearch loc_query = new AdvancedSearch();
 		loc_query.addSearchParam(SearchFieldID.LOCATION, "49.2626,-123.1878,200");
 		ArrayList<ClientTreeData> results = dataService.searchTreeData(loc_query);
@@ -97,7 +97,69 @@ public class ServerSearchTest {
 		assertTrue(results.get(0).getCommonName().equalsIgnoreCase("HIGHBURY TREE") );
 	}
 	
-	private TreeData makeTestTree(String common, int id){
+	@Test
+	public void testAddressSearch() {
+	
+		AdvancedSearch query = new AdvancedSearch();
+		query.addSearchParam(SearchFieldID.ADDRESS, "240-240 the crescent");
+		ArrayList<ClientTreeData> results = dataService.searchTreeData(query);
+		assertEquals(4,results.size() );
+		assertTrue(results.get(0).getStreet().equalsIgnoreCase("The Crescent") );
+	}
+	
+	@Test
+	public void testHeightSearch() {
+		
+		AdvancedSearch query = new AdvancedSearch();
+		query.addSearchParam(SearchFieldID.HEIGHT, "1-5");
+		ArrayList<ClientTreeData> results = dataService.searchTreeData(query);
+		assertEquals(5,results.size() );
+		assertEquals(results.get(0).getHeightRange(), 3);
+		
+		query = new AdvancedSearch();
+		query.addSearchParam(SearchFieldID.HEIGHT, "3-3");
+		results = dataService.searchTreeData(query);
+		assertEquals(5,results.size() );
+		assertEquals(results.get(0).getHeightRange(), 3);
+		
+		query = new AdvancedSearch();
+		query.addSearchParam(SearchFieldID.HEIGHT, "6-7");
+		results = dataService.searchTreeData(query);
+		assertEquals(0,results.size() );
+		
+		query = new AdvancedSearch();
+		query.addSearchParam(SearchFieldID.HEIGHT, "7-6");
+		results = dataService.searchTreeData(query);
+		assertEquals(0,results.size());
+	}
+	
+	@Test
+	public void testDiameterSearch() {
+	
+		AdvancedSearch query = new AdvancedSearch();
+		query.addSearchParam(SearchFieldID.DIAMETER, "1-5");
+		ArrayList<ClientTreeData> results = dataService.searchTreeData(query);
+		assertEquals(5,results.size() );
+		assertEquals(results.get(0).getHeightRange(), 3);
+		
+		query = new AdvancedSearch();
+		query.addSearchParam(SearchFieldID.DIAMETER, "3-3");
+		results = dataService.searchTreeData(query);
+		assertEquals(5,results.size() );
+		assertEquals(results.get(0).getHeightRange(), 3);
+		
+		query = new AdvancedSearch();
+		query.addSearchParam(SearchFieldID.DIAMETER, "6-7");
+		results = dataService.searchTreeData(query);
+		assertEquals(0,results.size() );
+		
+		query = new AdvancedSearch();
+		query.addSearchParam(SearchFieldID.DIAMETER, "7-6");
+		results = dataService.searchTreeData(query);
+		assertEquals(0,results.size());
+	}
+	
+	static private TreeData makeTestTree(String common, int id){
 		TreeData tree = new TreeData("U", id);
 		tree.setSpecies("AFAKESPECIES");
 		tree.setStreet("THE CRESCENT");
@@ -106,10 +168,12 @@ public class ServerSearchTest {
 		tree.setCultivar("GILDED LILY");
 		tree.setGenus("RUGOSA");
 		tree.setCommonName(common);
+		tree.setHeightRange(3);
+		tree.setDiameter(3);
 		return tree;
 	}
 	
-	private ArrayList<ClientTreeData> testKeywordSearch(String keyword){
+	private ArrayList<ClientTreeData> doKeywordSearch(String keyword){
 		KeywordSearch q_lower = new KeywordSearch();
 		q_lower.addSearchParam(SearchFieldID.KEYWORD, keyword);
 		return dataService.searchTreeData(q_lower);

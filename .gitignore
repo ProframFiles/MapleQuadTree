@@ -1,4 +1,8 @@
 TreeSpotter/gwt-unitCache/
 TreeSpotter/test-classes/
 TreeSpotter/war/WEB-INF/classes/
+TreeSpotter/war/WEB-INF/appengine-generated/
+TreeSpotter/war/WEB-INF/deploy/*
+TreeSpotter/war/treespotter/*
 *.class
+*.prefs
