@@ -90,7 +90,7 @@ public class TreeSpotter implements EntryPoint {
 	private final String SEARCH_MAP_SIZE = "600px";
 	private Geocoder geo;
 	private Label invalidLoc = new Label("Tree location could not be displayed");
-	private static final int ZOOM_LVL = 12;
+	private static final int ZOOM_LVL = 15;
 	private MapWidget searchMap;
 	private int listIndex;
 	private Icon icon;
@@ -150,6 +150,7 @@ public class TreeSpotter implements EntryPoint {
 
 		initHomePage();
 		initButtons();
+		initAdminButton();
 		initLoginLogout();
 
 		/*
@@ -643,8 +644,6 @@ public class TreeSpotter implements EntryPoint {
 	private void initLoginLogout() {
 		final Anchor loginLink = Anchor.wrap(Document.get().getElementById(
 				"login-link"));
-		final Anchor logoutLink = Anchor.wrap(Document.get().getElementById(
-				"logout-link"));
 		LoginServiceAsync loginService = GWT.create(LoginService.class);
 		loginService.login(GWT.getHostPageBaseURL(),
 				new AsyncCallback<LoginInfo>() {
@@ -655,10 +654,12 @@ public class TreeSpotter implements EntryPoint {
 					public void onSuccess(LoginInfo result) {
 						loginInfo = result;
 						if (loginInfo.isLoggedIn()) {
-							// log in was successful, don't do anything
+							// log in was successful, set the log out link
+							loginLink.setText("Log out");
+							loginLink.setHref(loginInfo.getLogoutUrl());
+							initAdminButton();
 						} else {
-							loginLink.setHref(loginInfo.getLoginUrl());
-							logoutLink.setHref(loginInfo.getLogoutUrl());
+							loginLink.setHref(loginInfo.getLoginUrl());							
 						}
 					}
 				});
@@ -700,6 +701,17 @@ public class TreeSpotter implements EntryPoint {
 			}
 		});
 	}
+	
+	private void initAdminButton() {
+		Button adminButton = Button.wrap(Document.get().getElementById(
+				"admin-button"));
+		adminButton.setVisible(loginInfo != null && loginInfo.isAdmin());
+		adminButton.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
+				loadAdminPage();
+			}
+		});
+	}
 
 	/**
 	 * Loads home.html into the content panel
@@ -711,14 +723,37 @@ public class TreeSpotter implements EntryPoint {
 		RootPanel.get("content").add(htmlPanel);
 	}
 
-	/**
-	 * Replaces main content panel with a loading bar
-	 */
-	private void loadLoadingBar() {
-		HTMLPanel htmlPanel = new HTMLPanel(HTMLResource.INSTANCE
-				.getLoadingbar().getText());
+	private void loadAdminPage() {
+		final HTMLPanel panel = new HTMLPanel("<h1> Admin Page </h1>");
+		Button importBtn = new Button("Full Update");
+		
+		importBtn.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
+				treeDataService.importFromSite("", new AsyncCallback<Void>() {
+
+					@Override
+					public void onFailure(Throwable caught) {
+						panel.add(new HTML("Something went wrong! <br>" + caught.getMessage()));						
+					}
+
+					@Override
+					public void onSuccess(Void result) {
+						panel.add(new HTML("Import success!"));						
+					}					
+				});
+			}			
+		});
+		
+		Button debugBtn = new Button("Debug Update");		
+		debugBtn.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
+
+			}			
+		});
+		
+		panel.add(importBtn);		
 		RootPanel.get("content").clear();
-		RootPanel.get("content").add(htmlPanel);
+		RootPanel.get("content").add(panel);	
 	}
 
 	/**
