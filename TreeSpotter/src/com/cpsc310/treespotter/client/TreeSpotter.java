@@ -226,6 +226,7 @@ public class TreeSpotter implements EntryPoint {
 					isBasicSearch = true;
 				} else {
 					advancedForm.setVisible(true);
+					addSearchTooltips();
 					isBasicSearch = false;
 				}
 			}
@@ -472,7 +473,7 @@ public class TreeSpotter implements EntryPoint {
 
 		/* create table with all the data */
 		treeInfoTable = new FlexTable();
-		treeInfoTable.setStyleName("treedata");
+		treeInfoTable.setStyleName("tree-info-table");
 		treeInfoTable.setCellPadding(10);
 		treeInfoTable.setSize("400px", "400px");
 
@@ -547,12 +548,18 @@ public class TreeSpotter implements EntryPoint {
 							if (!a.matches("[0-9]+(\\.[0-9]+)?")) {
 								invalidFields.add(name);
 							}
+						} else if (name.equalsIgnoreCase(PLANTED)) {
+							try {
+								ParseUtils.formatDate(input);
+							} catch (InvalidFieldException e) {
+								invalidFields.add(name);
+							}
+						}
 					} else {
 						// check for non-empty input
 						if (input.trim() == "") {
 							invalidFields.add(name);
 						}
-					}
 					}
 				}
 
@@ -570,13 +577,16 @@ public class TreeSpotter implements EntryPoint {
 						if (fld.equalsIgnoreCase(LOCATION)) {
 							errorMsg = errorMsg
 									+ "Location must be a valid address or coordinates.\n";
-						} else if (fld.equalsIgnoreCase("Height")) {
+						} else if (fld.equalsIgnoreCase(HEIGHT)) {
 							errorMsg = errorMsg + "Height must be a number.\n";
-						} else if (fld.equalsIgnoreCase("Diameter")) {
+						} else if (fld.equalsIgnoreCase(DIAMETER)) {
 							errorMsg = errorMsg
 									+ "Diameter must be a number.\n";
+						} else if (fld.equalsIgnoreCase(PLANTED)){
+							errorMsg = errorMsg + "Date Planted must be in the correct format.\n";
 						} else {
-							errorMsg = errorMsg + fld + " cannot be empty.\n";
+							String trimmed = fld.contains("*") ? fld.substring(0, fld.indexOf("*")) : fld;
+							errorMsg = errorMsg + trimmed + " cannot be empty.\n";
 						}
 					}
 					Window.alert(errorMsg);				
@@ -619,7 +629,7 @@ public class TreeSpotter implements EntryPoint {
 		tb.setStyleName("disabled");
 
 		HTML label = new HTML(text);
-		label.setStyleName("advanced-search");
+		label.setStyleName("advanced-search-panel");
 
 		// textbox will be enabled when clicked
 		// disabled if empty when clicking away
@@ -645,6 +655,13 @@ public class TreeSpotter implements EntryPoint {
 		/* add all elements to the panel */
 		panel.add(label);
 		panel.add(tb);
+		
+		/* add tooltip */
+//		Tooltip searchTip = new Tooltip(tb, "temp", tb.getAbsoluteLeft() + tb.getOffsetWidth() + 10, tb.getAbsoluteTop());
+//		tb.addMouseOverHandler(searchTip);
+//		tb.addMouseOutHandler(searchTip);
+//		setSearchTooltip(searchTip);
+		
 		return panel;
 	}
 
@@ -664,7 +681,6 @@ public class TreeSpotter implements EntryPoint {
 							// log in was successful, set the log out link
 							loginLink.setText("Log out");
 							loginLink.setHref(loginInfo.getLogoutUrl());
-							initAdminButton();
 						} else {
 							loginLink.setHref(loginInfo.getLoginUrl());							
 						}
@@ -705,7 +721,7 @@ public class TreeSpotter implements EntryPoint {
 		
 		addTooltip(
 				addButton,
-				"Don't see your favourite tree? Help improve the TreeSpotter database by adding new trees.",
+				HTMLResource.ADD_TREE_BUTTON_TOOLTIP,
 				addButton.getAbsoluteLeft(), 
 				addButton.getAbsoluteTop() + addButton.getOffsetHeight() + 10);
 		
@@ -738,6 +754,16 @@ public class TreeSpotter implements EntryPoint {
 	}
 
 	private void loadAdminPage() {
+		// put another check, since possible to force button to show
+		if (loginInfo == null || !loginInfo.isAdmin()) {
+			final HTMLPanel panel = new HTMLPanel("<h1> GO AWAY </h1>");
+			RootPanel.get("content").clear();
+			RootPanel.get("content").add(panel);	
+			return;
+		}
+		
+		System.out.println("Info " +loginInfo.isAdmin());
+		
 		final HTMLPanel panel = new HTMLPanel("<h1> Admin Page </h1>");
 		Button importBtn = new Button("Full Update");
 		
@@ -765,7 +791,7 @@ public class TreeSpotter implements EntryPoint {
 			}			
 		});
 		
-		panel.add(importBtn);		
+		panel.add(importBtn);
 		RootPanel.get("content").clear();
 		RootPanel.get("content").add(panel);	
 	}
@@ -782,7 +808,7 @@ public class TreeSpotter implements EntryPoint {
 	private void createResultDataRow(String field, String value) {
 		int rowNum = treeInfoTable.getRowCount();
 		Label fld = new Label(field);
-		fld.setStyleName("info-field");
+		fld.setStyleName("tree-info-field");
 		treeInfoTable.setWidget(rowNum, 0, fld);
 
 		if (value == null || value.equals("-1") || value.equals("-1.0 inches")) {
@@ -1001,7 +1027,7 @@ public class TreeSpotter implements EntryPoint {
 	 */
 	private void setTreeInfoMap(ClientTreeData data) {
 		infoMapPanel.clear();
-		infoMapPanel.setStyleName("map");
+		infoMapPanel.setStyleName("tree-info-map");
 		infoMapPanel.setSize(INFO_MAP_SIZE, INFO_MAP_SIZE);
 
 		if (data == null) {
@@ -1179,26 +1205,52 @@ public class TreeSpotter implements EntryPoint {
 			String text = null;
 			
 			if (key.equalsIgnoreCase(LOCATION)) {
-				text = HTMLResource.LOCATION_TOOLTIP;
+				text = HTMLResource.ADD_LOCATION_TOOLTIP;
 			} else if (key.equalsIgnoreCase(GENUS)) {
-				text = HTMLResource.GENUS_TOOLTIP;
+				text = HTMLResource.ADD_GENUS_TOOLTIP;
 			} else if (key.equalsIgnoreCase(SPECIES)) { 
-				text = HTMLResource.SPECIES_TOOLTIP;
+				text = HTMLResource.ADD_SPECIES_TOOLTIP;
 			} else if (key.equalsIgnoreCase(COMMON)) { 
-				text = HTMLResource.COMMON_TOOLTIP;
+				text = HTMLResource.ADD_COMMON_TOOLTIP;
 			} else if (key.equalsIgnoreCase(NEIGHBOUR)) { 
-				text = HTMLResource.NEIGHBOURHOOD_TOOLTIP;
+				text = HTMLResource.ADD_NEIGHBOURHOOD_TOOLTIP;
 			} else if (key.equalsIgnoreCase(HEIGHT)) { 
-				text = HTMLResource.HEIGHT_TOOLTIP;
+				text = HTMLResource.ADD_HEIGHT_TOOLTIP;
 			} else if (key.equalsIgnoreCase(DIAMETER)) {
-				text = HTMLResource.DIAMETER_TOOLTIP;
+				text = HTMLResource.ADD_DIAMETER_TOOLTIP;
 			} else if (key.equalsIgnoreCase(PLANTED)) {
-				text = HTMLResource.PLANTED_TOOLTIP;
-			}
+				text = HTMLResource.ADD_PLANTED_TOOLTIP;
+			} 
 
 			if (text != "") {
 				addTooltip(tb, text, left, top);
 			}		
+		}
+	}
+	
+	private void addSearchTooltips() {
+		for (Map.Entry<Label, TextBox> entry : advancedSearchMap.entrySet()) {
+			TextBox tb = entry.getValue();
+			String key = entry.getKey().getText().split("\\s[*]")[0];
+			int top = tb.getAbsoluteTop();
+			int left = tb.getAbsoluteLeft() + tb.getOffsetWidth() + 10;
+			String text = null;
+			
+			if (key.equalsIgnoreCase(LOCATION)) {
+				text = HTMLResource.SEARCH_LOCATION_TOOLTIP;
+			} else if (key.equalsIgnoreCase(GENUS)) {
+				text = HTMLResource.SEARCH_GENUS_TOOLTIP;
+			} else if (key.equalsIgnoreCase(SPECIES)) { 
+				text = HTMLResource.SEARCH_SPECIES_TOOLTIP;
+			} else if (key.equalsIgnoreCase(COMMON)) { 
+				text = HTMLResource.SEARCH_COMMON_TOOLTIP;
+			} else if (key.equalsIgnoreCase(NEIGHBOUR)) { 
+				text = HTMLResource.SEARCH_NEIGHBOURHOOD_TOOLTIP;
+			}
+			
+			if (text != "") {
+				addTooltip(tb, text, left, top);
+			}	
 		}
 	}
 }
