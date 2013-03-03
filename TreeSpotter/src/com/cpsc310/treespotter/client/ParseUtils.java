@@ -62,8 +62,7 @@ public class ParseUtils {
 		// (%d-%d %s)
 		else if (str.matches("\\d+\\s*-\\s*\\d+\\s+.+")) {
 			String[] words = input.split("-", 2);
-			str += words[0].trim();
-			str += words[1].trim();
+			str = words[0].trim() + "-" + words[1].trim();
 		}
 		// (%d %s)
 		else if (str.matches("\\d+\\s+.+")) {
