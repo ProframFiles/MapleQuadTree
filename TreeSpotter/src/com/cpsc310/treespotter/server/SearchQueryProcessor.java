@@ -77,7 +77,7 @@ public class SearchQueryProcessor {
 			}
 		}
 		return result_set;
-	}
+	} 
 	
 	public Set<TreeData> executeSpatialQueries(SearchQueryInterface search_params){
 		
@@ -170,7 +170,7 @@ public class SearchQueryProcessor {
 				has_search = true;
 			}
 			else{
-				sb.delete(sb.length()-prefix.length(), sb.length()-1);
+				sb.delete(sb.length()-prefix.length(), sb.length());
 			}
 		}
 		ArrayList<Query> ret = null;
@@ -216,11 +216,11 @@ public class SearchQueryProcessor {
 		Query q = pm.newQuery(StreetBlock.class, makeStreetBlockQuery(address));
 		
 		@SuppressWarnings("unchecked")
-		List<StreetBlock> result_list= (List<StreetBlock>)q.execute();
+		Collection<StreetBlock> result_list= (Collection<StreetBlock>)q.execute();
 		
 		if(result_list != null && !result_list.isEmpty())
 		{
-			StreetBlock block = result_list.get(0);
+			StreetBlock block = result_list.iterator().next();
 			return new LatLongRange(block.getLatitude(),block.getLongitude(), 200.0) ;
 		}
 		//TODO (aleksy) finish this function

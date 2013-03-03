@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
@@ -45,6 +46,7 @@ public class LocationProcessor extends HttpServlet {
 		
 	}
 	public void doPost(HttpServletRequest request, HttpServletResponse response){
+		LOG.setLevel(Level.FINE);
 		LOG.info("LocationProcessor:\n\tRecieved request to update street block data. Executing.");
 		
 		PersistenceManager pm = PMF.get().getPersistenceManager();
