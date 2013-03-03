@@ -101,7 +101,6 @@ public class TreeSpotter implements EntryPoint {
 	private ClientTreeData addTree;
 	
 	private DateTimeFormat dtf = DateTimeFormat.getFormat("d MMM yyyy");
-	private static final String ADMIN = "admin";
 	// in order to be accessed by inner classes this has to be a member
 	private ArrayList<ClientTreeData> treeList = new ArrayList<ClientTreeData>();
 	
@@ -808,13 +807,13 @@ public class TreeSpotter implements EntryPoint {
 
 	
 	/**
-	 * Creates a new ClientTreeData based on info from Add Tree form
+	 * Helper method for addUserTree.
+	 * Parses and populates a ClientTreeData object from add tree form.
 	 * 
-	 * @param list
-	 * 			list of fields/input from form
-	 * @return	ClientTreeData with the corresponding input
-	 * @throws InvalidFieldException
-	 * 			thrown when input is not properly formatted
+	 * @param t if null, location not yet parsed
+	 *           else, contains reverse-geocoded location
+	 * @throws InvalidFieldException 
+	 * 			 thrown if input is not in valid format for any field
 	 */
 	private void populateAddData(ClientTreeData t) 
 			throws InvalidFieldException {
@@ -926,6 +925,12 @@ public class TreeSpotter implements EntryPoint {
 		sendAddTreeData(addTree);
 	}
 	
+	/**
+	 * Helper method for addUserTree.
+	 * Sends ClientTreeData populated from add tree form to server
+	 * 
+	 * @param t ClientTreeData to be sent for persistence
+	 */
 	private void sendAddTreeData(ClientTreeData t) {
 		treeDataService.addTree(t, new AsyncCallback<ClientTreeData>() {
 			public void onFailure(Throwable error) {
@@ -943,6 +948,11 @@ public class TreeSpotter implements EntryPoint {
 		});
 	}
 
+	/**
+	 * Sets the tree info map to the geocoded location
+	 * 
+	 * @param data tree to be displayed
+	 */
 	private void setTreeInfoMap(ClientTreeData data) {
 		infoMapPanel.clear();
 		infoMapPanel.setStyleName("map");
@@ -967,6 +977,12 @@ public class TreeSpotter implements EntryPoint {
 
 	}
 
+	/**
+	 * Helper method for setTreeInfoMap.
+	 * Sets map to coordinates, centred and zoomed
+	 * 
+	 * @param pt passed in from async geocoding call
+	 */
 	private void setTreeInfoMap(LatLng pt) {
 		if (pt == null) {
 			infoMapPanel.add(invalidLoc);
@@ -980,6 +996,11 @@ public class TreeSpotter implements EntryPoint {
 		infoMapPanel.add(map);
 	}
 	
+	/**
+	 * Once search results have been made into markers,
+	 * generate a map panned and zoomed to contain all markers,
+	 * then add it to SearchMapPanel
+	 */
 	private void setSearchInfoMap() {
 		searchMapPanel.clear();
 		searchMap = new MapWidget();
@@ -1003,13 +1024,26 @@ public class TreeSpotter implements EntryPoint {
 		searchMapPanel.add(searchMap);
 	}
 	
-	public void setPoints(List<ClientTreeData> list) {
+	/**
+	 * Parse search results and generate points to place markers
+	 * on search results map
+	 * 
+	 * @param list search results returned from server
+	 */
+	private void setPoints(List<ClientTreeData> list) {
 		treeResults = list;
 		listIndex = 0;
 		markers.clear();
 		getNextPoint(listIndex);
 	}
 	
+	/**
+	 * Helper method for setPoints.
+	 * Makes an async call to geocode location
+	 * 
+	 * @param idx index of next ClientTreeData to process 
+	 * 				in search results list
+	 */
 	private void getNextPoint(int idx) {
 		if (idx >= treeResults.size()) {
 			setSearchInfoMap();
@@ -1030,6 +1064,12 @@ public class TreeSpotter implements EntryPoint {
 		});
 	}
 
+	/**
+	 * Helper method for setPoints.
+	 * Creates a Maker from a LatLng point and calls getNextPoint
+	 * 
+	 * @param pt geocoded coordinates to place on map
+	 */
 	private void addPoint(LatLng pt) {
 		MarkerOptions options = MarkerOptions.newInstance();
 		options.setIcon(icon);
@@ -1045,6 +1085,11 @@ public class TreeSpotter implements EntryPoint {
 		getNextPoint(listIndex);
 	}
 
+	/**
+	 * Display tree info window in map when marker is clicked
+	 * 
+	 * @param m marker for tree location in search results map
+	 */
 	private void clickMarker(Marker m) {
 		LatLng pt = m.getLatLng();
 		try {
@@ -1060,6 +1105,12 @@ public class TreeSpotter implements EntryPoint {
 		}
 	}
 
+	/**
+	 * Validates LatLng coordinates
+	 * 
+	 * @param c LatLng to verify
+	 * @return false if invalid (contains NaN), true if valid
+	 */
 	private boolean validCoordinates(LatLng c) {
 		if (Double.isNaN(c.getLatitude()) || Double.isNaN(c.getLongitude()))
 			return false;
