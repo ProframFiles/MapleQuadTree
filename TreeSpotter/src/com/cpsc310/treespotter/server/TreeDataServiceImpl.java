@@ -32,7 +32,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	private static final Key LAST_USER_TREE_STAMP_KEY = KeyFactory.createKey("UserTreeUpdateStamp", "last user tree id");
 	private static final Logger LOG = Logger.getLogger(TreeDataServiceImpl.class.getName());
 	
-	// as it says: we'll only ever return this many
+	// as it says: we'll only ever return this many 
 	private static int MAXRESULTS = 1000;
 
 	public TreeDataServiceImpl(){

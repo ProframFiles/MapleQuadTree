@@ -1,5 +1,6 @@
 package com.cpsc310.treespotter.server;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 
@@ -235,18 +236,19 @@ public class TreeData {
 		return commonName;
 	}
 	public void setCommonName(String commonName) {
-		replaceKeyword(this.commonName, commonName);
+		replaceKeyword(this.commonName, commonName); 
 		this.commonName = upperOrNull(commonName);
 	}
 	private void replaceKeyword(String kw_old, String kw_new ){
+	
 		if(kw_old != null){
 			int count = numKeywordsMatch(kw_old.toUpperCase());
 			if(count <= 1){
-				keywords.remove(kw_old.toUpperCase());
+				keywords.removeAll(Arrays.asList(kw_old.toUpperCase().split(" ")));
 			}
 		}
 		if(kw_new != null){
-			keywords.add(kw_new.toUpperCase());
+			keywords.addAll(Arrays.asList(kw_new.toUpperCase().split(" ")));
 		}
 	}
 	private int numKeywordsMatch(String s){

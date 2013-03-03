@@ -36,6 +36,7 @@ public class SearchQueryProcessor {
 	private static final Logger LOG = Logger.getLogger(SearchQueryProcessor.class.getName());
 	
 	SearchQueryProcessor(PersistenceManager pm){
+		LOG.setLevel(Level.FINER);
 		this.pm = pm;
 	}
 	

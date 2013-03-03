@@ -40,8 +40,10 @@ public class DataFetcher extends HttpServlet {
 			LOG.info("Unzipping files");
 			
 			while ((zip = zis.getNextEntry()) != null) {
-				parseFile(zis);
-				LOG.info("Parsed file: "+zip.getName());
+				if(zip.getName().equals("StreetTrees_Kerrisdale.csv")){
+					parseFile(zis);
+					LOG.info("Parsed file: "+zip.getName());
+				}
 			}
 			
 			zis.close();
