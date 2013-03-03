@@ -473,7 +473,7 @@ public class TreeSpotter implements EntryPoint {
 		createResultDataRow("Neighbourhood", neighbour);	
 		
 		// need to check if the date is null
-		String planted = t.getPlanted() == null ? null : t.getPlanted().toString();
+		String planted = t.getPlanted() == null ? null : t.getPlanted();
 		createResultDataRow("Date Planted", planted);	
 		createResultDataRow("Height", t.getHeightRange());
 		
@@ -915,8 +915,7 @@ public class TreeSpotter implements EntryPoint {
 				}
 			} else if (key.equalsIgnoreCase(PLANTED) && !input.isEmpty()) {
 				try {
-					Date d = dtf.parse(input);
-					addTree.setPlanted(d);
+					addTree.setPlanted(input);
 				} catch (Exception e) {
 					throw new InvalidFieldException("Invalid field: Date Planted");
 				}

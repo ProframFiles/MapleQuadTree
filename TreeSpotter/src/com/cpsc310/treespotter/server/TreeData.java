@@ -46,7 +46,7 @@ public class TreeData {
 	private float diameter;
 	
 	@Persistent
-	private Date planted;
+	private String planted;
 	
 	@Persistent
 	private String plantArea;
@@ -179,10 +179,10 @@ public class TreeData {
 		this.diameter = diameter;
 	}
 	
-	public Date getPlanted() {
+	public String getPlanted() {
 		return planted;
 	}
-	public void setPlanted(Date planted) {
+	public void setPlanted(String planted) {
 		this.planted = planted;
 	}
 	
