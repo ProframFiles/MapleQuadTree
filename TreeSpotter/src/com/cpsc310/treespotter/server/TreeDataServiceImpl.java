@@ -2,6 +2,8 @@ package com.cpsc310.treespotter.server;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -30,11 +32,6 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	private static final Key LAST_USER_TREE_STAMP_KEY = KeyFactory.createKey("UserTreeUpdateStamp", "last user tree id");
 	private static final Logger LOG = Logger.getLogger(TreeDataServiceImpl.class.getName());
 	
-	// the initial area for the street block search
-	// this works out to ~200 meters
-	private static double LATRANGE = 0.002*0.65;
-	private static double LONGRANGE = 0.002;
-	
 	// as it says: we'll only ever return this many
 	private static int MAXRESULTS = 1000;
 
@@ -46,7 +43,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
 		
 		//and uncomment this to force tree data parsing on server start  
-		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/import").method(TaskOptions.Method.GET));
+		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/import").method(TaskOptions.Method.GET)); 
 	}
 	
 	@Override
@@ -89,7 +86,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			//make the new tree, server style
 			TreeData new_tree;
 			if(info != null){
-				new_tree = makeTreeDataFromClient(info, id_number);
+				new_tree = TreeFactory.makeTreeData(info, id_number);
 			}
 			else{
 				throw new RuntimeException("Can't create an empty tree (null tree data)");
@@ -106,7 +103,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			LOG.info("\n\tDone adding new tree \"" +new_tree.getID() + "\"");
 			
 			//everything went better than expected, set return to non-null
-			return_tree = makeUserTreeData(new_tree);
+			return_tree = TreeFactory.makeUserTreeData(new_tree);
 		}
 		catch (Exception e){
 			LOG.severe("Unexpected exception during adding of user tree:\n\t\"" + e.getMessage() + "\"\n\tStack trace follows.");
@@ -145,10 +142,10 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			if (query_result != null) {
 				LOG.info("tree " + queryID + " found, creating ClientTreeData");
 				if (userType != null && userType.equals("user")) {
-					ret = makeUserTreeData(query_result);
+					ret = TreeFactory.makeUserTreeData(query_result);
 				}
 				if (userType != null && userType.equals("admin")) {
-					ret = makeAdminTreeData(query_result);
+					ret = TreeFactory.makeAdminTreeData(query_result);
 				}
 			}
 			else{
@@ -172,20 +169,21 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
+			SearchQueryProcessor sqp = new SearchQueryProcessor(pm);
 			
-			Query q = makeDBQueryFromSearch(pm, query);
-			
-			LOG.fine("About to execute query:\n\t" + q.toString());
-			
-			@SuppressWarnings("unchecked")
-			Collection<TreeData> tree_list = (Collection<TreeData>)q.execute();
-			int total_results = tree_list.size();
+			Set<TreeData> result_set = sqp.executeNonSpatialQueries(query);
+			Set<TreeData> spatial_set = sqp.executeSpatialQueries(query);
+			if(spatial_set != null){
+				result_set.retainAll(spatial_set);
+			}
+		
+			int total_results = result_set.size();
 			LOG.info("\tFound " + total_results + " tree results in the DB");
 			results = new ArrayList<ClientTreeData>();
 			if (total_results > 0) {
 				int result_count = 0;
-				for (TreeData server_tree : tree_list) {
-					results.add(makeUserTreeData(server_tree));
+				for (TreeData server_tree : result_set) {
+					results.add(TreeFactory.makeUserTreeData(server_tree));
 					result_count++;
 					if(result_count > MAXRESULTS){
 						LOG.warning("\n\tNumber of results exceeded maximum, returning first" + MAXRESULTS);
@@ -213,158 +211,6 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		return results;
 	}
 
-	private ClientTreeData makeUserTreeData(TreeData tree_data) {
-		ClientTreeData user_data = new ClientTreeData();
-		user_data.setTreeID(tree_data.getID().toString());
-		user_data.setCivicNumber(tree_data.getCivicNumber());
-		user_data.setNeighbourhood(tree_data.getNeighbourhood());
-		user_data.setStreet(tree_data.getStreet());
-		user_data.setHeightRange(tree_data.getHeightRange());
-		user_data.setDiameter(tree_data.getDiameter());
-		user_data.setPlanted(tree_data.getPlanted());
-		user_data.setCultivar(tree_data.getCultivar());
-		user_data.setGenus(tree_data.getGenus());
-		user_data.setSpecies(tree_data.getSpecies());
-		user_data.setCommonName(tree_data.getCommonName());
-		return user_data;
-	}
-	private TreeData makeTreeDataFromClient(ClientTreeData tree_data, int id_number) {
-		TreeData server_data = new TreeData("U", id_number);
-		server_data.setCivicNumber(tree_data.getCivicNumber());
-		server_data.setNeighbourhood(tree_data.getNeighbourhood());
-		server_data.setStreet(tree_data.getStreet());
-		server_data.setHeightRange(tree_data.getHeightRange());
-		server_data.setDiameter(tree_data.getDiameter());
-		server_data.setPlanted(tree_data.getPlanted());
-		server_data.setCultivar(tree_data.getCultivar());
-		server_data.setGenus(tree_data.getGenus());
-		server_data.setSpecies(tree_data.getSpecies());
-		server_data.setCommonName(tree_data.getCommonName());
-		return server_data;
-	}
 
-	private AdminTreeData makeAdminTreeData(TreeData tree_data) {
-		// TODO: differentiate this from user data
-		AdminTreeData admin_data = new AdminTreeData();
-		admin_data.setTreeID(tree_data.getID().toString());
-		admin_data.setCivicNumber(tree_data.getCivicNumber());
-		admin_data.setNeighbourhood(tree_data.getNeighbourhood());
-		admin_data.setStreet(tree_data.getStreet());
-		admin_data.setHeightRange(tree_data.getHeightRange());
-		admin_data.setDiameter(tree_data.getDiameter());
-		admin_data.setPlanted(tree_data.getPlanted());
-		admin_data.setCultivar(tree_data.getCultivar());
-		admin_data.setGenus(tree_data.getGenus());
-		admin_data.setSpecies(tree_data.getSpecies());
-		admin_data.setCommonName(tree_data.getCommonName());
-		return admin_data;
-	}
 
-	private Query makeDBQueryFromSearch(PersistenceManager pm, SearchQueryInterface search_params) {
-		//TODO aleksy: implement extra search query enums once they're there
-		StringBuilder sb = new StringBuilder();
-		String sort_order = "";
-		String prefix = "(";
-		for (SearchParam param : search_params) {
-			LOG.finer("search param:\n\t(" + param.fieldID.toString() +", " + param.value + ")");
-			sb.append(prefix);
-			switch (param.fieldID) {
-			case ID:
-				sb.append("treeID == \"");
-				sb.append(KeyFactory.createKey("TreeData", Integer.parseInt(param.value)));
-				sb.append('"');
-			case KEYWORD:
-				sb.append("keywords.contains(\"");
-				sb.append(param.value.toUpperCase());
-				sb.append("\")");
-				break;
-			case COMMON:
-				sb.append("commonName == \"" + param.value.toUpperCase() + "\"");
-				break;
-			case NEIGHBOUR:
-				sb.append("neighbourhood == \"" + param.value.toUpperCase() + "\"");
-				break;
-			case DIAMETER:
-				//
-				IntegerRange d_range = new IntegerRange(param.value);
-				sb.append("diameter >= ");
-				sb.append((double)d_range.getBottom());
-				sb.append(" && diameter <= ");
-				sb.append((double)d_range.getTop());
-				sort_order = "diameter ascending,";
-				break;
-			case HEIGHT:
-				IntegerRange h_range = new IntegerRange(param.value);
-				sb.append("heightRange >= ");
-				sb.append(h_range.getBottom());
-				sb.append(" && heightRange <= ");
-				sb.append(h_range.getTop());
-				sort_order = "heightRange ascending,";
-				break;
-			case GENUS:
-				sb.append("genus == \"" + param.value.toUpperCase() + "\"");
-				break;
-			case LOCATION:
-				sb.append(makeLocationQueryString(pm, param.value));
-				sort_order = "civicNumber ascending,";
-				break;
-			case ADDRESS:
-				StreetBlock address_block = new StreetBlock(param.value);
-				sb.append(makeStreetBlockQuery(address_block));
-				sort_order = "civicNumber ascending,";
-				break;
-			case SPECIES:
-				sb.append("species == \"" + param.value.toUpperCase() + "\"");
-				break;
-			default:
-				break;
-			}
-
-			sb.append(")");
-			LOG.finer("current query string:\n\t" + sb.toString());
-			prefix = " && (";
-		}
-		Query q = pm.newQuery(TreeData.class, sb.toString());
-		q.setOrdering(sort_order + "treeID descending");
-		q.setRange(search_params.getResultsOffset(), search_params.getResultsOffset() + search_params.getNumResults());
-		return q;
-	}
-
-	@SuppressWarnings("unchecked")
-	private String makeLocationQueryString(PersistenceManager pm, String location) {
-		//TODO tune the lat+ long ranges.
-		//TODO return more than one blocks worth of trees
-		//TODO actually use the given radius
-		LOG.fine("Performing block lookup");
-		String address_search = null;
-		int firstCommaLocation = location.indexOf(',');
-		int lastCommaLocation = location.lastIndexOf(',');
-		double latitude = Double.parseDouble(location.substring(0, firstCommaLocation));
-		double longitude = Double.parseDouble(location.substring(firstCommaLocation+1, lastCommaLocation));
-		Query longQuery = pm.newQuery(StreetBlock.class
-				, "longitude <= " + Double.toString(longitude + LONGRANGE) + "&&"
-				+ "longitude >= " + Double.toString(longitude - LONGRANGE));
-		//Query latQuery = pm.newQuery(StreetBlock.class
-		//		, "latitude <= " + Double.toString(latitude + LATRANGE) + "&&"  
-		//		+ "latitude >= " + Double.toString(latitude - LATRANGE));
-		StreetBlockDistanceComparator comparator = new StreetBlockDistanceComparator(latitude, longitude);
-		SortedSet<StreetBlock> block_set = new TreeSet<StreetBlock>(comparator);
-		block_set.addAll((Collection<StreetBlock>)longQuery.execute());
-		//block_set.addAll((Collection<StreetBlock>)latQuery.execute());
-		if(!block_set.isEmpty()){
-			LOG.fine(block_set.size() + " blocks found around lat/long point");
-			StreetBlock street_block = block_set.iterator().next();
-			address_search = makeStreetBlockQuery(street_block);
-		}
-		else{
-			LOG.log(Level.FINE, "no blocks found around lat/long point");
-			address_search = "civicNumber == -1";
-		}
-		return address_search;
-	}
-	private String makeStreetBlockQuery(StreetBlock street_block){
-		return "civicNumber >= " +  street_block.getBlockStart() 
-		+ " && civicNumber <= " + street_block.getBlockEnd()
-		+ " && street == \"" +street_block.getStreetName().toUpperCase()+ "\"";
-	}
 }

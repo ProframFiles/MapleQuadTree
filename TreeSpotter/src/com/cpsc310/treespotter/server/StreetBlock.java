@@ -23,6 +23,9 @@ public class StreetBlock {
 	private int	blockEnd;
 	
 	@Persistent
+	private int	blockCenter; 
+	
+	@Persistent
 	private String streetName;
 	
 	@Persistent
@@ -39,18 +42,33 @@ public class StreetBlock {
 		String block_string = blockString.trim();
 		blockID = KeyFactory.createKey("StreetBlock",placemarkID + block_string);
 		parseAddress(block_string);
-		parseCoords(coords);	
+		parseCoords(coords);
+		blockCenter = (blockStart+blockEnd)/2;
 	}
 	public StreetBlock(String blockString){
 		String block_string = blockString.trim();
 		parseAddress(block_string);	
 		blockEnd -= 100;
+		blockCenter = (blockStart+blockEnd)/2;
 	}
 	public String getBlockStart(){
 		return Integer.toString(blockStart);
 	}
 	public String getBlockEnd(){
 		return Integer.toString(blockEnd);
+	}
+	public void setBlockRange(int low, int high){
+		blockEnd = high;
+		blockStart = low;
+		blockCenter = (blockStart+blockEnd)/2;
+	}
+	public int getAddressTop()
+	{
+		return (blockEnd);
+	}
+	public int getAddressBottom()
+	{
+		return (blockStart);
 	}
 	public String getStreetName(){
 		return streetName;
@@ -60,6 +78,12 @@ public class StreetBlock {
 	}
 	public double getLongitudeRadians(){
 		return Math.toRadians(longitude);
+	}
+	public double getLatitude(){
+		return latitude;
+	}
+	public double getLongitude(){
+		return longitude;
 	}
 	private void parseAddress(String block_string){
 		int block_name_split = block_string.indexOf(' ');
