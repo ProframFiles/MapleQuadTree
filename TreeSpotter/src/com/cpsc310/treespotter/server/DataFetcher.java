@@ -25,7 +25,7 @@ public class DataFetcher extends HttpServlet {
 	final static private Logger LOG = Logger.getLogger(DataFetcher.class.getName());
 	
 	private ArrayList<TreeData> curr_trees = new ArrayList<TreeData>();
-	private int MAX_BLOCK_SIZE = 256;
+	private int MAX_BLOCK_SIZE = 32;
 	
 	public void doGet(HttpServletRequest req, HttpServletResponse res) 
 			throws ServletException, IOException {

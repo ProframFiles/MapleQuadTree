@@ -81,11 +81,11 @@ public class ServerSearchTest {
 		assertEquals(5,results.size() );
 		assertTrue(results.get(0).getSpecies().equalsIgnoreCase("AFAKESPECIES") );
 		
-		results = doKeywordSearch("THE CRESCENT");
+		results = doKeywordSearch("CRESCENT");
 		assertEquals(4,results.size() );
 		assertTrue(results.get(0).getStreet().equalsIgnoreCase("THE CRESCENT") );
 		
-		results = doKeywordSearch("the crescent");
+		results = doKeywordSearch("crescent");
 		assertEquals(4,results.size() );
 		assertTrue(results.get(0).getStreet().equalsIgnoreCase("THE CRESCENT") );
 		

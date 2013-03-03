@@ -2,6 +2,7 @@ package com.cpsc310.treespotter.server;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedSet;
@@ -173,10 +174,15 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			
 			Set<TreeData> result_set = sqp.executeNonSpatialQueries(query);
 			Set<TreeData> spatial_set = sqp.executeSpatialQueries(query);
-			if(spatial_set != null){
+			if(spatial_set != null && result_set!=null){
 				result_set.retainAll(spatial_set);
 			}
-		
+			else if(result_set == null && spatial_set != null){
+				result_set = spatial_set;
+			}
+			else if(result_set == null){
+				result_set = new HashSet<TreeData>();
+			}
 			int total_results = result_set.size();
 			LOG.info("\tFound " + total_results + " tree results in the DB");
 			results = new ArrayList<ClientTreeData>();
