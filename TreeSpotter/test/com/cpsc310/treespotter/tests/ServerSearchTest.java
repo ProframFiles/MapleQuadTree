@@ -1,10 +1,8 @@
 package com.cpsc310.treespotter.tests;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.jdo.PersistenceManager;
-import javax.servlet.ServletException;
 
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig;
 import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
@@ -21,9 +19,7 @@ import com.cpsc310.treespotter.client.SearchFieldID;
 import static org.junit.Assert.*;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ServerSearchTest {
@@ -81,11 +77,11 @@ public class ServerSearchTest {
 		assertEquals(5,results.size() );
 		assertTrue(results.get(0).getSpecies().equalsIgnoreCase("AFAKESPECIES") );
 		
-		results = doKeywordSearch("THE CRESCENT");
+		results = doKeywordSearch("CRESCENT");
 		assertEquals(4,results.size() );
 		assertTrue(results.get(0).getStreet().equalsIgnoreCase("THE CRESCENT") );
 		
-		results = doKeywordSearch("the crescent");
+		results = doKeywordSearch("crescent");
 		assertEquals(4,results.size() );
 		assertTrue(results.get(0).getStreet().equalsIgnoreCase("THE CRESCENT") );
 		

@@ -29,13 +29,13 @@ public class SearchQueryProcessor {
 
 	// the initial area for the street block search
 	// this works out to ~200 meters
-	private static double LATRANGE = 0.002*0.65;
 	private static double LONGRANGE = 0.002;
 	
 	PersistenceManager pm = null;
 	private static final Logger LOG = Logger.getLogger(SearchQueryProcessor.class.getName());
 	
 	SearchQueryProcessor(PersistenceManager pm){
+		LOG.setLevel(Level.FINER);
 		this.pm = pm;
 	}
 	
@@ -43,9 +43,16 @@ public class SearchQueryProcessor {
 		
 		Collection<Query> q_list = makeNonSpatialQueries(search_params);
 		
-		LOG.fine("Parsed search into "+ q_list.size() +" non-spatial queries.");
 		
-		return executeQueryList(q_list);
+		if(q_list != null){
+			LOG.fine("Parsed search into "+ q_list.size() +" non-spatial queries.");
+			return executeQueryList(q_list);
+		}
+		else{
+			LOG.fine("Found no non-spatial queries.");
+		}
+		
+		return null;
 		
 	}
 	
@@ -104,6 +111,7 @@ public class SearchQueryProcessor {
 		StringBuilder sb = new StringBuilder();
 		String sort_order = "";
 		String prefix = "(";
+		boolean has_search = false;
 		for (SearchParam param : search_params) {
 			LOG.finer("search param:\n\t(" + param.fieldID.toString() +", " + param.value + ")");
 			sb.append(prefix);
@@ -159,16 +167,20 @@ public class SearchQueryProcessor {
 				sb.append(")");
 				LOG.finer("current query string:\n\t" + sb.toString());
 				prefix = " && (";
+				has_search = true;
 			}
 			else{
-				sb.deleteCharAt(sb.length()-1);
+				sb.delete(sb.length()-prefix.length(), sb.length()-1);
 			}
 		}
-		Query q = pm.newQuery(TreeData.class, sb.toString());
-		q.setOrdering(sort_order + "treeID descending");
-		q.setRange(search_params.getResultsOffset(), search_params.getResultsOffset() + search_params.getNumResults());
-		ArrayList<Query> ret = new ArrayList<Query>();
-		ret.add(q);
+		ArrayList<Query> ret = null;
+		if(has_search){
+			ret = new ArrayList<Query>();
+			Query q = pm.newQuery(TreeData.class, sb.toString());
+			q.setOrdering(sort_order + "treeID descending");
+			q.setRange(search_params.getResultsOffset(), search_params.getResultsOffset() + search_params.getNumResults());
+			ret.add(q);
+		}
 		return ret;
 	}
 	
@@ -258,6 +270,7 @@ public class SearchQueryProcessor {
 	{
 		public double latitude;
 		public double longitude;
+		@SuppressWarnings("unused")
 		public double range;
 		public LatLongRange(String location){
 			int firstCommaLocation = location.indexOf(',');

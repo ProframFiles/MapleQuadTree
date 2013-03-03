@@ -1,11 +1,8 @@
 package com.cpsc310.treespotter.server;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,9 +10,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
 
-import com.cpsc310.treespotter.client.AdminTreeData;
 import com.cpsc310.treespotter.client.ClientTreeData;
-import com.cpsc310.treespotter.client.SearchParam;
 import com.cpsc310.treespotter.client.SearchQueryInterface;
 import com.cpsc310.treespotter.client.TreeDataService;
 import com.google.appengine.api.datastore.Key;
@@ -32,7 +27,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	private static final Key LAST_USER_TREE_STAMP_KEY = KeyFactory.createKey("UserTreeUpdateStamp", "last user tree id");
 	private static final Logger LOG = Logger.getLogger(TreeDataServiceImpl.class.getName());
 	
-	// as it says: we'll only ever return this many
+	// as it says: we'll only ever return this many 
 	private static int MAXRESULTS = 1000;
 
 	public TreeDataServiceImpl(){
@@ -173,10 +168,15 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			
 			Set<TreeData> result_set = sqp.executeNonSpatialQueries(query);
 			Set<TreeData> spatial_set = sqp.executeSpatialQueries(query);
-			if(spatial_set != null){
+			if(spatial_set != null && result_set!=null){
 				result_set.retainAll(spatial_set);
 			}
-		
+			else if(result_set == null && spatial_set != null){
+				result_set = spatial_set;
+			}
+			else if(result_set == null){
+				result_set = new HashSet<TreeData>();
+			}
 			int total_results = result_set.size();
 			LOG.info("\tFound " + total_results + " tree results in the DB");
 			results = new ArrayList<ClientTreeData>();

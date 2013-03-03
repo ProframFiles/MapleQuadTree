@@ -4,58 +4,59 @@ import java.io.Serializable;
 
 public class LoginInfo implements Serializable {
 
-  private boolean loggedIn = false;
-  private String loginUrl;
-  private String logoutUrl;
-  private String emailAddress;
-  private String nickname;
-  private boolean isAdmin = false;
+	private static final long serialVersionUID = 181007795908496774L;
+	private boolean loggedIn = false;
+	private String loginUrl;
+	private String logoutUrl;
+	private String emailAddress;
+	private String nickname;
+	private boolean isAdmin = false;
 
-  public boolean isLoggedIn() {
-    return loggedIn;
-  }
+	public boolean isLoggedIn() {
+		return loggedIn;
+	}
 
-  public void setLoggedIn(boolean loggedIn) {
-    this.loggedIn = loggedIn;
-  }
+	public void setLoggedIn(boolean loggedIn) {
+		this.loggedIn = loggedIn;
+	}
 
-  public String getLoginUrl() {
-    return loginUrl;
-  }
+	public String getLoginUrl() {
+		return loginUrl;
+	}
 
-  public void setLoginUrl(String loginUrl) {
-    this.loginUrl = loginUrl;
-  }
+	public void setLoginUrl(String loginUrl) {
+		this.loginUrl = loginUrl;
+	}
 
-  public String getLogoutUrl() {
-    return logoutUrl;
-  }
+	public String getLogoutUrl() {
+		return logoutUrl;
+	}
 
-  public void setLogoutUrl(String logoutUrl) {
-    this.logoutUrl = logoutUrl;
-  }
+	public void setLogoutUrl(String logoutUrl) {
+		this.logoutUrl = logoutUrl;
+	}
 
-  public String getEmailAddress() {
-    return emailAddress;
-  }
+	public String getEmailAddress() {
+		return emailAddress;
+	}
 
-  public void setEmailAddress(String emailAddress) {
-    this.emailAddress = emailAddress;
-  }
+	public void setEmailAddress(String emailAddress) {
+		this.emailAddress = emailAddress;
+	}
 
-  public String getNickname() {
-    return nickname;
-  }
+	public String getNickname() {
+		return nickname;
+	}
 
-  public void setNickname(String nickname) {
-    this.nickname = nickname;
-  }
-  
-  public boolean isAdmin() {
-    return isAdmin;
-  }
-  
-  public void setAdmin(boolean admin) {
-    isAdmin = admin;
-  }
+	public void setNickname(String nickname) {
+		this.nickname = nickname;
+	}
+
+	public boolean isAdmin() {
+		return isAdmin;
+	}
+
+	public void setAdmin(boolean admin) {
+		isAdmin = admin;
+	}
 }
