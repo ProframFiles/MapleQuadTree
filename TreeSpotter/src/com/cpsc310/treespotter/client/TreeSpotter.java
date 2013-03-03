@@ -23,7 +23,6 @@ import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.maps.client.InfoWindowContent;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.Maps;
@@ -105,7 +104,6 @@ public class TreeSpotter implements EntryPoint {
 	private Address geoAddr;
 	private ClientTreeData addTree;
 
-	private DateTimeFormat dtf = DateTimeFormat.getFormat("d MMM yyyy");
 	// in order to be accessed by inner classes this has to be a member
 	private ArrayList<ClientTreeData> treeList = new ArrayList<ClientTreeData>();
 
@@ -290,7 +288,14 @@ public class TreeSpotter implements EntryPoint {
 				if (!input.isEmpty()) {
 					System.out.println(key + ": " + input);
 					if (key.equalsIgnoreCase(LOCATION)) {
-						q.addSearchParam(SearchFieldID.LOCATION, input);
+						try {
+							input = ParseUtils.formatSearchLocation(input);
+							SearchFieldID sid = ParseUtils.isLocationSearch(input) ?
+										SearchFieldID.LOCATION : SearchFieldID.ADDRESS;
+							q.addSearchParam(sid, input);
+						} catch (InvalidFieldException e) {
+							handleError(e);
+						}
 					} else if (key.equalsIgnoreCase(GENUS)) {
 						q.addSearchParam(SearchFieldID.GENUS, input);
 					} else if (key.equalsIgnoreCase(SPECIES)) {
@@ -399,10 +404,9 @@ public class TreeSpotter implements EntryPoint {
 
 		for (final ClientTreeData tree : rlist) {
 			Anchor num = new Anchor(Integer.toString(++index));
-			HTML common = new HTML(capitalize(tree.getCommonName(), false));
-			HTML addr = new HTML(capitalize(
-					tree.getCivicNumber() + " " + tree.getStreet(), false));
-			String thood = tree.getNeighbourhood()==null ? "" : capitalize(tree.getNeighbourhood(), false);
+			HTML common = new HTML(ParseUtils.capitalize(tree.getCommonName(), false));
+			HTML addr = new HTML(ParseUtils.capitalize(tree.getLocation(), false));
+			String thood = tree.getNeighbourhood()==null ? "" : ParseUtils.capitalize(tree.getNeighbourhood(), false);
 			HTML hood = new HTML(thood);
 
 			/* add link to the tree info page */
@@ -470,12 +474,12 @@ public class TreeSpotter implements EntryPoint {
 		treeInfoTable.setCellPadding(10);
 		treeInfoTable.setSize("400px", "400px");
 
-		createResultDataRow("Species", capitalize(t.getSpecies(), true));
-		createResultDataRow("Genus", capitalize(t.getGenus(), false));
-		String capName = capitalize(t.getCommonName(), false);
+		createResultDataRow("Species", ParseUtils.capitalize(t.getSpecies(), true));
+		createResultDataRow("Genus", ParseUtils.capitalize(t.getGenus(), false));
+		String capName = ParseUtils.capitalize(t.getCommonName(), false);
 		createResultDataRow("Common Name", "<a href='" + wikipediaSearchURL
 				+ capName + "'>" + capName + "</a>");
-		createResultDataRow("Location", capitalize(t.getLocation(), false));
+		createResultDataRow("Location", ParseUtils.capitalize(t.getLocation(), false));
 		String neighbour = t.getNeighbourhood();
 		neighbour = (neighbour == null) ? neighbour : neighbour.toUpperCase();
 		createResultDataRow("Neighbourhood", neighbour);
@@ -873,7 +877,7 @@ public class TreeSpotter implements EntryPoint {
 				else if (parseLoc) {
 					try {
 						LatLng pt = LatLng.fromUrlValue(input);
-						if (!validCoordinates(pt)) {
+						if (!ParseUtils.validCoordinates(pt)) {
 							throw new InvalidFieldException(
 									"Invalid field: Location");
 						}
@@ -944,7 +948,7 @@ public class TreeSpotter implements EntryPoint {
 				}
 			} else if (key.equalsIgnoreCase(PLANTED) && !input.isEmpty()) {
 				try {
-					addTree.setPlanted(input);
+					addTree.setPlanted(ParseUtils.formatDate(input));
 				} catch (Exception e) {
 					throw new InvalidFieldException(
 							"Invalid field: Date Planted");
@@ -1048,7 +1052,7 @@ public class TreeSpotter implements EntryPoint {
 		}
 		if (!searchMapBound.isEmpty()) {
 			// getBoundsZoomLevel returns ridiculously zoomed out values
-			int zoom = searchMap.getBoundsZoomLevel(searchMapBound) + 8;
+			int zoom = searchMap.getBoundsZoomLevel(searchMapBound) + 9;
 			zoom = ZOOM_LVL < zoom ? ZOOM_LVL : zoom;
 			searchMap.setCenter(searchMapBound.getCenter(), zoom);
 		}
@@ -1133,95 +1137,12 @@ public class TreeSpotter implements EntryPoint {
 			searchMap.getInfoWindow().open(
 					pt,
 					new InfoWindowContent("<p>" + idx + ". "
-							+ capitalize(t.getCommonName(), false) + "<br/>"
-							+ capitalize(t.getLocation(), false) + "<br/>"
+							+ ParseUtils.capitalize(t.getCommonName(), false) + "<br/>"
+							+ ParseUtils.capitalize(t.getLocation(), false) + "<br/>"
 							+ pt.getLatitude() + ", " + pt.getLongitude()
 							+ "</p>"));
 		} catch (Exception e) {
 			handleError(e);
-		}
-	}
-
-	/**
-	 * Validates LatLng coordinates
-	 * 
-	 * @param c
-	 *            LatLng to verify
-	 * @return false if invalid (contains NaN), true if valid
-	 */
-	private boolean validCoordinates(LatLng c) {
-		if (Double.isNaN(c.getLatitude()) || Double.isNaN(c.getLongitude()))
-			return false;
-		return true;
-	}
-
-	private String capitalize(String str, boolean species) {
-		String cap = str.toLowerCase();
-		if (!species) {
-			String[] words = cap.split("\\s+");
-			cap = "";
-			for (String w : words) {
-				String first = w.substring(0, 1);
-				String rest = w.substring(1);
-				cap += first.toUpperCase() + rest + " ";
-			}
-		} else {
-			String first = cap.substring(0, 1);
-			String rest = cap.substring(1);
-			cap = first.toUpperCase() + rest + " ";
-		}
-		return cap;
-	}
-
-	/**
-	 * Inner class to hold a street number, street address pair
-	 * 
-	 */
-	private class Address {
-		private int num;
-		private String street;
-		private boolean valid;
-
-		/**
-		 * Parses String input to get number and street address
-		 * 
-		 * @param input
-		 */
-		public Address(String input) {
-			String[] addr = input.split("[,]", 2);
-			addr = addr[0].split("\\s+", 2);
-			if (addr.length < 1) {
-				num = -1;
-				street = "";
-				valid = false;
-				return;
-			}
-			try {
-				num = Integer.parseInt(addr[0]);
-				street = addr[1].trim();
-				valid = true;
-			} catch (Exception e) {
-				num = -1; // possibly no street number
-				street = addr[0] + " " + addr[1];
-				valid = true;
-			}
-		}
-
-		public Address(int n, String s) {
-			num = n;
-			street = s;
-		}
-
-		public int getNumber() {
-			return num;
-		}
-
-		public String getStreet() {
-			return street;
-		}
-
-		public boolean isValid() {
-			return valid;
 		}
 	}
 
