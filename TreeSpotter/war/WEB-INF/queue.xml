@@ -1,0 +1,10 @@
+<queue-entries>
+<!--Change the refresh rate of the default queue to 1/s-->
+  <queue>
+    <name>default</name>
+    <rate>1/s</rate>
+    <retry-parameters>
+      <task-retry-limit>0</task-retry-limit>
+    </retry-parameters>
+  </queue>
+</queue-entries>
