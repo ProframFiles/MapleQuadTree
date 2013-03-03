@@ -29,7 +29,6 @@ public class SearchQueryProcessor {
 
 	// the initial area for the street block search
 	// this works out to ~200 meters
-	private static double LATRANGE = 0.002*0.65;
 	private static double LONGRANGE = 0.002;
 	
 	PersistenceManager pm = null;
@@ -271,6 +270,7 @@ public class SearchQueryProcessor {
 	{
 		public double latitude;
 		public double longitude;
+		@SuppressWarnings("unused")
 		public double range;
 		public LatLongRange(String location){
 			int firstCommaLocation = location.indexOf(',');

@@ -1,12 +1,8 @@
 package com.cpsc310.treespotter.server;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,9 +10,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
 
-import com.cpsc310.treespotter.client.AdminTreeData;
 import com.cpsc310.treespotter.client.ClientTreeData;
-import com.cpsc310.treespotter.client.SearchParam;
 import com.cpsc310.treespotter.client.SearchQueryInterface;
 import com.cpsc310.treespotter.client.TreeDataService;
 import com.google.appengine.api.datastore.Key;

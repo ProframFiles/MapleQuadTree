@@ -1,6 +1,5 @@
 package com.cpsc310.treespotter.server;
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
