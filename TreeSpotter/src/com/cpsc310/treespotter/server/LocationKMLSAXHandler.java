@@ -1,6 +1,7 @@
 package com.cpsc310.treespotter.server;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -9,6 +10,15 @@ import javax.jdo.PersistenceManager;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import com.google.appengine.api.search.Document;
+import com.google.appengine.api.search.Field;
+import com.google.appengine.api.search.GeoPoint;
+import com.google.appengine.api.search.Index; 
+import com.google.appengine.api.search.IndexSpec;
+import com.google.appengine.api.search.PutException;
+import com.google.appengine.api.search.SearchServiceFactory;
+import com.google.appengine.api.search.StatusCode;
 
 public class LocationKMLSAXHandler extends DefaultHandler {
 
@@ -22,7 +32,7 @@ public class LocationKMLSAXHandler extends DefaultHandler {
 	private String blockName = null;
 	private String placemarkID = null;
 	private ArrayList<StreetBlock> cached_blocks = new ArrayList<StreetBlock>();
-	private int max_cached_blocks = 256;
+	private int max_cached_blocks = 64;
 
 	/**
 	 * Construct a new LocationKMLSAXHandler <br>
@@ -117,6 +127,7 @@ public void characters(char ch[], int start, int length) throws SAXBadDataExcept
 			try{
 				LOG.finer("parsing street block "+ placemarkID +": " + blockName);
 				StreetBlock streetBlock = new StreetBlock(placemarkID, blockName, blockCoords);
+				//addDocumentToIndex(streetBlock, 3);
 				cached_blocks.add(streetBlock);
 				if(cached_blocks.size() == max_cached_blocks){
 					cachedPM.makePersistentAll(cached_blocks);
@@ -135,15 +146,36 @@ public void characters(char ch[], int start, int length) throws SAXBadDataExcept
 		else if(inPlacemark && qName.equals("coordinates")){
 			inCoordinates = false;
 		}
-		else if(qName.equals("Document")){
+		else if(qName.equals("Document")){ 
 			cachedPM.makePersistentAll(cached_blocks);
 			cached_blocks.clear();
 		}
 		
 	}
 
-
-
+	private void addDocumentToIndex(StreetBlock block, int retries){
+		GeoPoint geoPoint = new GeoPoint(block.getLatitude(), block.getLongitude());
+		Document doc = Document
+				.newBuilder()
+				.addField( Field.newBuilder().setName("street").setText(block.getStreetName()))
+				.addField( Field.newBuilder().setName("BlockHigh").setNumber(block.getAddressTop()))
+				.addField( Field.newBuilder().setName("BlockLow").setNumber(block.getAddressBottom()))
+				.addField( Field.newBuilder().setName("location").setGeoPoint(geoPoint)).build();
+		
+		try {
+		    // Put the document.
+		    getIndex().put(doc);
+		} catch (PutException e) {
+		    if (StatusCode.TRANSIENT_ERROR.equals(e.getOperationResult().getCode()) && retries > 0) {
+		    	addDocumentToIndex( block, retries-1);
+		    }
+		    
+		}
+	}
+	public Index getIndex() {
+		IndexSpec indexSpec = IndexSpec.newBuilder().setName("StreetBlockIndex").build();
+		return SearchServiceFactory.getSearchService().getIndex(indexSpec);
+	}
 
 	/**
 	 * Validates data collected for a new StreetBlock. Throws a
