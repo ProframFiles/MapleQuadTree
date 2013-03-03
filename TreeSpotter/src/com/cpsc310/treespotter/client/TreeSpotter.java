@@ -43,6 +43,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -52,6 +53,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -600,6 +602,7 @@ public class TreeSpotter implements EntryPoint {
 		addPanel.setWidth("350px");
 		addPanel.setStyleName("add-popup");
 		addPanel.center();
+		addFormTooltips();
 	}
 
 	/**
@@ -699,6 +702,13 @@ public class TreeSpotter implements EntryPoint {
 		/* wrap add tree button with click handler */
 		Button addButton = Button.wrap(Document.get().getElementById(
 				"add-tree-button"));
+		
+		addTooltip(
+				addButton,
+				"Don't see your favourite tree? Help improve the TreeSpotter database by adding new trees.",
+				addButton.getAbsoluteLeft(), 
+				addButton.getAbsoluteTop() + addButton.getOffsetHeight() + 10);
+		
 		addButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
 				addUserTree();
@@ -829,6 +839,7 @@ public class TreeSpotter implements EntryPoint {
 		row.add(tb);
 		row.setCellHeight(row, "30px");
 		row.setCellHeight(tb, "50px");
+		
 		return row;
 	}
 
@@ -1146,4 +1157,48 @@ public class TreeSpotter implements EntryPoint {
 		}
 	}
 
+	/**
+	 * Adds a tooltip to the given object
+	 * @param obj Widget to hover over
+	 * @param txt Text to display in the tooltip
+	 * @param left position from left
+	 * @param top position from top
+	 */
+	private void addTooltip(Widget obj, String txt, int left, int top) {
+		Tooltip tip = new Tooltip(obj, txt, left, top);
+		((FocusWidget) obj).addMouseOverHandler(tip);
+		((FocusWidget) obj).addMouseOutHandler(tip);
+	}
+	
+	private void addFormTooltips() {
+		for (Map.Entry<Label, TextBox> entry : addFormMap.entrySet()) {
+			TextBox tb = entry.getValue();
+			String key = entry.getKey().getText().split("\\s[*]")[0];
+			int top = tb.getAbsoluteTop();
+			int left = tb.getAbsoluteLeft() + tb.getOffsetWidth() + 30;
+			String text = null;
+			
+			if (key.equalsIgnoreCase(LOCATION)) {
+				text = HTMLResource.LOCATION_TOOLTIP;
+			} else if (key.equalsIgnoreCase(GENUS)) {
+				text = HTMLResource.GENUS_TOOLTIP;
+			} else if (key.equalsIgnoreCase(SPECIES)) { 
+				text = HTMLResource.SPECIES_TOOLTIP;
+			} else if (key.equalsIgnoreCase(COMMON)) { 
+				text = HTMLResource.COMMON_TOOLTIP;
+			} else if (key.equalsIgnoreCase(NEIGHBOUR)) { 
+				text = HTMLResource.NEIGHBOURHOOD_TOOLTIP;
+			} else if (key.equalsIgnoreCase(HEIGHT)) { 
+				text = HTMLResource.HEIGHT_TOOLTIP;
+			} else if (key.equalsIgnoreCase(DIAMETER)) {
+				text = HTMLResource.DIAMETER_TOOLTIP;
+			} else if (key.equalsIgnoreCase(PLANTED)) {
+				text = HTMLResource.PLANTED_TOOLTIP;
+			}
+
+			if (text != "") {
+				addTooltip(tb, text, left, top);
+			}		
+		}
+	}
 }
