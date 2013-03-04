@@ -38,16 +38,7 @@ a:hover {
 	margin: 10px;
 }
 
-#admin-button {
-	border: 0px white solid;
-	float: left;
-	padding: 10px;
-	background: none;
-	color: blueviolet;
-	font-size: 14px;
-}
-
-#add-tree-button {
+#top button {
 	float: left;
 	height: 30px;
 	border: 1px solid gainsboro;
@@ -60,7 +51,7 @@ a:hover {
 	padding-right: 10px;
 }
 
-#add-tree-button:hover {
+#top button:hover {
 	color: black;
 }
 
@@ -69,12 +60,14 @@ a:hover {
 header{
 	display: block;
 	position: relative;
-	margin-top: 20px;
-	margin-left: auto;
-    margin-right: auto;
-    height:	150px;
-    width:	95%;
-	background-image: url('image/treebanner.jpg');
+	margin-top: 2px;
+	margin-left: none;
+    margin-right: none;
+    height:	220px;
+    width:	100%;
+	background-image: url('image/treespotterbanner.png'),url('image/leafbackground.png');
+	background-position: center top, center top;
+	background-repeat: no-repeat,repeat-x;
 }
 
 #button-bar {
@@ -88,7 +81,7 @@ header{
 
 .nav-button {
   padding: 10px;
-  margin:	10px;
+  margin: 8px 9% 8px 9%;
   background: #08C;
   border: thin solid #08C;
   border-radius: 5px;
@@ -284,4 +277,5 @@ a.main-search {
 	box-shadow: 0 0 5px 2px rgba(0,0,0,.35);
 	max-width: 400px;
 	z-index: 9999999;
+	font-size: 14px;
 }

@@ -9,6 +9,14 @@ public interface HTMLResource extends ClientBundle {
 
 	@Source("/res/home.html")
 	public TextResource getHomeHtml();
+	
+	@Source("/res/loadingbar.html")
+	public TextResource getLoadingBar();
+	
+	/* Popup messages for Add Tree */
+	public final String ADD_TREE_SUCCESS = "Your tree has been added to the database.";
+	
+	public final String ADD_TREE_FAIL = "Something went worng! The tree could not be added to the database.";
 
 	/* Tooltips for the Advanced Options */
 	public final String SEARCH_LOCATION_TOOLTIP = "<html>Location search supports the following:<br>"
@@ -25,7 +33,7 @@ public interface HTMLResource extends ClientBundle {
 			+ "<br> eg. \"Oakridge\"</html>";
 
 	/* Tooltips for the Add Tree form */
-	public final String ADD_TREE_BUTTON_TOOLTIP = "Don't see your favourite tree? Help improve the TreeSpotter"
+	public final String ADD_TREE_BUTTON_TOOLTIP = "Don't see your favourite tree? Help improve the TreeSpotter "
 			+ "database by adding new trees.";
 
 	public final String ADD_LOCATION_TOOLTIP = "<html>Location as address or coordinates (Vancouver only)<br>"

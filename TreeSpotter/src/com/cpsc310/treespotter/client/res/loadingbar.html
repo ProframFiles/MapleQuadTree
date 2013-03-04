@@ -1,377 +1,195 @@
 <style>
-.windows8 {
-position: relative;
-width: 50px;
-height:50px;
-margin: 50px auto auto;
+#fadingBarsG{
+position:relative;
+width:240px;
+height:29px}
+
+.fadingBarsG{
+position:absolute;
+top:0;
+background-color:#000000;
+width:29px;
+height:29px;
+-moz-animation-name:bounce_fadingBarsG;
+-moz-animation-duration:1.3s;
+-moz-animation-iteration-count:infinite;
+-moz-animation-direction:linear;
+-moz-transform:scale(.3);
+-webkit-animation-name:bounce_fadingBarsG;
+-webkit-animation-duration:1.3s;
+-webkit-animation-iteration-count:infinite;
+-webkit-animation-direction:linear;
+-webkit-transform:scale(.3);
+-ms-animation-name:bounce_fadingBarsG;
+-ms-animation-duration:1.3s;
+-ms-animation-iteration-count:infinite;
+-ms-animation-direction:linear;
+-ms-transform:scale(.3);
+-o-animation-name:bounce_fadingBarsG;
+-o-animation-duration:1.3s;
+-o-animation-iteration-count:infinite;
+-o-animation-direction:linear;
+-o-transform:scale(.3);
+animation-name:bounce_fadingBarsG;
+animation-duration:1.3s;
+animation-iteration-count:infinite;
+animation-direction:linear;
+transform:scale(.3);
 }
 
-.windows8 .wBall {
-position: absolute;
-width: 48px;
-height: 48px;
-opacity: 0;
--moz-transform: rotate(225deg);
--moz-animation: orbit 5.5s infinite;
--webkit-transform: rotate(225deg);
--webkit-animation: orbit 5.5s infinite;
--ms-transform: rotate(225deg);
--ms-animation: orbit 5.5s infinite;
--o-transform: rotate(225deg);
--o-animation: orbit 5.5s infinite;
-transform: rotate(225deg);
-animation: orbit 5.5s infinite;
+#fadingBarsG_1{
+left:0;
+-moz-animation-delay:0.52s;
+-webkit-animation-delay:0.52s;
+-ms-animation-delay:0.52s;
+-o-animation-delay:0.52s;
+animation-delay:0.52s;
 }
 
-.windows8 .wBall .wInnerBall{
-position: absolute;
-width: 6px;
-height: 6px;
-background: #2F4723;
-left:0px;
-top:0px;
--moz-border-radius: 6px;
--webkit-border-radius: 6px;
--ms-border-radius: 6px;
--o-border-radius: 6px;
-border-radius: 6px;
+#fadingBarsG_2{
+left:30px;
+-moz-animation-delay:0.65s;
+-webkit-animation-delay:0.65s;
+-ms-animation-delay:0.65s;
+-o-animation-delay:0.65s;
+animation-delay:0.65s;
 }
 
-.windows8 #wBall_1 {
--moz-animation-delay: 1.2s;
--webkit-animation-delay: 1.2s;
--ms-animation-delay: 1.2s;
--o-animation-delay: 1.2s;
-animation-delay: 1.2s;
+#fadingBarsG_3{
+left:60px;
+-moz-animation-delay:0.78s;
+-webkit-animation-delay:0.78s;
+-ms-animation-delay:0.78s;
+-o-animation-delay:0.78s;
+animation-delay:0.78s;
 }
 
-.windows8 #wBall_2 {
--moz-animation-delay: 0.24s;
--webkit-animation-delay: 0.24s;
--ms-animation-delay: 0.24s;
--o-animation-delay: 0.24s;
-animation-delay: 0.24s;
+#fadingBarsG_4{
+left:90px;
+-moz-animation-delay:0.91s;
+-webkit-animation-delay:0.91s;
+-ms-animation-delay:0.91s;
+-o-animation-delay:0.91s;
+animation-delay:0.91s;
 }
 
-.windows8 #wBall_3 {
--moz-animation-delay: 0.48s;
--webkit-animation-delay: 0.48s;
--ms-animation-delay: 0.48s;
--o-animation-delay: 0.48s;
-animation-delay: 0.48s;
+#fadingBarsG_5{
+left:120px;
+-moz-animation-delay:1.04s;
+-webkit-animation-delay:1.04s;
+-ms-animation-delay:1.04s;
+-o-animation-delay:1.04s;
+animation-delay:1.04s;
 }
 
-.windows8 #wBall_4 {
--moz-animation-delay: 0.72s;
--webkit-animation-delay: 0.72s;
--ms-animation-delay: 0.72s;
--o-animation-delay: 0.72s;
-animation-delay: 0.72s;
+#fadingBarsG_6{
+left:150px;
+-moz-animation-delay:1.17s;
+-webkit-animation-delay:1.17s;
+-ms-animation-delay:1.17s;
+-o-animation-delay:1.17s;
+animation-delay:1.17s;
 }
 
-.windows8 #wBall_5 {
--moz-animation-delay: 0.96s;
--webkit-animation-delay: 0.96s;
--ms-animation-delay: 0.96s;
--o-animation-delay: 0.96s;
-animation-delay: 0.96s;
+#fadingBarsG_7{
+left:180px;
+-moz-animation-delay:1.3s;
+-webkit-animation-delay:1.3s;
+-ms-animation-delay:1.3s;
+-o-animation-delay:1.3s;
+animation-delay:1.3s;
 }
 
-@-moz-keyframes orbit {
-0% {
-opacity: 1;
-z-index:99;
--moz-transform: rotate(180deg);
--moz-animation-timing-function: ease-out;
+#fadingBarsG_8{
+left:210px;
+-moz-animation-delay:1.43s;
+-webkit-animation-delay:1.43s;
+-ms-animation-delay:1.43s;
+-o-animation-delay:1.43s;
+animation-delay:1.43s;
 }
 
-7% {
-opacity: 1;
--moz-transform: rotate(300deg);
--moz-animation-timing-function: linear;
--moz-origin:0%;
+@-moz-keyframes bounce_fadingBarsG{
+0%{
+-moz-transform:scale(1);
+background-color:#000000;
 }
 
-30% {
-opacity: 1;
--moz-transform:rotate(410deg);
--moz-animation-timing-function: ease-in-out;
--moz-origin:7%;
-}
-
-39% {
-opacity: 1;
--moz-transform: rotate(645deg);
--moz-animation-timing-function: linear;
--moz-origin:30%;
-}
-
-70% {
-opacity: 1;
--moz-transform: rotate(770deg);
--moz-animation-timing-function: ease-out;
--moz-origin:39%;
-}
-
-75% {
-opacity: 1;
--moz-transform: rotate(900deg);
--moz-animation-timing-function: ease-out;
--moz-origin:70%;
-}
-
-76% {
-opacity: 0;
--moz-transform:rotate(900deg);
-}
-
-100% {
-opacity: 0;
--moz-transform: rotate(900deg);
+100%{
+-moz-transform:scale(.3);
+background-color:#FFFFFF;
 }
 
 }
 
-@-webkit-keyframes orbit {
-0% {
-opacity: 1;
-z-index:99;
--webkit-transform: rotate(180deg);
--webkit-animation-timing-function: ease-out;
+@-webkit-keyframes bounce_fadingBarsG{
+0%{
+-webkit-transform:scale(1);
+background-color:#000000;
 }
 
-7% {
-opacity: 1;
--webkit-transform: rotate(300deg);
--webkit-animation-timing-function: linear;
--webkit-origin:0%;
-}
-
-30% {
-opacity: 1;
--webkit-transform:rotate(410deg);
--webkit-animation-timing-function: ease-in-out;
--webkit-origin:7%;
-}
-
-39% {
-opacity: 1;
--webkit-transform: rotate(645deg);
--webkit-animation-timing-function: linear;
--webkit-origin:30%;
-}
-
-70% {
-opacity: 1;
--webkit-transform: rotate(770deg);
--webkit-animation-timing-function: ease-out;
--webkit-origin:39%;
-}
-
-75% {
-opacity: 1;
--webkit-transform: rotate(900deg);
--webkit-animation-timing-function: ease-out;
--webkit-origin:70%;
-}
-
-76% {
-opacity: 0;
--webkit-transform:rotate(900deg);
-}
-
-100% {
-opacity: 0;
--webkit-transform: rotate(900deg);
+100%{
+-webkit-transform:scale(.3);
+background-color:#FFFFFF;
 }
 
 }
 
-@-ms-keyframes orbit {
-0% {
-opacity: 1;
-z-index:99;
--ms-transform: rotate(180deg);
--ms-animation-timing-function: ease-out;
+@-ms-keyframes bounce_fadingBarsG{
+0%{
+-ms-transform:scale(1);
+background-color:#000000;
 }
 
-7% {
-opacity: 1;
--ms-transform: rotate(300deg);
--ms-animation-timing-function: linear;
--ms-origin:0%;
-}
-
-30% {
-opacity: 1;
--ms-transform:rotate(410deg);
--ms-animation-timing-function: ease-in-out;
--ms-origin:7%;
-}
-
-39% {
-opacity: 1;
--ms-transform: rotate(645deg);
--ms-animation-timing-function: linear;
--ms-origin:30%;
-}
-
-70% {
-opacity: 1;
--ms-transform: rotate(770deg);
--ms-animation-timing-function: ease-out;
--ms-origin:39%;
-}
-
-75% {
-opacity: 1;
--ms-transform: rotate(900deg);
--ms-animation-timing-function: ease-out;
--ms-origin:70%;
-}
-
-76% {
-opacity: 0;
--ms-transform:rotate(900deg);
-}
-
-100% {
-opacity: 0;
--ms-transform: rotate(900deg);
+100%{
+-ms-transform:scale(.3);
+background-color:#FFFFFF;
 }
 
 }
 
-@-o-keyframes orbit {
-0% {
-opacity: 1;
-z-index:99;
--o-transform: rotate(180deg);
--o-animation-timing-function: ease-out;
+@-o-keyframes bounce_fadingBarsG{
+0%{
+-o-transform:scale(1);
+background-color:#000000;
 }
 
-7% {
-opacity: 1;
--o-transform: rotate(300deg);
--o-animation-timing-function: linear;
--o-origin:0%;
-}
-
-30% {
-opacity: 1;
--o-transform:rotate(410deg);
--o-animation-timing-function: ease-in-out;
--o-origin:7%;
-}
-
-39% {
-opacity: 1;
--o-transform: rotate(645deg);
--o-animation-timing-function: linear;
--o-origin:30%;
-}
-
-70% {
-opacity: 1;
--o-transform: rotate(770deg);
--o-animation-timing-function: ease-out;
--o-origin:39%;
-}
-
-75% {
-opacity: 1;
--o-transform: rotate(900deg);
--o-animation-timing-function: ease-out;
--o-origin:70%;
-}
-
-76% {
-opacity: 0;
--o-transform:rotate(900deg);
-}
-
-100% {
-opacity: 0;
--o-transform: rotate(900deg);
+100%{
+-o-transform:scale(.3);
+background-color:#FFFFFF;
 }
 
 }
 
-@keyframes orbit {
-0% {
-opacity: 1;
-z-index:99;
-transform: rotate(180deg);
-animation-timing-function: ease-out;
+@keyframes bounce_fadingBarsG{
+0%{
+transform:scale(1);
+background-color:#000000;
 }
 
-7% {
-opacity: 1;
-transform: rotate(300deg);
-animation-timing-function: linear;
-origin:0%;
-}
-
-30% {
-opacity: 1;
-transform:rotate(410deg);
-animation-timing-function: ease-in-out;
-origin:7%;
-}
-
-39% {
-opacity: 1;
-transform: rotate(645deg);
-animation-timing-function: linear;
-origin:30%;
-}
-
-70% {
-opacity: 1;
-transform: rotate(770deg);
-animation-timing-function: ease-out;
-origin:39%;
-}
-
-75% {
-opacity: 1;
-transform: rotate(900deg);
-animation-timing-function: ease-out;
-origin:70%;
-}
-
-76% {
-opacity: 0;
-transform:rotate(900deg);
-}
-
-100% {
-opacity: 0;
-transform: rotate(900deg);
+100%{
+transform:scale(.3);
+background-color:#FFFFFF;
 }
 
 }
 
 </style>
-<div class="windows8">
-<div class="wBall" id="wBall_1">
-<div class="wInnerBall">
+<div id="fadingBarsG">
+<div id="fadingBarsG_1" class="fadingBarsG">
+</div>
+<div id="fadingBarsG_2" class="fadingBarsG">
+</div>
+<div id="fadingBarsG_3" class="fadingBarsG">
+</div>
+<div id="fadingBarsG_4" class="fadingBarsG">
+</div>
+<div id="fadingBarsG_5" class="fadingBarsG">
+</div>
+<div id="fadingBarsG_6" class="fadingBarsG">
+</div>
+<div id="fadingBarsG_7" class="fadingBarsG">
+</div>
+<div id="fadingBarsG_8" class="fadingBarsG">
 </div>
 </div>
-<div class="wBall" id="wBall_2">
-<div class="wInnerBall">
-</div>
-</div>
-<div class="wBall" id="wBall_3">
-<div class="wInnerBall">
-</div>
-</div>
-<div class="wBall" id="wBall_4">
-<div class="wInnerBall">
-</div>
-</div>
-<div class="wBall" id="wBall_5">
-<div class="wInnerBall">
-</div>
-</div>
-</div> 

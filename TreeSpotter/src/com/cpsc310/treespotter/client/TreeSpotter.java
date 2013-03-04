@@ -150,9 +150,9 @@ public class TreeSpotter implements EntryPoint {
 
 		initHomePage();
 		initButtons();
-		initAdminButton();
 		initLoginLogout();
-
+		initAdminButton();
+		
 		/*
 		 * History.addValueChangeHandler(new ValueChangeHandler<String>() {
 		 * public void onValueChange(ValueChangeEvent<String> event) { String
@@ -172,6 +172,7 @@ public class TreeSpotter implements EntryPoint {
 	private void handleError(Throwable error) {
 		Window.alert(error.getMessage());
 		if (error instanceof NotLoggedInException) {
+			System.out.println("Something weird happened.");
 			Window.Location.replace(loginInfo.getLogoutUrl());
 		}
 	}
@@ -313,6 +314,7 @@ public class TreeSpotter implements EntryPoint {
 		}
 
 		if (q != null) {
+			loadLoadingBar();
 			treeDataService.searchTreeData(q,
 					new AsyncCallback<ArrayList<ClientTreeData>>() {
 						@Override
@@ -656,12 +658,6 @@ public class TreeSpotter implements EntryPoint {
 		panel.add(label);
 		panel.add(tb);
 		
-		/* add tooltip */
-//		Tooltip searchTip = new Tooltip(tb, "temp", tb.getAbsoluteLeft() + tb.getOffsetWidth() + 10, tb.getAbsoluteTop());
-//		tb.addMouseOverHandler(searchTip);
-//		tb.addMouseOutHandler(searchTip);
-//		setSearchTooltip(searchTip);
-		
 		return panel;
 	}
 
@@ -681,6 +677,9 @@ public class TreeSpotter implements EntryPoint {
 							// log in was successful, set the log out link
 							loginLink.setText("Log out");
 							loginLink.setHref(loginInfo.getLogoutUrl());
+							
+							// check if the user is an admin
+							initAdminButton();
 						} else {
 							loginLink.setHref(loginInfo.getLoginUrl());							
 						}
@@ -733,14 +732,17 @@ public class TreeSpotter implements EntryPoint {
 	}
 	
 	private void initAdminButton() {
-		Button adminButton = Button.wrap(Document.get().getElementById(
-				"admin-button"));
-		adminButton.setVisible(loginInfo != null && loginInfo.isAdmin());
-		adminButton.addClickHandler(new ClickHandler() {
-			public void onClick(ClickEvent event) {
-				loadAdminPage();
-			}
-		});
+		if (loginInfo != null && loginInfo.isAdmin()) {
+			RootPanel top = RootPanel.get("top");
+			Button adminBtn = new Button("Admin");
+			adminBtn.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					loadAdminPage();
+				}			
+			});			
+			top.add(adminBtn);
+		}
 	}
 
 	/**
@@ -796,6 +798,13 @@ public class TreeSpotter implements EntryPoint {
 		RootPanel.get("content").add(panel);	
 	}
 
+	private void loadLoadingBar() {
+		HTMLPanel htmlPanel = new HTMLPanel(HTMLResource.INSTANCE.getLoadingBar()
+				.getText());
+		RootPanel.get("content").clear();
+		RootPanel.get("content").add(htmlPanel);	
+	}
+	
 	/**
 	 * Helper function to create rows of data for the TreeInfoPage
 	 * 
@@ -1010,9 +1019,9 @@ public class TreeSpotter implements EntryPoint {
 
 			public void onSuccess(ClientTreeData result) {
 				if (result != null) {
-					Window.alert("Tree " + result.getID() + " added.");
+					Window.alert(HTMLResource.ADD_TREE_SUCCESS);
 				} else {
-					Window.alert("Tree not added");
+					Window.alert(HTMLResource.ADD_TREE_FAIL);
 				}
 				displayTreeInfoPage(result);
 			}
