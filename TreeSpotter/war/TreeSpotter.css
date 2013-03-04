@@ -160,7 +160,13 @@ button.main-search:active {
 /* ADVANCED SEARCH OPTIONS */
 a.main-search {
 	margin-left: 800px;
-	font-size: 14px;
+	font-size: 13.5px;
+	color: darkblue;
+}
+
+a.main-search:hover {
+	color: orangered;
+	text-decoration: none;
 }
 
 .advanced-search-panel {
@@ -181,14 +187,14 @@ a.main-search {
 	background-color: #DEDEDE;
 	border: thin solid black;
 	padding: 5px;
-	width: 150px;
+	width: 250px;
 	opactiy: 0.5;
 }
 
 .enabled {
 	border: 2px solid #F1B720;
 	padding: 5px;
-	width: 150px;
+	width: 250px;
 }
 
 /* TREE INFO PAGE */
