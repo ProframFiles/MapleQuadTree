@@ -29,7 +29,7 @@ public class SearchQueryProcessor {
 
 	// the initial area for the street block search
 	// this works out to ~200 meters
-	private static double LONGRANGE = 0.002;
+	private static double LONGRANGE = 0.004;
 	
 	PersistenceManager pm = null;
 	private static final Logger LOG = Logger.getLogger(SearchQueryProcessor.class.getName());

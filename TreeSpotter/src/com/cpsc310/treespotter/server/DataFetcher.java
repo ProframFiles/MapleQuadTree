@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -29,6 +30,7 @@ public class DataFetcher extends HttpServlet {
 	
 	public void doGet(HttpServletRequest req, HttpServletResponse res) 
 			throws ServletException, IOException {
+		LOG.setLevel(Level.FINE);
 		LOG.info("Attemping to update tree database");
 		
 		try {
@@ -40,7 +42,7 @@ public class DataFetcher extends HttpServlet {
 			LOG.info("Unzipping files");
 			
 			while ((zip = zis.getNextEntry()) != null) {
-				if(zip.getName().equals("StreetTrees_Kerrisdale.csv")){
+				if(zip.getName().equals("StreetTrees_Shaughnessy.csv")){
 					parseFile(zis);
 					LOG.info("Parsed file: "+zip.getName());
 				}

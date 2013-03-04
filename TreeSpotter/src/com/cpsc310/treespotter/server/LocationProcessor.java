@@ -52,10 +52,10 @@ public class LocationProcessor extends HttpServlet {
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try{
 			
-			Query time_stamp_query = pm.newQuery(StreetBlockUpdateTimeStamp.class, "key == id");
+			Query time_stamp_query = pm.newQuery(FileUpdateTimeStamp.class, "key == id");
 			time_stamp_query.setUnique(true);
 			time_stamp_query.declareParameters("com.google.appengine.api.datastore.Key id");
-			StreetBlockUpdateTimeStamp time_stamp = (StreetBlockUpdateTimeStamp)time_stamp_query.execute(LAST_TIMESTAMP_KEY);
+			FileUpdateTimeStamp time_stamp = (FileUpdateTimeStamp)time_stamp_query.execute(LAST_TIMESTAMP_KEY);
 			// only fetch the file if enough time has passed since the last time we tried
 			if(time_stamp == null || time_stamp.getDaysPassed() > UPDATE_PERIOD){
 								
@@ -72,7 +72,7 @@ public class LocationProcessor extends HttpServlet {
 					
 					
 					if(time_stamp == null){
-						time_stamp = new StreetBlockUpdateTimeStamp(LAST_TIMESTAMP_KEY);
+						time_stamp = new FileUpdateTimeStamp(LAST_TIMESTAMP_KEY);
 					}
 				
 					time_stamp.Update(blocks_parsed,in_stream.getChecksum().getValue() );
