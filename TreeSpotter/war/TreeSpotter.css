@@ -15,6 +15,8 @@ a:hover {
 	text-decoration: underline;
 }
 
+/* BAR AT THE TOP OF THE PAGE */
+
 #top {
 	display: block;
 	position: relative;
@@ -33,7 +35,7 @@ a:hover {
 	color: red;
 	font-size: 14px;
 	display: inline-block;
-	margin-top: 10px;
+	margin: 10px;
 }
 
 #admin-button {
@@ -57,6 +59,12 @@ a:hover {
 	padding-left: 10px;
 	padding-right: 10px;
 }
+
+#add-tree-button:hover {
+	color: black;
+}
+
+/* BANNER AND MAIN BUTTONS */
 
 header{
 	display: block;
@@ -99,6 +107,8 @@ header{
 	opacity: 1;
 }
 
+/* MAIN CONTENT DIVS */
+
 #main {
 	display: table;
     width:	95%;
@@ -115,6 +125,8 @@ header{
 	min-height: 500px;
 	padding: 20px 40px 0 40px;
 }
+
+/* MAIN SEARCH */
 
 .main-search-box{
 	margin: 20px auto 0 auto;
@@ -143,19 +155,35 @@ button.main-search {
   	text-decoration: none;
 }
 
-.main-search-fields {
-	margin-left: 280px;
+button.main-search:hover {
+	color: orange;
 }
 
+button.main-search:active {
+	background-color: rgb(20, 71, 105);
+	border-color: rgb(20, 71, 105);
+}
+
+/* ADVANCED SEARCH OPTIONS */
 a.main-search {
 	margin-left: 800px;
 	font-size: 14px;
+}
+
+.advanced-search-panel {
+	margin: 5px;
+	width: 150px;
+}
+
+.main-search-fields {
+	margin-left: 280px;
 }
 
 .main-search table {
 	margin-left: 50px;
 }
 
+/* styles for enabled/disabled advanced search fields */
 .disabled {
 	background-color: #DEDEDE;
 	border: thin solid black;
@@ -170,39 +198,23 @@ a.main-search {
 	width: 150px;
 }
 
-.advanced-search {
-	margin: 5px;
-	width: 150px;
-}
-
-.result{
-	border-bottom: thin black dashed;
-	padding: 20px;
-	width: 80%;
-	height: 50px;
-	margin-left: 5%;
-}
-
-.treeinfo {
-	display: block;
-	margin-left: auto;
-	margin-right: auto;
-	width: 900px;	
-}
-
-.map {
+/* TREE INFO PAGE */
+.tree-info-map {
 	float: left;
 	margin-left: 5%;
 }
 
-.treedata {
+.tree-info-table {
 	padding: 20px;
 }
 
-.info-field {
+.tree-info-field {
 	font-weight: bold;
 	height: 20px;
 }
+
+/* ADD TREE POPUP */
+
 .add-popup {
 	z-index: 99999;
 	background-color: white;
@@ -222,11 +234,14 @@ a.main-search {
 	background-color: #F0FAF5;
 }
 
+/* SEARCH RESULTS */
+
 .results-map {
 	float: left;
 	margin: 30px 5px;
 }
 
+/* unselected tab items */
 .gwt-TabBarItem {
 	width: 20px;
 	cursor: pointer;
@@ -234,6 +249,7 @@ a.main-search {
 	text-decoration: underline;
 }
 
+/* selected tab items */
 .gwt-TabBarItem.gwt-TabBarItem-selected {
 	color: black;
 	text-decoration: none;
@@ -257,6 +273,8 @@ a.main-search {
 .results-row-alt {
 	background-color: #EEEEEE;	
 }
+
+/* TOOLTIP */
 
 .tooltip {
 	padding: 10px;

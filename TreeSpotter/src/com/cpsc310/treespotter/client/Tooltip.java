@@ -6,17 +6,14 @@ import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 
 public class Tooltip extends Composite implements MouseOverHandler, MouseOutHandler, MouseMoveHandler {
 	PopupPanel panel;
+	String text;
 	int left;
 	int top;
 	
@@ -29,6 +26,7 @@ public class Tooltip extends Composite implements MouseOverHandler, MouseOutHand
 	
 	private void createTooltip(String txt) {
 		panel = new PopupPanel();
+		text = txt;
 		HTML lbl = new HTML(txt);
 		lbl.setWordWrap(true);		
 		panel.add(lbl);
@@ -49,6 +47,13 @@ public class Tooltip extends Composite implements MouseOverHandler, MouseOutHand
 	@Override
 	public void onMouseMove(MouseMoveEvent event) {
 		panel.show();		
+	}
+	
+	public void setText(String newText) {
+		text = newText;
+		HTML lbl = new HTML(text);
+		lbl.setWordWrap(true);		
+		panel.add(lbl);
 	}
 	
 }
