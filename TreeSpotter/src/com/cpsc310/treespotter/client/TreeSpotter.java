@@ -94,6 +94,7 @@ public class TreeSpotter implements EntryPoint {
 	private static final int ZOOM_LVL = 15;
 	private MapWidget searchMap;
 	private int listIndex;
+	private int listOffset;
 	private Icon icon;
 	private final String greenIconURL = "http://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_green.png";
 	private ArrayList<Marker> markers = new ArrayList<Marker>();
@@ -358,7 +359,7 @@ public class TreeSpotter implements EntryPoint {
 		} else if (rlist.size() <= 25) {
 			// don't bother with tabs if less than 25 results
 			FlexTable resultsTable = createSearchPage(0, rlist);
-			setPoints(rlist);
+			setPoints(rlist, 0);
 			content.add(searchMapPanel);
 			content.add(resultsTable);
 
@@ -382,7 +383,7 @@ public class TreeSpotter implements EntryPoint {
 							int end = Math.min(rlist.size(), start + 24);
 							List<ClientTreeData> pageList = rlist.subList(
 									start, end);
-							setPoints(pageList);
+							setPoints(pageList, start);
 						}
 					});
 
@@ -829,7 +830,7 @@ public class TreeSpotter implements EntryPoint {
 		int rowNum = treeInfoTable.getRowCount();
 		Label fld = new Label(field);
 		String value = "";
-		fld.setStyleName("info-field");
+		fld.setStyleName("tree-info-field");
 		treeInfoTable.setWidget(rowNum, 0, fld);
 
 		if (range == -1) {
@@ -1105,9 +1106,10 @@ public class TreeSpotter implements EntryPoint {
 	 * @param list
 	 *            search results returned from server
 	 */
-	private void setPoints(List<ClientTreeData> list) {
+	private void setPoints(List<ClientTreeData> list, int offset) {
 		treeResults = list;
 		listIndex = 0;
+		listOffset = offset;
 		markers.clear();
 		getNextPoint(listIndex);
 	}
@@ -1148,7 +1150,7 @@ public class TreeSpotter implements EntryPoint {
 	private void addPoint(LatLng pt) {
 		MarkerOptions options = MarkerOptions.newInstance();
 		options.setIcon(icon);
-		options.setTitle(Integer.toString(++listIndex));
+		options.setTitle(Integer.toString(++listIndex + listOffset));
 		Marker mark = new Marker(pt, options);
 		mark.addMarkerClickHandler(new MarkerClickHandler() {
 			public void onClick(MarkerClickEvent event) {
@@ -1170,7 +1172,7 @@ public class TreeSpotter implements EntryPoint {
 		LatLng pt = m.getLatLng();
 		try {
 			int idx = Integer.parseInt(m.getTitle());
-			ClientTreeData t = treeResults.get(idx - 1);
+			ClientTreeData t = treeResults.get((idx % 25) - 1);
 			searchMap.getInfoWindow().open(
 					pt,
 					new InfoWindowContent("<p>" + idx + ". "
