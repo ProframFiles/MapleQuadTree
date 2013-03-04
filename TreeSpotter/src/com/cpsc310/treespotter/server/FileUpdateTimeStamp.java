@@ -17,7 +17,7 @@ import com.google.appengine.api.datastore.Key;
  *
  */
 @PersistenceCapable
-public class StreetBlockUpdateTimeStamp {
+public class FileUpdateTimeStamp {
 	
 	private static final double DAY_MS = 86400000.0;
 	
@@ -34,7 +34,7 @@ public class StreetBlockUpdateTimeStamp {
 	@Persistent
 	private long fileChecksum;
 	
-	public StreetBlockUpdateTimeStamp(Key key) {
+	public FileUpdateTimeStamp(Key key) {
 		timeStamp = null;
 		fileChecksum = 0;
 		updateCount = 0;
