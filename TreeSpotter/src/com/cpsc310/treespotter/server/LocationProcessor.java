@@ -4,6 +4,7 @@
 package com.cpsc310.treespotter.server;
 
 import java.io.ByteArrayInputStream;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +29,9 @@ import org.xml.sax.helpers.XMLReaderFactory;
 
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Key;
+import com.googlecode.objectify.Objectify;
+import com.googlecode.objectify.ObjectifyService;
+import static com.googlecode.objectify.ObjectifyService.ofy;
 
 /**
  * @author maple-quadtree
@@ -37,7 +41,7 @@ public class LocationProcessor extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final String URL_STRING = "http://data.vancouver.ca/download/kml/public_streets.kmz";
 	private static final String FILE_NAME = "public_streets.kml";
-	private static final Key LAST_TIMESTAMP_KEY = KeyFactory.createKey("StreetBlockUpdateTimeStamp", "last update");
+	private static final Key LAST_TIMESTAMP_KEY = KeyFactory.createKey("FileUpdateTimeStamp", "last update");
 	private static final Logger LOG = Logger.getLogger(LocationProcessor.class.getName());
 	// days before we should try fetching the file again
 	private static int UPDATE_PERIOD = 6;
@@ -62,9 +66,12 @@ public class LocationProcessor extends HttpServlet {
 				LOG.info("LocationProcessor:\n\tFetching and unpacking .kmz file.");
 				CheckedInputStream in_stream = FetchLocationFile();
 				
+				
 				// only update the data if the file it's different than the last one we parsed
 				if(time_stamp == null || !time_stamp.isChecksumEqual(in_stream.getChecksum().getValue()) ){
-				
+					
+					
+					
 					LOG.info("LocationProcessor:\n\tParsing .kml file.");
 					int blocks_parsed = ParseLocationFile(in_stream);
 					
@@ -121,6 +128,20 @@ public class LocationProcessor extends HttpServlet {
 				bytes_read += last_bytes_read;
 				last_bytes_read = unzipper.read(b, bytes_read, file_size
 						- bytes_read);
+			}
+			InputStream array_stream = new ByteArrayInputStream(b);
+			String blob_id = "kmlfile";
+			int blob_index = 0;
+			ByteArrayEntity<byte[]> blob = new ByteArrayEntity<byte[]>(blob_id+blob_index);
+			int written = blob.copyBytes(array_stream);
+			
+			ObjectifyService.register(blob.getClass());
+			
+			while(written > 0){
+				ofy().save().entity(blob).now();
+				blob_index++;
+				blob = new ByteArrayEntity<byte[]>(blob_id+blob_index);
+				written = blob.copyBytes(array_stream);
 			}
 			ret = new CheckedInputStream( new ByteArrayInputStream(b), new CRC32());
 		} catch (MalformedURLException e) {
