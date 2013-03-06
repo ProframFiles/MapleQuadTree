@@ -7,7 +7,9 @@ import javax.jdo.PersistenceManager;
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig;
 import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
 import com.cpsc310.treespotter.server.DataFetcher;
+import com.cpsc310.treespotter.server.Job;
 import com.cpsc310.treespotter.server.LocationProcessor;
+import com.cpsc310.treespotter.server.StreetDataUpdateJob;
 import com.cpsc310.treespotter.server.TreeData;
 import com.cpsc310.treespotter.server.TreeDataServiceImpl;
 import com.cpsc310.treespotter.server.PMF;
@@ -16,6 +18,7 @@ import com.cpsc310.treespotter.client.ClientTreeData;
 import com.cpsc310.treespotter.client.KeywordSearch;
 import com.cpsc310.treespotter.client.SearchFieldID;
 
+import static com.googlecode.objectify.ObjectifyService.ofy;
 import static org.junit.Assert.*;
 
 import org.junit.After;
@@ -56,6 +59,18 @@ public class ServerSearchTest {
 		helper.tearDown();
 	}
 
+	@Test
+	public void testStreetUpdateJob() {
+		Job job = ofy().load().type(Job.class).id("street data update job").get();
+		if(job == null){
+			job = new StreetDataUpdateJob("street data update job", "http://data.vancouver.ca/download/kml/public_streets.kmz");
+		}
+		boolean has_more_work = job.run();
+		if(has_more_work){
+			has_more_work = job.run();
+		}
+	}
+	
 	@Test
 	public void testKeywordSearch() {
 		ArrayList<ClientTreeData> results;
@@ -186,6 +201,7 @@ public class ServerSearchTest {
 			fail(e.getMessage());
 		}
 	}
+	
 	
 	@Test
 	public void testDiameterSearch() {

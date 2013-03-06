@@ -1,7 +1,9 @@
 package com.cpsc310.treespotter.server;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -11,6 +13,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Output;
 import com.google.appengine.api.search.Document;
 import com.google.appengine.api.search.Field;
 import com.google.appengine.api.search.GeoPoint;
@@ -28,11 +32,17 @@ public class LocationKMLSAXHandler extends DefaultHandler {
 	private boolean inName = false;
 	private boolean inCoordinates = false;
 	private int blockCount = 0;
+	private int maxBlocks = 20000;
+	private int placeMarkStarts = 0;
+	private int skipUntil = 0;
 	private ArrayList<Double> blockCoords = new ArrayList<Double>();
 	private String blockName = null;
 	private String placemarkID = null;
 	private ArrayList<StreetBlock> cached_blocks = new ArrayList<StreetBlock>();
-	private int max_cached_blocks = 64;
+	private int max_cached_blocks = 128;
+	private ByteArrayOutputStream sink_stream = new ByteArrayOutputStream();
+	private Kryo kryo = new Kryo();
+	
 
 	/**
 	 * Construct a new LocationKMLSAXHandler <br>
@@ -45,11 +55,20 @@ public class LocationKMLSAXHandler extends DefaultHandler {
 	 */
 	public LocationKMLSAXHandler(PersistenceManager pm) {
 		super();
+		kryo.register(StreetBlock.class);
 		LOG.setLevel(Level.FINE);
 		cachedPM = pm;
 		resetState();
 	}
-
+	public LocationKMLSAXHandler(PersistenceManager pm, int start, int num_to_read) {
+		super();
+		kryo.register(StreetBlock.class);
+		LOG.setLevel(Level.FINE);
+		cachedPM = pm;
+		skipUntil = start;
+		maxBlocks = num_to_read;
+		resetState();
+	}
 
 	@Override
 	/**
@@ -64,10 +83,14 @@ public class LocationKMLSAXHandler extends DefaultHandler {
 		if(qName == null) return;
 		//System.out.println(qName);
 		if(!inPlacemark && qName.equals("Placemark")){
-			inPlacemark = true;
-			int id_index = attr.getIndex("id");
-			if(id_index != -1){
-				placemarkID=attr.getValue(id_index);
+			placeMarkStarts ++;
+			if(placeMarkStarts >= skipUntil && blockCount < maxBlocks){
+				blockCount++;
+				inPlacemark = true;
+				int id_index = attr.getIndex("id");
+				if(id_index != -1){
+					placemarkID=attr.getValue(id_index);
+				}
 			}
 		}
 		else if(inPlacemark && qName.equals("name")){
@@ -121,7 +144,8 @@ public void characters(char ch[], int start, int length) throws SAXBadDataExcept
 	 */
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 		if(qName == null) return;
-		if( qName.equals("Placemark") ){
+		if(inPlacemark && qName.equals("Placemark") ){
+
 			inPlacemark = false;
 			checkCreateBlockConditions();
 			try{
@@ -130,10 +154,11 @@ public void characters(char ch[], int start, int length) throws SAXBadDataExcept
 				//addDocumentToIndex(streetBlock, 3);
 				cached_blocks.add(streetBlock);
 				if(cached_blocks.size() == max_cached_blocks){
+					
+					//writeToByteArray();
 					cachedPM.makePersistentAll(cached_blocks);
 					cached_blocks.clear();
 				}
-				blockCount++;
 			}
 			catch(RuntimeException e){
 				LOG.warning("Problem parsing:\n\t" + e.getMessage() + ".\n\tIgnoring and resuming." );
@@ -147,12 +172,27 @@ public void characters(char ch[], int start, int length) throws SAXBadDataExcept
 			inCoordinates = false;
 		}
 		else if(qName.equals("Document")){ 
+			//writeToByteArray();
+			LOG.info("placing remaining "+ cached_blocks.size() + " in the DB ");
 			cachedPM.makePersistentAll(cached_blocks);
+			
 			cached_blocks.clear();
+			
 		}
 		
 	}
 
+	private void writeToByteArray(){
+		
+		
+		Output out = new Output(sink_stream);
+		for (StreetBlock block : cached_blocks) {
+			kryo.writeObject(out, block);
+		}
+		out.close();
+		LOG.fine("serialized_size is now " + sink_stream.size()/1024 +"kb"  );
+	}
+	
 	private void addDocumentToIndex(StreetBlock block, int retries){
 		GeoPoint geoPoint = new GeoPoint(block.getLatitude(), block.getLongitude());
 		Document doc = Document

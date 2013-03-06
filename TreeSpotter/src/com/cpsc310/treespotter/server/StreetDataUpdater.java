@@ -10,7 +10,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.appengine.api.taskqueue.QueueFactory;
 import com.googlecode.objectify.ObjectifyService;
+
+import static com.google.appengine.api.taskqueue.TaskOptions.Builder.withUrl;
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
 /**
@@ -23,6 +26,7 @@ public class StreetDataUpdater extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final Logger LOG = Logger.getLogger(StreetDataUpdater.class.getName());
 	private static final String JOB_NAME = "street data update job";
+	private static final String JOB_URL = "http://data.vancouver.ca/download/kml/public_streets.kmz";
 	
 	StreetDataUpdater(){
 		LOG.setLevel(Level.FINE);
@@ -32,7 +36,7 @@ public class StreetDataUpdater extends HttpServlet {
 	public void doPost(HttpServletRequest request, HttpServletResponse response){
 		Job job = ofy().load().type(Job.class).id(JOB_NAME).get();
 		if(job == null){
-			job = new StreetDataUpdateJob(JOB_NAME);
+			job = new StreetDataUpdateJob(JOB_NAME, JOB_URL);
 		}
 		boolean has_more_work = job.run();
 		if(has_more_work){
@@ -41,6 +45,6 @@ public class StreetDataUpdater extends HttpServlet {
 	}
 	
 	static public void queueThisTask(){
-		
+		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetdataupdate"));
 	}
 }

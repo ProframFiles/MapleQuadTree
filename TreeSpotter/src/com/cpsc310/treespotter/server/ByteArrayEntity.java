@@ -3,6 +3,7 @@
  */
 package com.cpsc310.treespotter.server;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -23,6 +24,10 @@ public class ByteArrayEntity<T> {
 	@Id String key;
 	@Unindex byte b[];
 
+	public ByteArrayEntity(){
+		
+	}
+	
 	public ByteArrayEntity(String id_string){
 		setKey(id_string);
 	}
@@ -44,22 +49,16 @@ public class ByteArrayEntity<T> {
 	}
 	
 	public int copyBytes(InputStream in_stream) throws IOException{
-		int read_bytes = 0;
 		b = null;
-		do{
-			if(b == null){
-				b = new byte[INITIAL_BUFFER_SIZE];
-			}
-			else{
-				b = Arrays.copyOf(b, b.length*2);
-			}
-			int this_read = 0;
-			do{
-				read_bytes += this_read;
-				this_read = in_stream.read(b, read_bytes, b.length-read_bytes);
-			}while( this_read >0 );
-		}while(b.length <= MAX_NUM_BYTES/2);
-		return read_bytes;
+		ByteArrayOutputStream byte_stream = new ByteArrayOutputStream();
+		byte[] buffer = new byte[1024];
+	    int len;
+	    while (byte_stream.size() < MAX_NUM_BYTES && (len =in_stream.read(buffer)) > -1 ) {
+	        byte_stream.write(buffer, 0, len);
+	    }
+	    byte_stream.flush();
+	    b = byte_stream.toByteArray();
+		return byte_stream.size();
 	}
 
 }
