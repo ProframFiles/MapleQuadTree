@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
-import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Unindex;
@@ -23,9 +22,7 @@ public class ByteArrayEntity<T> {
 	static final int INITIAL_BUFFER_SIZE = 1024;
 	@Id String key;
 	@Unindex byte b[];
-	ByteArrayEntity(){
-		
-	}
+
 	public ByteArrayEntity(String id_string){
 		setKey(id_string);
 	}
