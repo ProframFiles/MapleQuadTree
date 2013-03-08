@@ -12,7 +12,15 @@ public interface TreeDataService extends RemoteService {
 
   public ClientTreeData addTree(ClientTreeData info);
   
+  public ClientTreeData modifyTree(ClientTreeData info);
+  
+  public String flagTreeData(String treeID, String fieldName, String reason);
+  
+  public ClientTreeData addTreeComment(String treeID, TreeComment comment );
+  
   public ClientTreeData getTreeData(String id, String userType);
   
   public ArrayList<ClientTreeData> searchTreeData(SearchQueryInterface query);
+  
+  public ArrayList<String> getSearchSuggestions(SearchFieldID field_id, String hint);
 }

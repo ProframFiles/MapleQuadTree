@@ -1,6 +1,7 @@
 package com.cpsc310.treespotter.server;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +16,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
+import com.cpsc310.treespotter.shared.ZippedCSVFilter;
 import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.annotation.EntitySubclass;
 
@@ -36,6 +38,36 @@ public class StreetDataUpdateJob extends Job {
 	public void setOptions(String option_name, String option_value) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	@Override
+	protected byte[] preProcessDataFile(byte[] b) {
+		String file_name = "ICIS_AddressBC.csv";
+		byte[] out_array;
+		
+		ArrayList<Integer> selectedIndices = new ArrayList<Integer>();
+		selectedIndices.add(2);
+		selectedIndices.add(3);
+		selectedIndices.add(8);
+		selectedIndices.add(11);
+		selectedIndices.add(12);
+		ZippedCSVFilter filt = new ZippedCSVFilter(selectedIndices);
+		try {
+			ZipInputStream unzipper = new ZipInputStream(new ByteArrayInputStream(b));
+			ZipEntry zip_entry = unzipper.getNextEntry();
+			while (zip_entry != null
+					&& !zip_entry.getName().equalsIgnoreCase(file_name)) {
+				zip_entry = unzipper.getNextEntry();
+			}
+			if(zip_entry == null || !zip_entry.getName().equalsIgnoreCase(file_name)){
+				throw new FileNotFoundException("File Not Found:  " + file_name);
+			}
+			
+			out_array = filt.filter(unzipper);
+		} catch (IOException e) {
+			throw new RuntimeException("Preprocessing of file failed: " + e, e);
+		}
+		return out_array;
 	}
 
 	@Override
@@ -64,7 +96,7 @@ public class StreetDataUpdateJob extends Job {
 			ZipEntry zip_entry = unzipper.getNextEntry();
 			while (zip_entry != null
 					&& !zip_entry.getName().equalsIgnoreCase(st.task_string)) {
-				unzipper.getNextEntry();
+				zip_entry = unzipper.getNextEntry();
 			}
 			if(zip_entry == null || !zip_entry.getName().equalsIgnoreCase(st.task_string)){
 				throw new FileNotFoundException("File Not Found:  " + st.task_string);

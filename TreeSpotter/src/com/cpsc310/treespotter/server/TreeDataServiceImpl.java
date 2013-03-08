@@ -11,7 +11,9 @@ import javax.jdo.Query;
 import javax.jdo.Transaction;
 
 import com.cpsc310.treespotter.client.ClientTreeData;
+import com.cpsc310.treespotter.client.SearchFieldID;
 import com.cpsc310.treespotter.client.SearchQueryInterface;
+import com.cpsc310.treespotter.client.TreeComment;
 import com.cpsc310.treespotter.client.TreeDataService;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
@@ -209,6 +211,31 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		}
 		
 		return results;
+	}
+
+	@Override
+	public ClientTreeData modifyTree(ClientTreeData info) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String flagTreeData(String treeID, String fieldName, String reason) {
+		// TODO Auto-generated method stub
+		return "Not Implemented yet";
+	}
+
+	@Override
+	public ClientTreeData addTreeComment(String treeID, TreeComment comment) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ArrayList<String> getSearchSuggestions(SearchFieldID field_id,
+			String hint) {
+		// TODO Auto-generated method stub
+		return new ArrayList<String>();
 	}
 
 

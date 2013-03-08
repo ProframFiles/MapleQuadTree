@@ -12,6 +12,7 @@ import java.net.URL;
 import java.util.Date;
 import java.util.ArrayList;
 
+import com.cpsc310.treespotter.shared.Util;
 import com.google.apphosting.api.ApiProxy;
 import com.google.apphosting.api.DeadlineExceededException;
 import com.googlecode.objectify.ObjectifyService;
@@ -63,6 +64,7 @@ public abstract class Job {
 		}
 		if(shouldFetchFile()){
 			byte[] b = fetchFileData();
+			b = preProcessDataFile(b);
 			fileData.save(new ByteArrayInputStream(b));
 			fileDataRef = Ref.create(fileData);
 			subTasks = createSubTasks(new ByteArrayInputStream(b));
@@ -98,6 +100,11 @@ public abstract class Job {
 		return true;
 	}
 
+	protected byte[] preProcessDataFile(byte[] b) {
+		// TODO Auto-generated method stub
+		return b;
+	}
+
 	private boolean needToStop(){
 		long rem = ApiProxy.getCurrentEnvironment().getRemainingMillis();
 		return rem < 30000;
@@ -107,14 +114,7 @@ public abstract class Job {
 		try {
 			URL url = new URL(urlString);
 			InputStream url_stream = url.openStream();
-			ByteArrayOutputStream byte_stream = new ByteArrayOutputStream();
-			byte[] buffer = new byte[1024];
-		    int len;
-		    while ((len = url_stream.read(buffer)) > -1 ) {
-		        byte_stream.write(buffer, 0, len);
-		    }
-		    byte_stream.flush();
-		    byte[] b = byte_stream.toByteArray();
+		    byte[] b = Util.streamToByteArray(url_stream);
 			return b;
 		} catch (MalformedURLException e) {
 			throw new RuntimeException("Malformed url while getting job data\n\t" + e.getMessage(), e);
