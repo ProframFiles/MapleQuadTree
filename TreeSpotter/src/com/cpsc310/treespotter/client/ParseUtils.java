@@ -104,5 +104,23 @@ public class ParseUtils {
 			throw new InvalidFieldException("Invalid field: Date");
 		}
 	}
+	
+	public static int getHeightRange(String str) 
+		throws Exception {
+		try {
+			int h = (int) Double.parseDouble(str); // just in case it's a float
+			int range = -1;
+			if (h < 0) {
+				range = 0;
+			} else if (h < 100) {
+				range = h / 10;
+			} else {
+				range = 10;
+			}
+			return range;
+		} catch (Exception e) {
+			throw e;
+		}
+	}
 
 }

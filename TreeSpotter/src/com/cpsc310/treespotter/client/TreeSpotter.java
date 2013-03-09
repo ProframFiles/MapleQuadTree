@@ -61,14 +61,14 @@ public class TreeSpotter implements EntryPoint {
 	private static final String wikipediaSearchURL = "http://en.wikipedia.org/wiki/Special:Search/";
 
 	// list of fields, used for the Add Tree Form and the Advanced Search
-	private static final String LOCATION = "Location";
-	private static final String GENUS = "Genus";
-	private static final String SPECIES = "Species";
-	private static final String COMMON = "Common Name";
-	private static final String NEIGHBOUR = "Neighbourhood";
-	private static final String HEIGHT = "Height";
-	private static final String DIAMETER = "Diameter";
-	private static final String PLANTED = "Date Planted";
+	protected static final String LOCATION = "Location";
+	protected static final String GENUS = "Genus";
+	protected static final String SPECIES = "Species";
+	protected static final String COMMON = "Common Name";
+	protected static final String NEIGHBOUR = "Neighbourhood";
+	protected static final String HEIGHT = "Height";
+	protected static final String DIAMETER = "Diameter";
+	protected static final String PLANTED = "Date Planted";
 	private String[] basicFields = { LOCATION, GENUS, SPECIES, COMMON };
 	private String[] optionalFields = { NEIGHBOUR, HEIGHT, DIAMETER, PLANTED };
 
@@ -79,15 +79,15 @@ public class TreeSpotter implements EntryPoint {
 	private LinkedHashMap<Label, TextBox> advancedSearchMap = new LinkedHashMap<Label, TextBox>();
 	private LinkedHashMap<Label, TextBox> addFormMap = new LinkedHashMap<Label, TextBox>();
 
-	private final TreeDataServiceAsync treeDataService = GWT
-			.create(TreeDataService.class);
+	protected final TreeDataServiceAsync treeDataService = GWT.create(TreeDataService.class);
+	private TreeSpotterClient clientHelper = null;
 
 	// variables for loading map view
 	private final VerticalPanel infoMapPanel = new VerticalPanel();
 	private final VerticalPanel searchMapPanel = new VerticalPanel();
 	private final String INFO_MAP_SIZE = "500px";
 	private final String SEARCH_MAP_SIZE = "600px";
-	private Geocoder geo;
+	protected Geocoder geo;
 	private Label invalidLoc = new Label("Tree location could not be displayed");
 	private static final int ZOOM_LVL = 15;
 	private MapWidget searchMap;
@@ -100,7 +100,7 @@ public class TreeSpotter implements EntryPoint {
 
 	private List<ClientTreeData> treeResults = new ArrayList<ClientTreeData>();
 	private LatLngBounds searchMapBound;
-
+	
 	// for adding tree
 	private Address geoAddr;
 	private ClientTreeData addTree;
@@ -110,6 +110,7 @@ public class TreeSpotter implements EntryPoint {
 
 	// table for TreeInfo
 	private FlexTable treeInfoTable = null;
+	private ClientTreeData displayTree;
 
 	// tab panel container for search results
 	private TabPanel searchResultsPanel = null;
@@ -135,6 +136,8 @@ public class TreeSpotter implements EntryPoint {
 		 * 
 		 * String user = ADMIN; getTreeInfo(tid, user);
 		 */
+		
+		clientHelper = new TreeSpotterClient(this);
 
 		// Reminder: replace with API key once deployed
 		// Load Google Maps API asynchronously
@@ -168,7 +171,7 @@ public class TreeSpotter implements EntryPoint {
 		 */
 	}
 
-	private void handleError(Throwable error) {
+	protected void handleError(Throwable error) {
 		Window.alert(error.getMessage());
 		if (error instanceof NotLoggedInException) {
 			Window.Location.replace(loginInfo.getLogoutUrl());
@@ -467,7 +470,9 @@ public class TreeSpotter implements EntryPoint {
 	 * @param t
 	 *            ClientTreeData to display details of
 	 */
-	private void displayTreeInfoPage(ClientTreeData t) {
+	protected void displayTreeInfoPage(ClientTreeData t) {
+		displayTree = t;
+		
 		/* create the map */
 		setTreeInfoMap(t);
 
@@ -566,7 +571,7 @@ public class TreeSpotter implements EntryPoint {
 				if (invalidFields.isEmpty()) {
 					try {
 						addPanel.hide();
-						populateAddData(null);
+						clientHelper.populateAddData(null, addFormMap);
 					} catch (Exception e) {
 						handleError(e);
 					}
@@ -615,6 +620,10 @@ public class TreeSpotter implements EntryPoint {
 		addFormTooltips();
 	}
 
+	private void addComment() {
+		// TODO: implement
+	}
+	
 	/**
 	 * Helper function for initHomePage() Creates a panel with a text box for an
 	 * advanced search field
@@ -874,156 +883,6 @@ public class TreeSpotter implements EntryPoint {
 		row.setCellHeight(tb, "50px");
 		
 		return row;
-	}
-
-	/**
-	 * Helper method for addUserTree. Parses and populates a ClientTreeData
-	 * object from add tree form.
-	 * 
-	 * @param t
-	 *            if null, location not yet parsed else, contains
-	 *            reverse-geocoded location
-	 * @throws InvalidFieldException
-	 *             thrown if input is not in valid format for any field
-	 */
-	private void populateAddData(ClientTreeData t) throws InvalidFieldException {
-		boolean parseLoc = true;
-		if (t == null) {
-			addTree = new ClientTreeData();
-		} else {
-			addTree = t;
-			parseLoc = false;
-		}
-
-		for (Map.Entry<Label, TextBox> entry : addFormMap.entrySet()) {
-			String key = entry.getKey().getText().split("\\s[*]")[0];
-			String input = entry.getValue().getValue().trim();
-
-			// this assumes valid location/coords in form
-			// #### Street Name or #, #
-			if (key.equalsIgnoreCase(LOCATION)) {
-				boolean isAddr = true;
-				String[] loc = input.split("[,]");
-				if (loc.length == 2) {
-					isAddr = false;
-				}
-				// try parsing as address
-				if (isAddr) {
-					geoAddr = new Address(input);
-					if (!geoAddr.isValid()) {
-						throw new InvalidFieldException(
-								"Invalid field: Location");
-					}
-					addTree.setCivicNumber(geoAddr.getNumber());
-					addTree.setStreet(geoAddr.getStreet());
-				}
-				// try parsing as coordinates
-				else if (parseLoc) {
-					try {
-						LatLng pt = LatLng.fromUrlValue(input);
-						if (!ParseUtils.validCoordinates(pt)) {
-							throw new InvalidFieldException(
-									"Invalid field: Location");
-						}
-						// reverse geocode coordinates -> address
-						geo.getLocations(pt, new LocationCallback() {
-							public void onFailure(int e) {
-								handleError(new InvalidFieldException(
-										"Invalid field: Location"));
-							}
-
-							public void onSuccess(JsArray<Placemark> p) {
-								if (p.length() <= 0) {
-									handleError(new InvalidFieldException(
-											"Invalid field: Location"));
-								}
-								// uses first placemark result only
-								// getAddress has format ### Street, Vancouver,
-								// BC postal_code, Canada
-								else {
-									geoAddr = new Address(p.get(0).getAddress());
-									addTree.setCivicNumber(geoAddr.getNumber());
-									addTree.setStreet(geoAddr.getStreet());
-									try {
-										populateAddData(addTree);
-									} catch (Exception e) {
-										handleError(e);
-									}
-								}
-							}
-						});
-						return;
-					} catch (Exception e) {
-						throw new InvalidFieldException(
-								"Invalid field: Location");
-					}
-				}
-			} else if (key.equalsIgnoreCase(GENUS)) {
-				addTree.setGenus(input);
-			} else if (key.equalsIgnoreCase(SPECIES)) {
-				addTree.setSpecies(input);
-			} else if (key.equalsIgnoreCase(COMMON)) {
-				addTree.setCommonName(input);
-			} else if (key.equalsIgnoreCase(NEIGHBOUR) && !input.isEmpty()) {
-				addTree.setNeighbourhood(input);
-			} else if (key.equalsIgnoreCase(HEIGHT) && !input.isEmpty()) {
-				try {
-					// TODO: need a setHeight field
-					// t.setHeight(Double.parseDouble(input));
-					int h = (int) Double.parseDouble(input); // just in case
-																// it's a float
-					int range = -1;
-					if (h < 0) {
-						range = 0;
-					} else if (h < 100) {
-						range = h / 10;
-					} else {
-						range = 10;
-					}
-					addTree.setHeightRange(range);
-				} catch (Exception e) {
-					throw new InvalidFieldException("Invalid field: Height");
-				}
-			} else if (key.equalsIgnoreCase(DIAMETER) && !input.isEmpty()) {
-				try {
-					addTree.setDiameter((int) Double.parseDouble(input));
-				} catch (Exception e) {
-					throw new InvalidFieldException("Invalid field: Diameter");
-				}
-			} else if (key.equalsIgnoreCase(PLANTED) && !input.isEmpty()) {
-				try {
-					addTree.setPlanted(ParseUtils.formatDate(input));
-				} catch (Exception e) {
-					throw new InvalidFieldException(
-							"Invalid field: Date Planted");
-				}
-			}
-		}
-		sendAddTreeData(addTree);
-	}
-
-	/**
-	 * Helper method for addUserTree. Sends ClientTreeData populated from add
-	 * tree form to server
-	 * 
-	 * @param t
-	 *            ClientTreeData to be sent for persistence
-	 */
-	private void sendAddTreeData(ClientTreeData t) {
-		treeDataService.addTree(t, new AsyncCallback<ClientTreeData>() {
-			public void onFailure(Throwable error) {
-				handleError(error);
-			}
-
-			public void onSuccess(ClientTreeData result) {
-				if (result != null) {
-					Window.alert(HTMLResource.ADD_TREE_SUCCESS);
-				} else {
-					Window.alert(HTMLResource.ADD_TREE_FAIL);
-				}
-				displayTreeInfoPage(result);
-			}
-		});
 	}
 
 	/**
