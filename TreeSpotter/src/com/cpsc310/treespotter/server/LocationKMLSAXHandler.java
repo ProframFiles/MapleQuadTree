@@ -2,8 +2,6 @@ package com.cpsc310.treespotter.server;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -181,7 +179,8 @@ public void characters(char ch[], int start, int length) throws SAXBadDataExcept
 		}
 		
 	}
-
+	//(aleksy) testing method, leave me alone eclipse warnings
+	@SuppressWarnings("unused")
 	private void writeToByteArray(){
 		
 		
@@ -193,6 +192,8 @@ public void characters(char ch[], int start, int length) throws SAXBadDataExcept
 		LOG.fine("serialized_size is now " + sink_stream.size()/1024 +"kb"  );
 	}
 	
+	//(aleksy) testing method, leave me alone eclipse warnings
+	@SuppressWarnings("unused")
 	private void addDocumentToIndex(StreetBlock block, int retries){
 		GeoPoint geoPoint = new GeoPoint(block.getLatitude(), block.getLongitude());
 		Document doc = Document

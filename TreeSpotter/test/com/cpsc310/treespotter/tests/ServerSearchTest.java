@@ -63,7 +63,7 @@ public class ServerSearchTest {
 	public void testStreetUpdateJob() {
 		Job job = ofy().load().type(Job.class).id("street data update job").get();
 		if(job == null){
-			job = new StreetDataUpdateJob("street data update job", "http://www.ugrad.cs.ubc.ca/~q0b7/ICIS_AddressBC_csv_all.zip");
+			job = new StreetDataUpdateJob("street data update job");
 		}
 		boolean has_more_work = job.run();
 		if(has_more_work){

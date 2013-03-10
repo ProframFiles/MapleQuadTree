@@ -29,7 +29,6 @@ import org.xml.sax.helpers.XMLReaderFactory;
 
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Key;
-import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
 import static com.googlecode.objectify.ObjectifyService.ofy;
 

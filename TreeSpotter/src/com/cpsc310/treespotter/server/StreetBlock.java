@@ -10,7 +10,7 @@ import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 
 @PersistenceCapable
-public class StreetBlock {
+public class StreetBlock implements LatLongProvider {
 	@PrimaryKey
 	@Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
 	private Key blockID;
@@ -71,6 +71,9 @@ public class StreetBlock {
 	}
 	public String getStreetName(){
 		return streetName;
+	}
+	public LatLong getLatLong(){
+		return new LatLong(latitude, longitude);
 	}
 	public double getLatitudeRadians(){
 		return Math.toRadians(latitude);

@@ -6,7 +6,6 @@ package com.cpsc310.treespotter.server;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -236,7 +235,7 @@ public class SearchQueryProcessor {
 		Query longQuery = pm.newQuery(StreetBlock.class
 				, "longitude <= " + Double.toString(ll.longitude + LONGRANGE) + "&&"
 				+ "longitude >= " + Double.toString(ll.longitude - LONGRANGE));
-		StreetBlockDistanceComparator comparator = new StreetBlockDistanceComparator(ll.latitude, ll.longitude);
+		LatLongDistanceComparator comparator = new LatLongDistanceComparator(ll.latitude, ll.longitude);
 		SortedSet<StreetBlock> block_set = new TreeSet<StreetBlock>(comparator);
 		block_set.addAll((Collection<StreetBlock>)longQuery.execute());
 		if(!block_set.isEmpty()){

@@ -4,7 +4,6 @@
 package com.cpsc310.treespotter.server;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -45,14 +44,14 @@ public abstract class Job {
 		
 	}
 	
-	public Job(String job_name, String fetch_url){
+	public Job(String job_name){
 		id = job_name;
-		urlString = fetch_url;
 		ObjectifyService.register(this.getClass());
 	}
 	
 	abstract protected int processSubTask(InputStream is, SubTask st);
-	
+	abstract protected ArrayList<String> getFileUrls();
+	abstract public String getJobID();
 	
 	public boolean run()
 	{
@@ -62,9 +61,9 @@ public abstract class Job {
 		else{
 			fileData = null;
 		}
-		if(shouldFetchFile()){
-			byte[] b = fetchFileData();
-			b = preProcessDataFile(b);
+		if(shouldFetchData()){
+			ArrayList<byte[]> file_blobs = fetchFileData(getFileUrls());
+			byte[] b = preProcessDataFiles(file_blobs);
 			fileData.save(new ByteArrayInputStream(b));
 			fileDataRef = Ref.create(fileData);
 			subTasks = createSubTasks(new ByteArrayInputStream(b));
@@ -100,9 +99,9 @@ public abstract class Job {
 		return true;
 	}
 
-	protected byte[] preProcessDataFile(byte[] b) {
+	protected byte[] preProcessDataFiles(ArrayList<byte[]> b) {
 		// TODO Auto-generated method stub
-		return b;
+		return null;
 	}
 
 	private boolean needToStop(){
@@ -110,24 +109,27 @@ public abstract class Job {
 		return rem < 30000;
 	}
 	
-	private byte[] fetchFileData(){
-		try {
-			URL url = new URL(urlString);
-			InputStream url_stream = url.openStream();
-		    byte[] b = Util.streamToByteArray(url_stream);
-			return b;
-		} catch (MalformedURLException e) {
-			throw new RuntimeException("Malformed url while getting job data\n\t" + e.getMessage(), e);
-		} catch (IOException e) {
-			throw new RuntimeException("IO error while opening job url stream\n\t" + e.getMessage(), e);
+	private ArrayList< byte[]> fetchFileData(ArrayList<String> urls){
+		ArrayList<byte[]> file_blobs = new ArrayList<byte[]>();
+		for(String file_url: urls){
+			try {
+				URL url = new URL(file_url);
+				InputStream url_stream = url.openStream();
+			    file_blobs.add(Util.streamToByteArray(url_stream));
+			} catch (MalformedURLException e) {
+				throw new RuntimeException("Malformed url while getting job data\n\t" + e.getMessage(), e);
+			} catch (IOException e) {
+				throw new RuntimeException("IO error while opening job url stream\n\t" + e.getMessage(), e);
+			}
 		}
+		return file_blobs;
 	}
 	
-	private boolean shouldFetchFile()
+	private boolean shouldFetchData()
 	{
 		//the persisted file is not the one we have saved, or we don't have one saved
-		if (fileData == null || !fileData.getName().equals(urlString)){
-			fileData = new PersistentFile(urlString);
+		if (fileData == null){
+			fileData = new PersistentFile(getJobID());
 			return true;
 		}
 		
