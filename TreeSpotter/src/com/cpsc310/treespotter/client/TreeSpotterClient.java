@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.maps.client.geocode.Geocoder;
 import com.google.gwt.maps.client.geocode.LocationCallback;
@@ -11,6 +12,7 @@ import com.google.gwt.maps.client.geocode.Placemark;
 import com.google.gwt.maps.client.geom.LatLng;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -168,8 +170,76 @@ public class TreeSpotterClient {
 
 	public void exportData(ArrayList<ClientTreeData> rlist) {
 		
+		StringBuilder stringBuilder = new StringBuilder();
 		
+		// Columns
+		stringBuilder.append("\"" + "Tree ID" + "\",");
+		stringBuilder.append("\"" + TreeSpotter.LOCATION + "\",");
+		stringBuilder.append("\"" + TreeSpotter.NEIGHBOUR + "\",");
+		stringBuilder.append("\"" + TreeSpotter.GENUS + "\",");
+		stringBuilder.append("\"" + TreeSpotter.SPECIES + "\",");
+		stringBuilder.append("\"" + TreeSpotter.COMMON + "\",");
+		stringBuilder.append("\"" + TreeSpotter.DIAMETER + "\",");
+		stringBuilder.append("\"" + TreeSpotter.HEIGHT + "\",");
+		stringBuilder.append("\"" + TreeSpotter.PLANTED + "\",");
 		
+		stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+		stringBuilder.append("\n");
+		
+		// Data
+		for (int i=0; i<rlist.size(); i++) {
+			ClientTreeData tree = rlist.get(i);
+			stringBuilder.append("\"" + tree.getID() + "\",");
+			stringBuilder.append("\"" + tree.getLocation() + "\",");
+			stringBuilder.append("\"" + emptyOrValue(tree.getNeighbourhood()) + "\",");
+			stringBuilder.append("\"" + tree.getGenus() + "\",");
+			stringBuilder.append("\"" + tree.getSpecies() + "\",");
+			stringBuilder.append("\"" + tree.getCommonName() + "\",");
+			stringBuilder.append("\"" + convertToDiameter(tree.getDiameter()) + "\",");
+			stringBuilder.append("\"" + convertToHeight(tree.getHeightRange()) + "\",");
+			stringBuilder.append("\"" + emptyOrValue(tree.getPlanted()) + "\"");
+			
+			stringBuilder.append("\n");
+		}
+		
+		sendToServer(stringBuilder);
+		
+	}
+
+	private void sendToServer(StringBuilder csvText) {
+		String csv = csvText.toString();
+		parent.treeDataService.exportCSV(csv, new AsyncCallback<String>() {
+			public void onFailure(Throwable caught) {
+				
+			}
+			
+			public void onSuccess(String result) {
+				final HTML serverResponseLabel = new HTML();
+				serverResponseLabel.removeStyleName("serverResponseLabelError");
+				serverResponseLabel.setHTML(result);
+			}
+		});
+		
+	}
+
+	private String convertToHeight(int heightRange) {
+		if (heightRange < 0) return "";
+		if (0 <= heightRange && heightRange <= 10) {
+			int low = heightRange * 10;
+			int high = low + 10;
+			return String.valueOf(low) + "-" + String.valueOf(high);
+		}
+		return "100+";
+	}
+
+	private String convertToDiameter(float diameter) {
+		if (diameter < 0) return "";
+		return String.valueOf(diameter);
+	}
+
+	private String emptyOrValue(String s) {
+		if (s == null) return "";
+		return s;
 	}
 	
 	
