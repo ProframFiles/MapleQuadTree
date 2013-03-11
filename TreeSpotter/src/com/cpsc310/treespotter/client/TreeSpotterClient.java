@@ -1,5 +1,6 @@
 package com.cpsc310.treespotter.client;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -163,6 +164,12 @@ public class TreeSpotterClient {
 				parent.displayTreeInfoPage(result);
 			}
 		});
+	}
+
+	public void exportData(ArrayList<ClientTreeData> rlist) {
+		
+		
+		
 	}
 	
 	
