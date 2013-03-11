@@ -9,7 +9,6 @@ import java.util.Set;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
@@ -28,8 +27,6 @@ import com.google.gwt.maps.client.Maps;
 import com.google.gwt.maps.client.event.MarkerClickHandler;
 import com.google.gwt.maps.client.geocode.Geocoder;
 import com.google.gwt.maps.client.geocode.LatLngCallback;
-import com.google.gwt.maps.client.geocode.LocationCallback;
-import com.google.gwt.maps.client.geocode.Placemark;
 import com.google.gwt.maps.client.geom.LatLng;
 import com.google.gwt.maps.client.geom.LatLngBounds;
 import com.google.gwt.maps.client.geom.Point;
@@ -58,7 +55,7 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class TreeSpotter implements EntryPoint {
 	private LoginInfo loginInfo = null;
-	private static final String wikipediaSearchURL = "http://en.wikipedia.org/wiki/Special:Search/";
+	protected static final String wikipediaSearchURL = "http://en.wikipedia.org/wiki/Special:Search/";
 
 	// list of fields, used for the Add Tree Form and the Advanced Search
 	protected static final String LOCATION = "Location";
@@ -83,12 +80,9 @@ public class TreeSpotter implements EntryPoint {
 	private TreeSpotterClient clientHelper = null;
 
 	// variables for loading map view
-	private final VerticalPanel infoMapPanel = new VerticalPanel();
 	private final VerticalPanel searchMapPanel = new VerticalPanel();
-	private final String INFO_MAP_SIZE = "500px";
 	private final String SEARCH_MAP_SIZE = "600px";
 	protected Geocoder geo;
-	private Label invalidLoc = new Label("Tree location could not be displayed");
 	private static final int ZOOM_LVL = 15;
 	private MapWidget searchMap;
 	private int listIndex;
@@ -107,10 +101,6 @@ public class TreeSpotter implements EntryPoint {
 
 	// in order to be accessed by inner classes this has to be a member
 	private ArrayList<ClientTreeData> treeList = new ArrayList<ClientTreeData>();
-
-	// table for TreeInfo
-	private FlexTable treeInfoTable = null;
-	private ClientTreeData displayTree;
 
 	// tab panel container for search results
 	private TabPanel searchResultsPanel = null;
@@ -470,44 +460,15 @@ public class TreeSpotter implements EntryPoint {
 	 * @param t
 	 *            ClientTreeData to display details of
 	 */
-	protected void displayTreeInfoPage(ClientTreeData t) {
-		displayTree = t;
+	protected void displayTreeInfoPage(ClientTreeData t) {		
+		TreeInfoPage treePage; 
 		
-		/* create the map */
-		setTreeInfoMap(t);
-
-		/* create table with all the data */
-		treeInfoTable = new FlexTable();
-		treeInfoTable.setStyleName("tree-info-table");
-		treeInfoTable.setCellPadding(10);
-		treeInfoTable.setSize("400px", "400px");
-
-		createResultDataRow("Species", ParseUtils.capitalize(t.getSpecies(), true));
-		createResultDataRow("Genus", ParseUtils.capitalize(t.getGenus(), false));
-		String capName = ParseUtils.capitalize(t.getCommonName(), false);
-		createResultDataRow("Common Name", "<a href='" + wikipediaSearchURL
-				+ capName + "'>" + capName + "</a>");
-		createResultDataRow("Location", ParseUtils.capitalize(t.getLocation(), false));
-		String neighbour = t.getNeighbourhood();
-		neighbour = (neighbour == null) ? neighbour : neighbour.toUpperCase();
-		createResultDataRow("Neighbourhood", neighbour);
-		createResultDataRow("Date Planted", t.getPlanted());
-		createResultDataRow("Height", t.getHeightRange());
-
-		// need to check if the diameter is -1
-		String dm = t.getDiameter() == -1.0 ? null : Double.toString(t
-				.getDiameter()) + " inches";
-		createResultDataRow("Diameter", dm);
-
-		RootPanel content = RootPanel.get("content");
-		content.clear();
-		content.add(infoMapPanel);
-		content.add(treeInfoTable);
-
-		/* history support */
-		// TODO: put this back when history works
-		//History.newItem("tree" + t.getID());
-
+		// get the regular tree info page if not logged in
+		boolean isLoggedIn = loginInfo != null && loginInfo.isLoggedIn();
+		treePage = isLoggedIn ? new LoggedInTreeInfoPage(this, t) : new RegularTreeInfoPage(this, t); 
+		
+		RootPanel.get("content").clear();
+		RootPanel.get("content").add(treePage);
 	}
 
 	/**
@@ -671,6 +632,13 @@ public class TreeSpotter implements EntryPoint {
 	private void initLoginLogout() {
 		final Anchor loginLink = Anchor.wrap(Document.get().getElementById(
 				"login-link"));
+		
+		if (loginInfo != null && loginInfo.isLoggedIn()) {
+			loginLink.setText("Log out");
+			loginLink.setHref(loginInfo.getLogoutUrl());
+		}
+		
+		
 		LoginServiceAsync loginService = GWT.create(LoginService.class);
 		loginService.login(GWT.getHostPageBaseURL(),
 				new AsyncCallback<LoginInfo>() {
@@ -813,53 +781,6 @@ public class TreeSpotter implements EntryPoint {
 	}
 	
 	/**
-	 * Helper function to create rows of data for the TreeInfoPage
-	 * 
-	 * @param field
-	 *            Data field
-	 * @param value
-	 *            Data value
-	 * @return
-	 */
-	private void createResultDataRow(String field, String value) {
-		int rowNum = treeInfoTable.getRowCount();
-		Label fld = new Label(field);
-		fld.setStyleName("tree-info-field");
-		treeInfoTable.setWidget(rowNum, 0, fld);
-
-		if (value == null || value.equals("-1") || value.equals("-1.0 inches")) {
-			value = "Not available";
-		}
-		treeInfoTable.setWidget(rowNum, 1, new HTML(value));
-	}
-
-	/**
-	 * Helper function to create height data row for the TreeInfoPage
-	 * 
-	 * @param range
-	 *            Tree height range
-	 * 
-	 * @return String of height range ie. "0 - 10 ft"
-	 */
-	private void createResultDataRow(String field, int range) {
-		int rowNum = treeInfoTable.getRowCount();
-		Label fld = new Label(field);
-		String value = "";
-		fld.setStyleName("tree-info-field");
-		treeInfoTable.setWidget(rowNum, 0, fld);
-
-		if (range == -1) {
-			value = "Not available";
-		} else if (range == 10) {
-			value = "Over 10 ft";
-		} else {
-			value = Integer.toString(range * 10) + " - "
-					+ Integer.toString((range + 1) * 10) + " ft";
-		}
-		treeInfoTable.setWidget(rowNum, 1, new Label(value));
-	}
-
-	/**
 	 * Helper method to create fields for the add tree popup
 	 * 
 	 * @param text
@@ -883,56 +804,6 @@ public class TreeSpotter implements EntryPoint {
 		row.setCellHeight(tb, "50px");
 		
 		return row;
-	}
-
-	/**
-	 * Sets the tree info map to the geocoded location
-	 * 
-	 * @param data
-	 *            tree to be displayed
-	 */
-	private void setTreeInfoMap(ClientTreeData data) {
-		infoMapPanel.clear();
-		infoMapPanel.setStyleName("tree-info-map");
-		infoMapPanel.setSize(INFO_MAP_SIZE, INFO_MAP_SIZE);
-
-		if (data == null) {
-			infoMapPanel.add(invalidLoc);
-			return;
-		}
-		// just in case city is required in search
-		String loc = data.getLocation() + ", Vancouver, BC";
-		System.out.println("location: " + loc);
-		geo.getLatLng(loc, new LatLngCallback() {
-			public void onFailure() {
-				infoMapPanel.add(invalidLoc);
-			}
-
-			public void onSuccess(LatLng pt) {
-				setTreeInfoMap(pt);
-			}
-		});
-
-	}
-
-	/**
-	 * Helper method for setTreeInfoMap. Sets map to coordinates, centred and
-	 * zoomed
-	 * 
-	 * @param pt
-	 *            passed in from async geocoding call
-	 */
-	private void setTreeInfoMap(LatLng pt) {
-		if (pt == null) {
-			infoMapPanel.add(invalidLoc);
-			return;
-		}
-		MapWidget map = new MapWidget(pt, ZOOM_LVL);
-		map.setSize(INFO_MAP_SIZE, INFO_MAP_SIZE);
-		map.setUIToDefault();
-		Marker m = new Marker(pt);
-		map.addOverlay(m);
-		infoMapPanel.add(map);
 	}
 
 	/**

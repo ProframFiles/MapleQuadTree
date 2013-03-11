@@ -1,0 +1,23 @@
+/* TREE INFO PAGE */
+
+.tree-info-map {
+	float: left;
+	margin-left: 5%;
+}
+
+.tree-info-table {
+	padding: 20px;
+}
+
+.tree-info-field {
+	font-weight: bold;
+	height: 20px;
+}
+
+input {
+	font-size: 14px;
+}
+
+button {
+	margin-left: 25px;
+}
