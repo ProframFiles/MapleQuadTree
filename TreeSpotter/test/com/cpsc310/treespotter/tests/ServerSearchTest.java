@@ -10,6 +10,7 @@ import com.cpsc310.treespotter.server.DataFetcher;
 import com.cpsc310.treespotter.server.Job;
 import com.cpsc310.treespotter.server.LocationProcessor;
 import com.cpsc310.treespotter.server.StreetDataUpdateJob;
+import com.cpsc310.treespotter.server.StreetDataUpdater;
 import com.cpsc310.treespotter.server.TreeData;
 import com.cpsc310.treespotter.server.TreeDataServiceImpl;
 import com.cpsc310.treespotter.server.PMF;
@@ -61,6 +62,8 @@ public class ServerSearchTest {
 
 	@Test
 	public void testStreetUpdateJob() {
+		StreetDataUpdater updater = new StreetDataUpdater();
+		updater.init();
 		Job job = ofy().load().type(Job.class).id("street data update job").get();
 		if(job == null){
 			job = new StreetDataUpdateJob("street data update job");

@@ -11,7 +11,7 @@ import com.cpsc310.treespotter.client.ClientTreeData;
  *
  */
 public class TreeFactory {
-	static public ClientTreeData makeUserTreeData(TreeData tree_data) {
+	static public ClientTreeData makeUserTreeData(TreeDataProvider tree_data) {
 		ClientTreeData user_data = new ClientTreeData();
 		user_data.setTreeID(tree_data.getID().toString());
 		user_data.setCivicNumber(tree_data.getCivicNumber());
@@ -40,8 +40,49 @@ public class TreeFactory {
 		server_data.setCommonName(tree_data.getCommonName());
 		return server_data;
 	}
+	
+	static public TreeData2 makeTreeData2(String[] values){
+		//thanks for this handy method, Samantha
+		TreeData2 tree = new TreeData2();
+		tree.setCivicNumber(Integer.parseInt(values[1]));
+		tree.setStdStreet(values[2]);
+		tree.setNeighbourhood(values[3]);
+		tree.setCell(Integer.parseInt(values[4]));
+		tree.setStreet(values[5]);
+		tree.setStreetBlock(values[6]);
+		tree.setStreetSideName(values[7]);
+		if(values[8].length() > 0){
+			tree.setAssigned(valueToBoolean(values[8]));
+		}
+		
+		tree.setHeightRange(Integer.parseInt(values[9]));
+		tree.setDiameter(Float.parseFloat(values[10]));
+		tree.setPlanted(null);
+		tree.setPlantArea(values[12]);
+		if(values[13].length() > 0){
+			tree.setRootBarrier(valueToBoolean(values[13]));
+		}
+		if(values[14].length() > 0){
+			tree.setCurb(valueToBoolean(values[14]));
+		}
+		tree.setCultivar(values[15]);
+		tree.setGenus(values[16]);
+		tree.setSpecies(values[17]);
+		tree.setCommonName(values[18]);
+		return tree;
+	}
+	static private boolean valueToBoolean(String b) {
+		if (b.equals("Y")){
+			return true;
+		}
+		else if (b.equals("N")){
+			return false;
+		}
+			
+		throw new RuntimeException("can't get a boolean from " + b);
+	}
 
-	static public AdminTreeData makeAdminTreeData(TreeData tree_data) {
+	static public AdminTreeData makeAdminTreeData(TreeDataProvider tree_data) {
 		// TODO: differentiate this from user data
 		AdminTreeData admin_data = new AdminTreeData();
 		admin_data.setTreeID(tree_data.getID().toString());

@@ -68,7 +68,7 @@
 	</filter>
 	<filter-mapping>
 		<filter-name>appstats</filter-name>
-		<url-pattern>/treespotter/*</url-pattern>
+		<url-pattern>/treespotter/treedata</url-pattern>
 	</filter-mapping>
 	<servlet>
 		<servlet-name>appstats</servlet-name>
@@ -85,6 +85,14 @@
 	<servlet-mapping>
 		<servlet-name>locationUpdateTask</servlet-name>
 		<url-pattern>/treespotter/tasks/streetblockupdate</url-pattern>
+	</servlet-mapping>
+	<servlet>
+		<servlet-name>taskTest</servlet-name>
+		<servlet-class>com.cpsc310.treespotter.server.StreetDataUpdater</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>taskTest</servlet-name>
+		<url-pattern>/treespotter/tasks/tasktest</url-pattern>
 	</servlet-mapping>
 
 </web-app>

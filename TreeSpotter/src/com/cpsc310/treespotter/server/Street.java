@@ -33,30 +33,30 @@ public class Street {
 			sort();
 		}
 		int pos = Collections.binarySearch(places, new StreetAddress(civicNumber));
-		if(pos > 0){
+		if(pos >= 0){
 			return places.get(pos).getLatLong();
 		}
 		else if(places.size() >= 2) {
 			pos = -(pos + 1);
 			boolean is_odd = ((civicNumber+2)/2 == 1);
 			
-			int best_lower = Math.max(pos - 1,0);
+			int best_lower = Math.max(pos-1,0);
 			int best_upper = Math.min(places.size()-1, pos);
-			while(best_lower >= 0){
+			while((best_lower) > 0){
 				int this_num = places.get(best_lower).civicNumber;
 				boolean this_is_odd = ((this_num+2)/2 == 1);
 				if(this_is_odd == is_odd){
 					break;
 				}
-				best_lower --;
+				best_lower--;
 			}
-			while(best_upper < places.size()){
+			while((best_upper) < places.size()-1){
 				int this_num = places.get(best_upper).civicNumber;
 				boolean this_is_odd = ((this_num+2)/2 == 1);
 				if(this_is_odd == is_odd){
 					break;
 				}
-				best_upper ++;
+				best_upper++;
 			}
 			
 			return StreetAddress.lerpLatLong(places.get(best_lower), places.get(best_upper), civicNumber);

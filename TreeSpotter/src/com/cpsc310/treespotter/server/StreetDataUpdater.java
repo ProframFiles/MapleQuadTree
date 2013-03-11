@@ -24,26 +24,46 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 
 public class StreetDataUpdater extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private static final Logger LOG = Logger.getLogger(StreetDataUpdater.class.getName());
+	private static Logger LOG = Logger.getLogger(StreetDataUpdater.class.getName());
 	private static final String JOB_NAME = "street data update job";
 	
-	StreetDataUpdater(){
-		LOG.setLevel(Level.FINE);
-		ObjectifyService.register(StreetDataUpdateJob.class);
+	public StreetDataUpdater(){
+	
 	}
 	
 	public void doPost(HttpServletRequest request, HttpServletResponse response){
+		init();
+		LOG.info("recieved StreetDataUpdater request, about to fetch job record...");
 		Job job = ofy().load().type(Job.class).id(JOB_NAME).get();
 		if(job == null){
+			LOG.info("\n\tjob not found, creating a new job with id \"" + JOB_NAME + "\"");
 			job = new StreetDataUpdateJob(JOB_NAME);
 		}
+		else{
+			LOG.info("\n\tjob found: " + job.getJobID() + " with " + job.getNumTasks() + " remaining subtasks.");
+		}
+		job.setLogLevel(LOG.getLevel());
+		LOG.fine("\n\trunning the job.");
 		boolean has_more_work = job.run();
+		LOG.fine("\n\tDone this run portion.");
 		if(has_more_work){
+			LOG.info("\n\tJob still has more work, re-queueing.");
 			queueThisTask();
+		}
+		else{
+			LOG.info("\n\tJob is done, not re-queueing.");
 		}
 	}
 	
+	public void init(){
+		LOG.setLevel(Level.FINE);
+		ByteArrayEntity<byte[]> temp_blob = new ByteArrayEntity<byte[]>("");
+		ObjectifyService.register(StreetDataUpdateJob.class);
+		ObjectifyService.register(PersistentFile.class);
+		ObjectifyService.register(temp_blob.getClass());
+	}
+	
 	static public void queueThisTask(){
-		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetdataupdate"));
+		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/tasktest"));
 	}
 }

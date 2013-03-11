@@ -45,6 +45,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	
 	@Override
 	public void importFromSite(String url) {
+		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/tasktest"));
 		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
 		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/import").method(TaskOptions.Method.GET));
 	}

@@ -18,6 +18,7 @@ public class FilteredCSVReader extends FilterReader {
 	private boolean haveLine = false;
 	private StringBuilder currentLine = new StringBuilder();
 	private int lineIndex = -1;
+	private int linesRead = 0;
 	
 	public FilteredCSVReader(BufferedReader bufferedReader, ArrayList<Integer> cols) {
 		super(bufferedReader);
@@ -102,7 +103,12 @@ public class FilteredCSVReader extends FilterReader {
 	public void reset() throws IOException {
 		// TODO Auto-generated method stub
 		super.reset();
+		linesRead = 0;
 		setUnparsed();
+	}
+	
+	public int getLinesRead(){
+		return linesRead;
 	}
 	
 	private boolean updateLine() throws IOException{
@@ -123,6 +129,7 @@ public class FilteredCSVReader extends FilterReader {
 		currentLine.append("\n");
 		haveLine = true;
 		lineIndex = 0;
+		linesRead++;
 		//System.out.println(currentLine.toString());
 		return true;
 	}
