@@ -131,7 +131,7 @@ public class LocationProcessor extends HttpServlet {
 			InputStream array_stream = new ByteArrayInputStream(b);
 			String blob_id = "kmlfile";
 			int blob_index = 0;
-			ByteArrayEntity<byte[]> blob = new ByteArrayEntity<byte[]>(blob_id+blob_index);
+			ByteArrayEntity blob = new ByteArrayEntity(blob_id+blob_index);
 			int written = blob.copyBytes(array_stream);
 			
 			ObjectifyService.register(blob.getClass());
@@ -139,7 +139,7 @@ public class LocationProcessor extends HttpServlet {
 			while(written > 0){
 				ofy().save().entity(blob).now();
 				blob_index++;
-				blob = new ByteArrayEntity<byte[]>(blob_id+blob_index);
+				blob = new ByteArrayEntity(blob_id+blob_index);
 				written = blob.copyBytes(array_stream);
 			}
 			ret = new CheckedInputStream( new ByteArrayInputStream(b), new CRC32());

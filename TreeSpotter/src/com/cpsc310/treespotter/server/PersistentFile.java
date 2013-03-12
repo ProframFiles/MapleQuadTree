@@ -30,7 +30,7 @@ import com.googlecode.objectify.annotation.Unindex;
 @Entity
 public class PersistentFile {
 	@Id private  String name;
-	@Unindex private ArrayList<Ref<ByteArrayEntity<byte[]>>> chunkIds;
+	@Unindex private ArrayList<Ref<ByteArrayEntity>> chunkIds;
 	@Unindex private int numBytes;
 	@Unindex private long checksum;
 	@Unindex private Date dateStamp;
@@ -43,11 +43,11 @@ public class PersistentFile {
 	
 	public PersistentFile(String file_name){
 		name = file_name;
-		chunkIds = new ArrayList<Ref<ByteArrayEntity<byte[]>>>();
+		chunkIds = new ArrayList<Ref<ByteArrayEntity>>();
 		ObjectifyService.register(this.getClass());
 		
 		//there must be a better way to get this class name...
-		ByteArrayEntity<byte[]> temp_blob = new ByteArrayEntity<byte[]>("");
+		ByteArrayEntity temp_blob = new ByteArrayEntity("");
 		ObjectifyService.register(temp_blob.getClass());
 	}
 	
@@ -56,7 +56,7 @@ public class PersistentFile {
 		InputStream in_stream = new CheckedInputStream(source, check_crc);
 		String blob_id = name;
 		int blob_index = 0;
-		ByteArrayEntity<byte[]> blob = new ByteArrayEntity<byte[]>(blob_id+blob_index);
+		ByteArrayEntity blob = new ByteArrayEntity(blob_id+blob_index);
 		numBytes = 0;
 		int written = 0;
 		
@@ -72,7 +72,7 @@ public class PersistentFile {
 				
 				// create a new chunk and try to copy bytes to it
 				blob_index++;
-				blob = new ByteArrayEntity<byte[]>(blob_id+blob_index);
+				blob = new ByteArrayEntity(blob_id+blob_index);
 				written = blob.copyBytes(in_stream);
 			}
 			
@@ -94,9 +94,9 @@ public class PersistentFile {
 		int current_index = 0;
 		long retrieved_long = 0L;
 		try {
-			for( Ref<ByteArrayEntity<byte[]>> chunk_ref: chunkIds){
+			for( Ref<ByteArrayEntity> chunk_ref: chunkIds){
 				ofy().load().ref(chunk_ref);
-				ByteArrayEntity<byte[]> blob = chunk_ref.get();
+				ByteArrayEntity blob = chunk_ref.get();
 				byte_wrapper.write(blob.getBytes());
 				current_index += blob.getBytes().length;
 			}

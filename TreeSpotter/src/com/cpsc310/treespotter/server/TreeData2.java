@@ -3,12 +3,15 @@
  */
 package com.cpsc310.treespotter.server;
 
+import java.util.Set;
+import java.util.TreeSet;
+
 
 /**
  * @author aleksy
  *
  */
-public class TreeData2 implements TreeDataProvider, LatLongProvider {
+public class TreeData2 implements TreeDataProvider, LatLongProvider, Comparable<TreeData2> {
 
 	private String treeID;
 	private int civicNumber;
@@ -59,6 +62,11 @@ public class TreeData2 implements TreeDataProvider, LatLongProvider {
 			throw new RuntimeException("Invalid tree ID prefix: " + user);
 		}
 		return key;
+	}
+	
+	@Override
+	public int compareTo(TreeData2 o) {
+		return treeID.compareTo(o.getID());
 	}
 	
 	@Override
@@ -246,4 +254,40 @@ public class TreeData2 implements TreeDataProvider, LatLongProvider {
 	public void setCommonName(String commonName) {
 		this.commonName = commonName;
 	}
+	
+	public String getKeywordString(){
+		StringBuilder sb = new StringBuilder();
+			if(commonName != null){
+				sb.append(commonName);
+				sb.append(" ");
+			}
+			if(cultivar != null){
+				sb.append(cultivar);
+				sb.append(" ");
+			}
+			if(genus != null){
+				sb.append(genus);
+				sb.append(" ");
+			}
+			if(species != null){
+				sb.append(species);
+				sb.append(" ");
+			}
+			if(neighbourhood != null){
+				sb.append(neighbourhood);
+				sb.append(" ");
+			}
+			if(street != null){
+				sb.append(street);
+				sb.append(" ");
+			}
+			if(stdStreet != null){
+				sb.append(stdStreet);
+				sb.append(" ");
+			}
+			
+		return sb.toString().trim();
+	}
+
+
 }

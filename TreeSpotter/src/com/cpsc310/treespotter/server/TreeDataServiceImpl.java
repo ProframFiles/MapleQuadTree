@@ -1,17 +1,23 @@
 package com.cpsc310.treespotter.server;
+import static com.cpsc310.treespotter.server.TreeDepot.treeDepot;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
 
+
 import com.cpsc310.treespotter.client.ClientTreeData;
 import com.cpsc310.treespotter.client.SearchFieldID;
+import com.cpsc310.treespotter.client.SearchParam;
 import com.cpsc310.treespotter.client.SearchQueryInterface;
 import com.cpsc310.treespotter.client.TreeComment;
 import com.cpsc310.treespotter.client.TreeDataService;
@@ -46,8 +52,8 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public void importFromSite(String url) {
 		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/tasktest"));
-		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
-		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/import").method(TaskOptions.Method.GET));
+		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
+		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/import").method(TaskOptions.Method.GET));
 	}
 
 	@Override
@@ -165,12 +171,40 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			return null;
 		}
 		
+		
+		
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
+			
+			SearchParam sp = query.iterator().next();
+			if(sp.fieldID == SearchFieldID.SPECIES){
+				SortedSet<TreeData2> trees = treeDepot().getTreesMatchingSpecies(sp.value.toUpperCase());
+				LOG.info("\tFound " + trees.size() + " special species tree results in the Objectify DB");
+				results = new ArrayList<ClientTreeData>();
+				int counter = 0;
+				
+				for (TreeDataProvider server_tree : trees) {
+					query.getResultsOffset();
+					if(counter >= query.getResultsOffset()){
+						results.add(TreeFactory.makeUserTreeData(server_tree));
+					}
+					if(results.size() >= query.getNumResults() ){
+						break;
+					}
+					counter ++;
+				}
+				return results;
+			}
+			
 			SearchQueryProcessor sqp = new SearchQueryProcessor(pm);
+			
+			
 			
 			Set<TreeData> result_set = sqp.executeNonSpatialQueries(query);
 			Set<TreeData> spatial_set = sqp.executeSpatialQueries(query);
+			
+			
+			
 			if(spatial_set != null && result_set!=null){
 				result_set.retainAll(spatial_set);
 			}
@@ -233,10 +267,28 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public ArrayList<String> getSearchSuggestions(SearchFieldID field_id,
-			String hint) {
-		// TODO Auto-generated method stub
-		return new ArrayList<String>();
+	public ArrayList<String> getSearchSuggestions(SearchFieldID field_id, String hint) {
+		
+		ArrayList<String> ret = new ArrayList<String>();
+		Set<String> all_set = null;
+		if(field_id == SearchFieldID.SPECIES){
+			all_set = treeDepot().getSpeciesSet();
+		}
+		
+		if(all_set != null && hint != null && hint.length() > 0)
+		{
+			Pattern regex = Pattern.compile(hint.toUpperCase());
+			for(String s: all_set){
+				Matcher matcher = regex.matcher(s);
+				if(matcher.find()){
+					ret.add(s);
+				}
+			}
+		}
+		else if(all_set != null){
+			ret.addAll(all_set);
+		}
+		return ret;
 	}
 
 	@Override

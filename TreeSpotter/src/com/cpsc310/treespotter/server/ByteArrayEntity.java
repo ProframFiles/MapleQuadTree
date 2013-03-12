@@ -16,7 +16,7 @@ import com.googlecode.objectify.annotation.Unindex;
  *
  */
 @Entity
-public class ByteArrayEntity<T> {
+public class ByteArrayEntity {
 	// limit is a MB, but we'll play it safe for now, and go with 0.5MB
 	static final int MAX_NUM_BYTES = 524288;
 	static final int INITIAL_BUFFER_SIZE = 1024;

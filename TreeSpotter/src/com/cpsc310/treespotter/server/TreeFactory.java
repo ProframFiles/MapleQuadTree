@@ -44,6 +44,7 @@ public class TreeFactory {
 	static public TreeData2 makeTreeData2(String[] values){
 		//thanks for this handy method, Samantha
 		TreeData2 tree = new TreeData2();
+		tree.setID("V",Integer.parseInt(values[0]) );
 		tree.setCivicNumber(Integer.parseInt(values[1]));
 		tree.setStdStreet(values[2]);
 		tree.setNeighbourhood(values[3]);
@@ -67,7 +68,12 @@ public class TreeFactory {
 		}
 		tree.setCultivar(values[15]);
 		tree.setGenus(values[16]);
-		tree.setSpecies(values[17]);
+		if(values[17].endsWith("X")){
+			tree.setSpecies(values[17].substring(0,values[17].length() - 1 ).trim());
+		}
+		else{
+			tree.setSpecies(values[17]);
+		}
 		tree.setCommonName(values[18]);
 		return tree;
 	}

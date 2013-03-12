@@ -57,10 +57,9 @@ public class StreetDataUpdater extends HttpServlet {
 	
 	public void init(){
 		LOG.setLevel(Level.FINE);
-		ByteArrayEntity<byte[]> temp_blob = new ByteArrayEntity<byte[]>("");
 		ObjectifyService.register(StreetDataUpdateJob.class);
 		ObjectifyService.register(PersistentFile.class);
-		ObjectifyService.register(temp_blob.getClass());
+		ObjectifyService.register(ByteArrayEntity.class);
 	}
 	
 	static public void queueThisTask(){

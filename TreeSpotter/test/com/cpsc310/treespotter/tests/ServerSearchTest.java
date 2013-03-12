@@ -18,6 +18,7 @@ import com.cpsc310.treespotter.client.AdvancedSearch;
 import com.cpsc310.treespotter.client.ClientTreeData;
 import com.cpsc310.treespotter.client.KeywordSearch;
 import com.cpsc310.treespotter.client.SearchFieldID;
+import com.cpsc310.treespotter.client.SearchQuery;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 import static org.junit.Assert.*;
@@ -71,6 +72,15 @@ public class ServerSearchTest {
 		boolean has_more_work = job.run();
 		if(has_more_work){
 			has_more_work = job.run();
+		}
+		SearchQuery loc_query = new AdvancedSearch();
+		loc_query.addSearchParam(SearchFieldID.SPECIES, "Betulus");
+		ArrayList<ClientTreeData> results = dataService.searchTreeData(loc_query);
+		assert(!results.isEmpty());
+		
+		ArrayList<String> suggestions = dataService.getSearchSuggestions(SearchFieldID.SPECIES, "be");
+		for(String s: suggestions){
+			System.out.println(s);
 		}
 	}
 	

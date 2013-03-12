@@ -1,4 +1,5 @@
 package com.cpsc310.treespotter.server;
+import static com.cpsc310.treespotter.server.TreeDepot.treeDepot;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -13,6 +14,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -21,8 +24,6 @@ import java.util.zip.ZipOutputStream;
 
 import com.cpsc310.treespotter.shared.FilteredCSVReader;
 import com.cpsc310.treespotter.shared.Util;
-import com.esotericsoftware.kryo.Kryo;
-import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.annotation.EntitySubclass;
 
 @EntitySubclass
@@ -166,6 +167,7 @@ public class StreetDataUpdateJob extends Job {
 		String line_string;
 		ArrayList<TreeData2> tree_list = new ArrayList<TreeData2>();
 		Set<String> missing_strings = new HashSet<String>();
+		SortedMap<String,Integer> keyword_combos = new TreeMap<String, Integer>();
 		assert(streets != null);
 		int missing = 0;
 		LatLong max_ll = new LatLong(-300.0, -300.0);
@@ -189,6 +191,7 @@ public class StreetDataUpdateJob extends Job {
 				}
 			}
 			Street this_street = streets.get(street_name);
+			Integer num_of_species = keyword_combos.get(new_tree.getKeywordString());
 			if(this_street != null){
 				LatLong ll = this_street.getLatLong(new_tree.getCivicNumber());
 				if(ll.getLatitude() > max_ll.getLatitude()) max_ll.setLatitude(ll.getLatitude());
@@ -196,19 +199,25 @@ public class StreetDataUpdateJob extends Job {
 				if(ll.getLatitude() < min_ll.getLatitude()) min_ll.setLatitude(ll.getLatitude());
 				if(ll.getLongitude() < min_ll.getLongitude()) min_ll.setLongitude(ll.getLongitude());
 				new_tree.setLatLong(ll);
+				if(num_of_species == null){
+					num_of_species = 0;
+				}
+				keyword_combos.put(new_tree.getKeywordString(), num_of_species+1);
 				tree_list.add(new_tree);
 			}
 		}
-		LOG.info("\n\t" + missing + " addressless trees total");
-		LOG.info("\n\t" + missing_strings.size() + " missing streets total");
+		LOG.info("\n\tskipping " + missing + " unlocatable trees");
+		LOG.info("\n\ton " + missing_strings.size() + " unfound streets");
 		LOG.info("\n\t" + tree_list.size() + " treeData2 objects created (with locations)");
+		LOG.info("\n\t" + keyword_combos.size() + " keyword combinations total");
 		LOG.info("\n\tMax lat,long = ( "+ max_ll.getLatitude()+", "+max_ll.getLongitude() + " )");
 		LOG.info("\n\tMin lat,long = ( "+ min_ll.getLatitude()+", "+min_ll.getLongitude() + " )");
-		LOG.info("\n\t" + missing + " addressless trees total");
-		return tree_list;
-		//for(String address: missing_strings){
-			//LOG.info("could not find street:\n\t"+address);
+
+		
+		//for(String s: keyword_combos.keySet()){
+			//LOG.info("tree species\n\t"+s + ", " + species.get(s) + " entries" );
 		//}
+		return tree_list;
 	}
 	
 	@Override
@@ -236,6 +245,8 @@ public class StreetDataUpdateJob extends Job {
 				if(zip_entry.getName().equals("street_trees.csv")){
 					BufferedReader csv_reader =  new BufferedReader(new InputStreamReader(new BufferedInputStream(unzipper)));
 					ArrayList<TreeData2> trees = testForStreetMatch(csv_reader, street_set);
+					treeDepot().putTrees(trees);
+					treeDepot().saveTrees();
 				}
 				else if (zip_entry.getName().equals("ICIS_AddressBC.csv")){
 					BufferedReader csv_reader =  new BufferedReader(new InputStreamReader(new BufferedInputStream(unzipper)));
@@ -248,7 +259,11 @@ public class StreetDataUpdateJob extends Job {
 			LOG.severe(e.getMessage());
 			throw new RuntimeException("Reading of " + st.task_string
 					+ " failed: " + e, e);
-		} catch (Exception e) {
+		}catch (NullPointerException e) {
+			throw new RuntimeException("Parsing of " + st.task_string + " failed: "
+					+ e, e);
+		} 
+		catch (Exception e) {
 			LOG.severe(e.getMessage());
 			throw new RuntimeException("Parsing of " + st.task_string + " failed: "
 					+ e, e);
