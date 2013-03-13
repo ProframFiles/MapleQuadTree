@@ -197,7 +197,18 @@ a.main-search:hover {
 	width: 250px;
 }
 
+/* SUGGEST BOX */
+.gwt-SuggestBoxPopup { 
+	border: thin gray solid;
+	background-color: white;
+}
+
+.gwt-SuggestBoxPopup .item-selected { 
+	background-color:	lightblue;
+}
+
 /* TREE INFO PAGE */
+
 .tree-info-map {
 	float: left;
 	margin-left: 5%;
@@ -210,6 +221,14 @@ a.main-search:hover {
 .tree-info-field {
 	font-weight: bold;
 	height: 20px;
+}
+
+.flagged {
+	opacity: 1;
+}
+
+.unflagged {
+	opacity: 0.4;
 }
 
 /* ADD TREE POPUP */
@@ -272,6 +291,23 @@ a.main-search:hover {
 .results-row-alt {
 	background-color: #EEEEEE;	
 }
+
+/* COMMENTS */
+.comments-panel {
+	width: 100%;	
+}
+
+.comment {
+	min-width:500px; 
+	padding: 10px; 
+	border-left: 3px solid green; 
+	margin: 10px 50px;
+}
+
+.comment:hover {
+	background-color: #F0F4FA;
+}
+
 
 /* TOOLTIP */
 

@@ -1,13 +1,15 @@
 package com.cpsc310.treespotter.client;
 
+import java.util.ArrayList;
+
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.geocode.Geocoder;
 import com.google.gwt.maps.client.geocode.LatLngCallback;
 import com.google.gwt.maps.client.geom.LatLng;
 import com.google.gwt.maps.client.overlay.Marker;
+import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -21,7 +23,6 @@ public abstract class TreeInfoPage extends Composite {
 	private Label invalidLoc = new Label("Tree location could not be displayed");
 	
 	private Geocoder geo;
-	private FlexTable treeInfoTable;
 	private VerticalPanel infoMapPanel;
 	
 	public void setGeocoder(Geocoder aGeo) {
@@ -30,7 +31,6 @@ public abstract class TreeInfoPage extends Composite {
 	
 	
 	protected void populateTreeInfoTable(FlexTable treeInfoTable, ClientTreeData t) {
-		this.treeInfoTable = treeInfoTable;
 		treeInfoTable.removeAllRows();
 		
 		treeInfoTable.setStyleName("tree-info-table");
@@ -47,62 +47,21 @@ public abstract class TreeInfoPage extends Composite {
 		neighbour = (neighbour == null) ? neighbour : neighbour.toUpperCase();
 		createResultDataRow(TreeSpotter.NEIGHBOUR, neighbour);
 		createResultDataRow(TreeSpotter.PLANTED, t.getPlanted());
-		createResultDataRow(TreeSpotter.HEIGHT, t.getHeightRange());
-		
+		createResultDataRow(TreeSpotter.HEIGHT, intToHeightRange(t.getHeightRange()));	
+	}
+
+	protected void displayComments(VerticalPanel panel, ArrayList<TreeComment> comments) {
+		CommentCell cell = new CommentCell();
+		CellList<TreeComment> cellList = new CellList<TreeComment>(cell);
+		cellList.setRowData(comments);
+		panel.setStyleName("comments-panel");
+		panel.add(cellList);
 	}
 	
-	/**
-	 * Helper function to create rows of data for the TreeInfoPage
-	 * 
-	 * @param field
-	 *            Data field
-	 * @param value
-	 *            Data value
-	 * @return
-	 */
-	protected void createResultDataRow(String field, String value) {
-		int rowNum = treeInfoTable.getRowCount();
-		Label fld = new Label(field);
-		
-		fld.setStyleName("tree-info-field");
-		treeInfoTable.setWidget(rowNum, 0, fld);
-
-		if (value == null || value.equals("-1") || value.equals("-1.0 inches")) {
-			value = "Not available";
-		}
-		
-		treeInfoTable.setWidget(rowNum, 1, new HTML(value));
-	}
 	
-	/**
-	 * Helper function to create height data row for the TreeInfoPage
-	 * 
-	 * @param range
-	 *            Tree height range
-	 * 
-	 * @return String of height range ie. "0 - 10 ft"
-	 */
-	 protected void createResultDataRow(String field, int range) {
-		 	int rowNum = treeInfoTable.getRowCount();
-		 
-			Label fld = new Label(field);
-			String value = "";
-			fld.setStyleName("tree-info-field");
-			treeInfoTable.setWidget(rowNum, 0, fld);
+	protected abstract void createResultDataRow(String field, String value);
 
-			if (range == -1) {
-				value = "Not available";
-			} else if (range == 10) {
-				value = "Over 10 ft";
-			} else {
-				value = Integer.toString(range * 10) + " - "
-						+ Integer.toString((range + 1) * 10) + " ft";
-			}
-			treeInfoTable.setWidget(rowNum, 1, new Label(value));
-	 }
 
-	
-	
 	/**
 	 * Helper method for setTreeInfoMap. Sets map to coordinates, centred and
 	 * zoomed
@@ -153,4 +112,22 @@ public abstract class TreeInfoPage extends Composite {
 		});
 
 	}
+	
+	 /**
+	  * Helper to convert Height Range from tree into a String
+	  * ie. 10 - 20ft
+	  * @param i int
+	  */
+	 protected String intToHeightRange(int range) {
+		 String value;
+		 if (range == -1) {
+			 value = "Not available";
+		 } else if (range == 10) {
+			 value = "Over 10 ft";
+		 } else {
+			 value = Integer.toString(range * 10) + " - "
+					 + Integer.toString((range + 1) * 10) + " ft";
+		 }
+		 return value;
+	 }
 }

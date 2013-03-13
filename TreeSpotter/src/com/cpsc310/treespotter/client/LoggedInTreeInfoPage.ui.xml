@@ -4,10 +4,11 @@
 
  <ui:style src="TreeInfoPage.css" />
 
-  <gwt:HTMLPanel ui:field="mainPanel">
+  <gwt:HTMLPanel ui:field="mainPanel"> 
     <gwt:VerticalPanel ui:field="infoMapPanel"></gwt:VerticalPanel>
     <gwt:FlexTable ui:field="treeInfoTable"/>
 	<gwt:Button ui:field="editButton"> Edit Details </gwt:Button>
+	<gwt:VerticalPanel ui:field="commentsPanel"></gwt:VerticalPanel>
   </gwt:HTMLPanel>
 
 </ui:UiBinder>

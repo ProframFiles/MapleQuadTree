@@ -43,8 +43,10 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -69,8 +71,10 @@ public class TreeSpotter implements EntryPoint {
 	private String[] basicFields = { LOCATION, GENUS, SPECIES, COMMON };
 	private String[] optionalFields = { NEIGHBOUR, HEIGHT, DIAMETER, PLANTED };
 
+	private MultiWordSuggestOracle speciesOracle;
+	
 	private boolean isBasicSearch = true;
-	private TextBox basicSearch = null;
+	private SuggestBox basicSearch = null;
 
 	// list of the input boxes, so the values can be retrieved
 	private LinkedHashMap<Label, TextBox> advancedSearchMap = new LinkedHashMap<Label, TextBox>();
@@ -141,6 +145,7 @@ public class TreeSpotter implements EntryPoint {
 		});
 
 		initHomePage();
+		initSearchOracle();
 		initButtons();
 		initLoginLogout();
 		initAdminButton();
@@ -178,7 +183,9 @@ public class TreeSpotter implements EntryPoint {
 
 		/* set up basic search elements */
 		HorizontalPanel searchPanel = new HorizontalPanel();
-		final TextBox searchInput = new TextBox();
+		speciesOracle = new MultiWordSuggestOracle();
+		// TODO: replace with basic oracle later
+		final SuggestBox searchInput = new SuggestBox(speciesOracle);
 		Button searchBtn = new Button("Find my tree!");
 		searchInput.setStyleName("main-search");
 		searchBtn.setStyleName("main-search");
@@ -469,6 +476,11 @@ public class TreeSpotter implements EntryPoint {
 		
 		RootPanel.get("content").clear();
 		RootPanel.get("content").add(treePage);
+		
+		// need the widget to be placed on the page before adding tooltips
+		if (!isLoggedIn) {
+			((RegularTreeInfoPage) treePage).addImageTooltips();
+		}
 	}
 
 	/**
@@ -629,6 +641,24 @@ public class TreeSpotter implements EntryPoint {
 		return panel;
 	}
 
+	private void initSearchOracle() {
+		treeDataService.getSearchSuggestions(SearchFieldID.SPECIES, null, new AsyncCallback<ArrayList<String>>() {
+
+			@Override
+			public void onFailure(Throwable caught) {
+				handleError(caught);
+				
+			}
+
+			@Override
+			public void onSuccess(ArrayList<String> result) {
+				MultiWordSuggestOracle basicOracle = (MultiWordSuggestOracle) basicSearch.getSuggestOracle();				
+				basicOracle.addAll(result);
+			}
+			
+		});
+	}
+	
 	private void initLoginLogout() {
 		final Anchor loginLink = Anchor.wrap(Document.get().getElementById(
 				"login-link"));
