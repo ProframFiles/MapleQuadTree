@@ -3,7 +3,7 @@
  */
 package com.cpsc310.treespotter.server;
 
-import static com.googlecode.objectify.ObjectifyService.ofy;
+import static com.cpsc310.treespotter.server.OfyService.ofy;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -96,7 +96,7 @@ public class PersistentFile {
 		try {
 			for( Ref<ByteArrayEntity> chunk_ref: chunkIds){
 				ofy().load().ref(chunk_ref);
-				ByteArrayEntity blob = chunk_ref.get();
+				ByteArrayEntity blob = chunk_ref.safeGet();
 				byte_wrapper.write(blob.getBytes());
 				current_index += blob.getBytes().length;
 			}

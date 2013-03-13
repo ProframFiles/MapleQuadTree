@@ -7,6 +7,9 @@ import static com.cpsc310.treespotter.server.OfyService.ofy;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,6 +19,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.zip.DeflaterInputStream;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -24,6 +30,7 @@ import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Ref;
 import com.googlecode.objectify.Result;
 import com.googlecode.objectify.annotation.Embed;
+import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
 import com.googlecode.objectify.annotation.OnSave;
@@ -35,7 +42,7 @@ import com.googlecode.objectify.annotation.Unindex;
  * @author maple-quadtree
  * meant to act as a sort of a handle to the serialized tree blobs
  */
-@Embed
+@Entity
 public class TreesIndexedByString {
 	
 	@Id String id;
@@ -115,36 +122,44 @@ public class TreesIndexedByString {
 	
 	private SortedSet<TreeData2> loadList(Ref<PersistentFile> ref){
 		ofy().load().ref(ref);
-		Kryo kryo = getKryo();
 		PersistentFile pFile = ref.get();
 		byte[] b = pFile.load();
-		Input input = new Input(new ByteArrayInputStream(b));
-		
-		SortedSet<TreeData2> ret = new TreeSet<TreeData2>();
-		Collections.addAll(ret, kryo.readObject(input, TreeData2[].class));
+		SortedSet<TreeData2> ret = null;
+		try {
+			InflaterInputStream inflater = new InflaterInputStream(new ByteArrayInputStream(b));
+			ObjectInputStream in = new ObjectInputStream(inflater);
+			ret = (SortedSet<TreeData2>) in.readObject();
+		} catch (IOException e) {
+			throw new RuntimeException("IOException while deserializing " + ref.toString() + "\n\t"+e.getMessage(), e);
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException("ClassNotFoundException while deserializing " + ref.toString() + "\n\t"+e.getMessage(), e);
+		}
+		//Collections.addAll(ret, kryo.readObject(input, TreeData2[].class));
 		return ret;
 	}
 	
-	@OnSave
 	public void serializeMapping(){
-		Kryo kryo = getKryo();
 		ArrayList<Result<Key<PersistentFile>>> results = new ArrayList<Result<Key<PersistentFile>>>();
 		for(Entry<String,SortedSet<TreeData2>> tree_entry: treeMap.entrySet()){
 			if(tree_entry.getValue()!=null && !tree_entry.getValue().isEmpty()){
 				ByteArrayOutputStream byte_stream = new ByteArrayOutputStream();
-				Output output = new Output(byte_stream);
-				int set_size = tree_entry.getValue().size();
-				kryo.writeObject(output, tree_entry.getValue().toArray(new TreeData2[set_size]));
-				output.close();
+				DeflaterOutputStream deflater = new DeflaterOutputStream(byte_stream);
+				ObjectOutputStream out;
+				try {
+					out = new ObjectOutputStream(deflater);
+					out.writeObject(tree_entry.getValue());
+					out.close();
+					deflater.flush();
+				}
+				catch (IOException e) {
+					throw new RuntimeException("IOException while serializing " + tree_entry.getKey() + "\n\t"+e.getMessage(), e);
+				}
 				byte[] b = byte_stream.toByteArray();
 				PersistentFile f = new PersistentFile(id+tree_entry.getKey());
 				f.save(new ByteArrayInputStream(b));
+				ofy().save().entity(f).now();
 				blobRefs.put(tree_entry.getKey(),Ref.create(f));
-				results.add(ofy().save().entity(f));
 			}
-		}
-		for(Result<Key<PersistentFile>> r: results){
-			r.now();
 		}
 	}
 	

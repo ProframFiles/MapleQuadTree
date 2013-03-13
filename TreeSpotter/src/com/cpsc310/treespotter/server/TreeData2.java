@@ -3,6 +3,7 @@
  */
 package com.cpsc310.treespotter.server;
 
+import java.io.Serializable;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -11,8 +12,8 @@ import java.util.TreeSet;
  * @author aleksy
  *
  */
-public class TreeData2 implements TreeDataProvider, LatLongProvider, Comparable<TreeData2> {
-
+public class TreeData2 implements Serializable, TreeDataProvider, LatLongProvider, Comparable<TreeData2> {
+	private static final long serialVersionUID = 1L;
 	private String treeID;
 	private int civicNumber;
 	private String stdStreet;

@@ -14,6 +14,7 @@ import com.googlecode.objectify.ObjectifyService;
 public class OfyService {
 	static {
 		factory().register(PersistentFile.class);
+		factory().register(TreesIndexedByString.class);
 		factory().register(ByteArrayEntity.class);
 		factory().register(TreeDepot.class);
 		factory().register(Job.class);

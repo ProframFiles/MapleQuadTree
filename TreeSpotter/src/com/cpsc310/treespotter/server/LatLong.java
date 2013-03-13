@@ -1,9 +1,13 @@
 package com.cpsc310.treespotter.server;
+
+import java.io.Serializable;
+
 /**
  * @author maple-quadtree
  *
  */
-public class LatLong {
+public class LatLong implements Serializable{
+	private static final long serialVersionUID = 1L;
 	LatLong(){
 		latitude = 0.0;
 		longitude = 0.0;

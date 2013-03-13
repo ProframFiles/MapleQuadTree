@@ -65,10 +65,14 @@
 			<param-name>logMessage</param-name>
 			<param-value>Appstats available: /appstats/details?time={ID}</param-value>
 		</init-param>
+		<init-param>
+          <param-name>calculateRpcCosts</param-name>
+          <param-value>true</param-value>
+      </init-param>
 	</filter>
 	<filter-mapping>
 		<filter-name>appstats</filter-name>
-		<url-pattern>/treespotter/treedata</url-pattern>
+		<url-pattern>/treespotter/*</url-pattern>
 	</filter-mapping>
 	<servlet>
 		<servlet-name>appstats</servlet-name>

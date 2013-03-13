@@ -14,6 +14,7 @@ import com.cpsc310.treespotter.server.StreetDataUpdater;
 import com.cpsc310.treespotter.server.TreeData;
 import com.cpsc310.treespotter.server.TreeDataServiceImpl;
 import com.cpsc310.treespotter.server.PMF;
+import com.cpsc310.treespotter.server.TreeDepot;
 import com.cpsc310.treespotter.client.AdvancedSearch;
 import com.cpsc310.treespotter.client.ClientTreeData;
 import com.cpsc310.treespotter.client.KeywordSearch;
@@ -73,6 +74,9 @@ public class ServerSearchTest {
 		if(has_more_work){
 			has_more_work = job.run();
 		}
+		
+		TreeDepot.reset();
+		
 		SearchQuery loc_query = new AdvancedSearch();
 		loc_query.addSearchParam(SearchFieldID.SPECIES, "Betulus");
 		ArrayList<ClientTreeData> results = dataService.searchTreeData(loc_query);

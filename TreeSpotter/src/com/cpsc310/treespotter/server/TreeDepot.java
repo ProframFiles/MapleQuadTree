@@ -12,9 +12,12 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.googlecode.objectify.Key;
+import com.googlecode.objectify.Ref;
 import com.googlecode.objectify.annotation.Embed;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Ignore;
+import com.googlecode.objectify.annotation.Load;
 import com.googlecode.objectify.annotation.OnLoad;
 
 /**
@@ -25,7 +28,8 @@ import com.googlecode.objectify.annotation.OnLoad;
 public class TreeDepot {
 	static TreeDepot instance = null;
 	@Id private String id;
-	@Embed private TreesIndexedByString speciesIndex;
+	@Ignore private TreesIndexedByString speciesIndex;
+	@Load Ref<TreesIndexedByString> speciesIndexRef;
 	
 	static TreeDepot treeDepot(){
 		return treeDepot("TreeDepot");
@@ -43,6 +47,10 @@ public class TreeDepot {
 		return instance; 
 	}
 	
+	static public void reset(){
+		instance = null;
+	}
+	
 	private TreeDepot(){
 		
 	}
@@ -55,6 +63,9 @@ public class TreeDepot {
 	
 	@OnLoad
 	private void Init(){
+		if(speciesIndex == null){
+			speciesIndex = speciesIndexRef.safeGet();
+		}
 		speciesIndex.setStringProvider(TreeToStringFactory.getTreeToSpecies());
 	}
 	
@@ -64,7 +75,10 @@ public class TreeDepot {
 	
 	public void saveTrees(){
 		speciesIndex.serializeMapping();
-		 ofy().save().entity(this).now();
+		ofy().save().entity(speciesIndex).now();
+		speciesIndexRef = Ref.create(speciesIndex);
+		//speciesIndex.serializeMapping();
+		ofy().save().entity(this).now();
 	}
 	
 	public SortedSet<TreeData2> getTreesMatchingSpecies(String species){
