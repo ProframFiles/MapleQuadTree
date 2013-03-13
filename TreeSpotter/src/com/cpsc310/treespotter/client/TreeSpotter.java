@@ -350,6 +350,16 @@ public class TreeSpotter implements EntryPoint {
 	private void displaySearchResults(final ArrayList<ClientTreeData> rlist) {
 		RootPanel content = RootPanel.get("content");
 		content.clear();
+		
+		// TODO: Remove this after you are done
+		Button exportButton = new Button("Export Results");
+		content.add(exportButton);
+		exportButton.addClickHandler(new ClickHandler() {
+			public void onClick (ClickEvent event) {
+				clientHelper.exportData(rlist);
+			}
+		});
+		
 
 		if (rlist.isEmpty()) {
 			Label noResults = new Label("No results were found.");
