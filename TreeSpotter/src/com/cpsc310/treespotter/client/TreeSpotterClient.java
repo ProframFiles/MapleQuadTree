@@ -228,7 +228,6 @@ public class TreeSpotterClient {
 		
 		FormPanel formPanel = new FormPanel();
 		TextBox textBox = new TextBox();
-		System.out.println(csvText.toString());
 		
 		textBox.setName("textbox");
 		textBox.setValue(csvText.toString());
@@ -238,12 +237,6 @@ public class TreeSpotterClient {
 		formPanel.setWidget(textBox);
 		
 		formPanel.submit();
-		formPanel.addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
-			public void onSubmitComplete(SubmitCompleteEvent event) {
-				System.out.println("Submit done");
-				System.out.println(event.getResults());
-			}
-		});
 	}
 
 	private String convertToHeight(int heightRange) {

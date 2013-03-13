@@ -14,7 +14,7 @@ public class ExportCSV extends HttpServlet {
 	public void doPost(HttpServletRequest req, HttpServletResponse res) 
 			throws ServletException, IOException{
 		
-		System.out.println("Hello on server");
+		System.out.println("Received data to put in CSV");
 		String csvLine = req.getParameter("textbox");
 		String[] csvRaw = csvLine.split("/n");
 		StringBuilder sb = new StringBuilder();
@@ -27,7 +27,7 @@ public class ExportCSV extends HttpServlet {
 			String csv = sb.toString();
 			byte[] bytes = csv.getBytes();
 			sendCSV(res, bytes, "tree_data.csv");
-			System.out.println("sent");
+			System.out.println("Sent CSV back to client");
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
