@@ -42,6 +42,7 @@ public abstract class Job {
 	@Ignore private PersistentFile fileData;
 	@Ignore private double meanSubTaskTime;
 	@Ignore private int numSubTasksCompleted = 0;
+	@Ignore long initialMillis = ApiProxy.getCurrentEnvironment().getRemainingMillis();
 	public Job(){
 		
 	}
@@ -129,7 +130,7 @@ public abstract class Job {
 	private boolean needToStop(){
 		long rem = ApiProxy.getCurrentEnvironment().getRemainingMillis();
 		LOG.info("\n\t"+rem/1000.0+" remaining seconds!");
-		return rem < 60000;
+		return (rem < 60000 && initialMillis > 120000);
 	}
 	
 	private ArrayList< byte[]> fetchFileData(ArrayList<String> urls){

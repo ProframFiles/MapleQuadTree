@@ -25,10 +25,12 @@ import java.util.zip.ZipOutputStream;
 import com.cpsc310.treespotter.shared.FilteredCSVReader;
 import com.cpsc310.treespotter.shared.Util;
 import com.googlecode.objectify.annotation.EntitySubclass;
+import com.googlecode.objectify.annotation.Ignore;
 
 @EntitySubclass
 public class StreetDataUpdateJob extends Job {
 	private static final Logger LOG = Logger.getLogger(StreetDataUpdateJob.class.getName());
+	@Ignore private ArrayList<TreeData2> cachedTrees = null;
 	
 	// this is here for objectify
 	@SuppressWarnings("unused")
@@ -245,82 +247,87 @@ public class StreetDataUpdateJob extends Job {
 		LOG.info("starting subtask:\n\t"+st.task_string + "\n\t progress: " + st.task_progress);
 		int max_records = 10000;
 		int count = 0;
-		try {
-
-			ZipInputStream unzipper = new ZipInputStream(is);
-			ZipEntry zip_entry;
-			Map<String, Street> street_set = null;
-			while ((zip_entry = unzipper.getNextEntry()) != null) {
-				if(zip_entry.getName().equals("street_trees.csv")){
-					BufferedReader csv_reader =  new BufferedReader(new InputStreamReader(new BufferedInputStream(unzipper)));
-					ArrayList<TreeData2> trees = testForStreetMatch(csv_reader, street_set);
-					//treeDepot().putTrees(trees);
-					if(st.task_string.equals("species")){
-						TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToSpecies());
-						Collections.sort(trees, tc);
-						int last_index = Math.min(st.task_progress+max_records, trees.size()-1);
-						treeDepot().putTreesBySpecies(trees.subList(st.task_progress, last_index));
-						count = last_index - st.task_progress;
+		if(cachedTrees == null){
+			try {
+	
+				ZipInputStream unzipper = new ZipInputStream(is);
+				ZipEntry zip_entry;
+				Map<String, Street> street_set = null;
+				while ((zip_entry = unzipper.getNextEntry()) != null) {
+					if(zip_entry.getName().equals("street_trees.csv")){
+						BufferedReader csv_reader =  new BufferedReader(new InputStreamReader(new BufferedInputStream(unzipper)));
+						cachedTrees = testForStreetMatch(csv_reader, street_set);
+						street_set = null;
+						
 					}
-					if(st.task_string.equals("street")){
-						TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToStdStreet());
-						Collections.sort(trees, tc);
-						int last_index = Math.min(st.task_progress+max_records, trees.size()-1);
-						treeDepot().putTreesByStreet(trees.subList(st.task_progress, last_index));
-						count = last_index - st.task_progress;
-					}
-					if(st.task_string.equals("neighbourhood")){
-						TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToNeighbourhood());
-						Collections.sort(trees, tc);
-						int last_index = Math.min(st.task_progress+max_records, trees.size()-1);
-						treeDepot().putTreesByNeighbourhood(trees.subList(st.task_progress, last_index));
-						count = last_index - st.task_progress;
-					}
-					if(st.task_string.equals("commonName")){
-						TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToCommonName());
-						Collections.sort(trees, tc);
-						int last_index = Math.min(st.task_progress+max_records, trees.size()-1);
-						treeDepot().putTreesByCommonName(trees.subList(st.task_progress, last_index));
-						count = last_index - st.task_progress;
-					}
-					if(st.task_string.equals("genus")){
-						TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToGenus());
-						Collections.sort(trees, tc);
-						int last_index = Math.min(st.task_progress+max_records, trees.size()-1);
-						treeDepot().putTreesByGenus(trees.subList(st.task_progress, last_index));
-						count = last_index - st.task_progress;
-					}
-					if(st.task_string.equals("keywords")){
-						int largest = 1000;
-						max_records = largest*2;
-						TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToKeywords());
-						Collections.sort(trees, tc);
-						for(int start = 0; start < max_records; start+=largest ){
-							int last_index = Math.min(st.task_progress+start+largest, trees.size()-1);
-							treeDepot().putTreesByKeywords(trees.subList(st.task_progress+start, last_index));
-							count = last_index - st.task_progress;
-						}
+					else if (zip_entry.getName().equals("ICIS_AddressBC.csv")){
+						BufferedReader csv_reader =  new BufferedReader(new InputStreamReader(new BufferedInputStream(unzipper)));
+						street_set = createStreetSetFromCSV(csv_reader);
+						LOG.info(street_set.size() +" streets in the set");
 					}
 				}
-				else if (zip_entry.getName().equals("ICIS_AddressBC.csv")){
-					BufferedReader csv_reader =  new BufferedReader(new InputStreamReader(new BufferedInputStream(unzipper)));
-					street_set = createStreetSetFromCSV(csv_reader);
-					LOG.info(street_set.size() +" streets in the set");
-				}
+				unzipper.close();
+	
+			} catch (IOException e) {
+				LOG.severe(e.getMessage());
+				throw new RuntimeException("Reading of " + st.task_string
+						+ " failed: " + e, e);
+			}catch (NullPointerException e) {
+				throw new RuntimeException("Parsing of " + st.task_string + " failed: "
+						+ e, e);
+			} 
+			catch (Exception e) {
+				LOG.severe(e.getMessage());
+				throw new RuntimeException("Parsing of " + st.task_string + " failed: "
+						+ e, e);
 			}
-
-		} catch (IOException e) {
-			LOG.severe(e.getMessage());
-			throw new RuntimeException("Reading of " + st.task_string
-					+ " failed: " + e, e);
-		}catch (NullPointerException e) {
-			throw new RuntimeException("Parsing of " + st.task_string + " failed: "
-					+ e, e);
-		} 
-		catch (Exception e) {
-			LOG.severe(e.getMessage());
-			throw new RuntimeException("Parsing of " + st.task_string + " failed: "
-					+ e, e);
+		}
+		//treeDepot().putTrees(trees);
+		if(st.task_string.equals("species")){
+			TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToSpecies());
+			Collections.sort(cachedTrees, tc);
+			int last_index = Math.min(st.task_progress+max_records, cachedTrees.size()-1);
+			treeDepot().putTreesBySpecies(cachedTrees.subList(st.task_progress, last_index));
+			count = last_index - st.task_progress;
+		}
+		if(st.task_string.equals("street")){
+			TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToStdStreet());
+			Collections.sort(cachedTrees, tc);
+			int last_index = Math.min(st.task_progress+max_records, cachedTrees.size()-1);
+			treeDepot().putTreesByStreet(cachedTrees.subList(st.task_progress, last_index));
+			count = last_index - st.task_progress;
+		}
+		if(st.task_string.equals("neighbourhood")){
+			TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToNeighbourhood());
+			Collections.sort(cachedTrees, tc);
+			int last_index = Math.min(st.task_progress+max_records, cachedTrees.size()-1);
+			treeDepot().putTreesByNeighbourhood(cachedTrees.subList(st.task_progress, last_index));
+			count = last_index - st.task_progress;
+		}
+		if(st.task_string.equals("commonName")){
+			TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToCommonName());
+			Collections.sort(cachedTrees, tc);
+			int last_index = Math.min(st.task_progress+max_records, cachedTrees.size()-1);
+			treeDepot().putTreesByCommonName(cachedTrees.subList(st.task_progress, last_index));
+			count = last_index - st.task_progress;
+		}
+		if(st.task_string.equals("genus")){
+			TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToGenus());
+			Collections.sort(cachedTrees, tc);
+			int last_index = Math.min(st.task_progress+max_records, cachedTrees.size()-1);
+			treeDepot().putTreesByGenus(cachedTrees.subList(st.task_progress, last_index));
+			count = last_index - st.task_progress;
+		}
+		if(st.task_string.equals("keywords")){
+			int largest = 1000;
+			max_records = largest*2;
+			TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToKeywords());
+			Collections.sort(cachedTrees, tc);
+			for(int start = 0; start < max_records; start+=largest ){
+				int last_index = Math.min(st.task_progress+start+largest, cachedTrees.size()-1);
+				treeDepot().putTreesByKeywords(cachedTrees.subList(st.task_progress+start, last_index));
+				count = last_index - st.task_progress;
+			}
 		}
 		LOG.info("done subtask chunk:\n\twork unit count = " + count);
 		if(count  < max_records){

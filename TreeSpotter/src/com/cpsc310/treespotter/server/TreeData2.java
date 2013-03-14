@@ -307,7 +307,6 @@ public class TreeData2 implements Serializable, TreeDataProvider, LatLongProvide
 				sb.append(s);
 				sb.append(" ");
 			}
-			
 		keywords = new String(sb.toString().trim());
 		sb = null;
 		kw_set = null;
