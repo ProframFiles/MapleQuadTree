@@ -10,12 +10,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -167,14 +167,14 @@ public class StreetDataUpdateJob extends Job {
 		String line_string;
 		ArrayList<TreeData2> tree_list = new ArrayList<TreeData2>();
 		Set<String> missing_strings = new HashSet<String>();
-		SortedMap<String,Integer> keyword_combos = new TreeMap<String, Integer>();
+
 		assert(streets != null);
 		int missing = 0;
 		LatLong max_ll = new LatLong(-300.0, -300.0);
 		LatLong min_ll = new LatLong(300, 300);
 		while((line_string = reader.readLine()) != null ){
 			String[] split_line = line_string.split(",");
-			TreeData2 new_tree = TreeFactory.makeTreeData2(split_line);
+			TreeData2 new_tree = TreeFactory.makeTreeData2(Arrays.copyOf(split_line, split_line.length));
 			String street_name = new_tree.getStdStreet();
 			if(!streets.containsKey(street_name)){
 				if((street_name.startsWith("N ") && streets.containsKey(street_name.substring(2,street_name.length())+" NORTH"))){
@@ -191,7 +191,7 @@ public class StreetDataUpdateJob extends Job {
 				}
 			}
 			Street this_street = streets.get(street_name);
-			Integer num_of_species = keyword_combos.get(new_tree.getKeywordString());
+
 			if(this_street != null){
 				LatLong ll = this_street.getLatLong(new_tree.getCivicNumber());
 				if(ll.getLatitude() > max_ll.getLatitude()) max_ll.setLatitude(ll.getLatitude());
@@ -199,24 +199,13 @@ public class StreetDataUpdateJob extends Job {
 				if(ll.getLatitude() < min_ll.getLatitude()) min_ll.setLatitude(ll.getLatitude());
 				if(ll.getLongitude() < min_ll.getLongitude()) min_ll.setLongitude(ll.getLongitude());
 				new_tree.setLatLong(ll);
-				if(num_of_species == null){
-					num_of_species = 0;
-				}
-				keyword_combos.put(new_tree.getKeywordString(), num_of_species+1);
 				tree_list.add(new_tree);
 			}
 		}
 		LOG.info("\n\tskipping " + missing + " unlocatable trees");
 		LOG.info("\n\ton " + missing_strings.size() + " unfound streets");
 		LOG.info("\n\t" + tree_list.size() + " treeData2 objects created (with locations)");
-		LOG.info("\n\t" + keyword_combos.size() + " keyword combinations total");
-		LOG.info("\n\tMax lat,long = ( "+ max_ll.getLatitude()+", "+max_ll.getLongitude() + " )");
-		LOG.info("\n\tMin lat,long = ( "+ min_ll.getLatitude()+", "+min_ll.getLongitude() + " )");
 
-		
-		//for(String s: keyword_combos.keySet()){
-			//LOG.info("tree species\n\t"+s + ", " + species.get(s) + " entries" );
-		//}
 		return tree_list;
 	}
 	
@@ -224,9 +213,29 @@ public class StreetDataUpdateJob extends Job {
 	protected ArrayList<SubTask> createSubTasks(InputStream is) {
 		ArrayList<SubTask> task_list = new ArrayList<SubTask>();
 		SubTask the_task = new SubTask();
-		the_task.task_string = "address_match";
+		the_task.task_string = "species";
 		the_task.task_progress = 0;
 		task_list.add(the_task);
+		SubTask the_task1 = new SubTask();
+		the_task1.task_string = "genus";
+		the_task1.task_progress = 0;
+		task_list.add(the_task1);
+		SubTask the_task2 = new SubTask();
+		the_task2.task_string = "street";
+		the_task2.task_progress = 0;
+		task_list.add(the_task2);
+		SubTask the_task3 = new SubTask();
+		the_task3.task_string = "commonName";
+		the_task3.task_progress = 0;
+		task_list.add(the_task3);
+		SubTask the_task4 = new SubTask();
+		the_task4.task_string = "neighbourhood";
+		the_task4.task_progress = 0;
+		task_list.add(the_task4);
+		SubTask the_task5 = new SubTask();
+		the_task5.task_string = "keywords";
+		the_task5.task_progress = 0;
+		task_list.add(the_task5);
 		return task_list;
 	}
 
@@ -234,7 +243,7 @@ public class StreetDataUpdateJob extends Job {
 	@Override
 	protected int processSubTask(InputStream is, SubTask st) {
 		LOG.info("starting subtask:\n\t"+st.task_string + "\n\t progress: " + st.task_progress);
-		int max_records = 3000;
+		int max_records = 10000;
 		int count = 0;
 		try {
 
@@ -245,8 +254,53 @@ public class StreetDataUpdateJob extends Job {
 				if(zip_entry.getName().equals("street_trees.csv")){
 					BufferedReader csv_reader =  new BufferedReader(new InputStreamReader(new BufferedInputStream(unzipper)));
 					ArrayList<TreeData2> trees = testForStreetMatch(csv_reader, street_set);
-					treeDepot().putTrees(trees);
-					treeDepot().saveTrees();
+					//treeDepot().putTrees(trees);
+					if(st.task_string.equals("species")){
+						TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToSpecies());
+						Collections.sort(trees, tc);
+						int last_index = Math.min(st.task_progress+max_records, trees.size()-1);
+						treeDepot().putTreesBySpecies(trees.subList(st.task_progress, last_index));
+						count = last_index - st.task_progress;
+					}
+					if(st.task_string.equals("street")){
+						TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToStdStreet());
+						Collections.sort(trees, tc);
+						int last_index = Math.min(st.task_progress+max_records, trees.size()-1);
+						treeDepot().putTreesByStreet(trees.subList(st.task_progress, last_index));
+						count = last_index - st.task_progress;
+					}
+					if(st.task_string.equals("neighbourhood")){
+						TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToNeighbourhood());
+						Collections.sort(trees, tc);
+						int last_index = Math.min(st.task_progress+max_records, trees.size()-1);
+						treeDepot().putTreesByNeighbourhood(trees.subList(st.task_progress, last_index));
+						count = last_index - st.task_progress;
+					}
+					if(st.task_string.equals("commonName")){
+						TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToCommonName());
+						Collections.sort(trees, tc);
+						int last_index = Math.min(st.task_progress+max_records, trees.size()-1);
+						treeDepot().putTreesByCommonName(trees.subList(st.task_progress, last_index));
+						count = last_index - st.task_progress;
+					}
+					if(st.task_string.equals("genus")){
+						TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToGenus());
+						Collections.sort(trees, tc);
+						int last_index = Math.min(st.task_progress+max_records, trees.size()-1);
+						treeDepot().putTreesByGenus(trees.subList(st.task_progress, last_index));
+						count = last_index - st.task_progress;
+					}
+					if(st.task_string.equals("keywords")){
+						int largest = 1000;
+						max_records = largest*2;
+						TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToKeywords());
+						Collections.sort(trees, tc);
+						for(int start = 0; start < max_records; start+=largest ){
+							int last_index = Math.min(st.task_progress+start+largest, trees.size()-1);
+							treeDepot().putTreesByKeywords(trees.subList(st.task_progress+start, last_index));
+							count = last_index - st.task_progress;
+						}
+					}
 				}
 				else if (zip_entry.getName().equals("ICIS_AddressBC.csv")){
 					BufferedReader csv_reader =  new BufferedReader(new InputStreamReader(new BufferedInputStream(unzipper)));

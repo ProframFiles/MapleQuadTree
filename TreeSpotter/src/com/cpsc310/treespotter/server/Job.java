@@ -97,9 +97,14 @@ public abstract class Job {
 				InputStream is = new ByteArrayInputStream(b);
 				SubTask st = subTasks.get(subTasks.size()-1);
 				int progress;
-				while((progress = processSubTask(is, st)) > 0 && !needToStop()){
+				while((progress = processSubTask(is, st)) > 0){
 					st.task_progress = progress;
 					ofy().save().entity(this).now();
+					LOG.info("\n\tSave task" + st.task_string + " with progress "+ st.task_progress);
+					if(needToStop()){
+						LOG.info("\n\tNeed to stop!");
+						break;
+					}
 					is = new ByteArrayInputStream(b);
 				}
 				if(progress == 0){
@@ -109,6 +114,7 @@ public abstract class Job {
 			}
 		}
 		catch(DeadlineExceededException e){
+			LOG.info("\n\tDeadline Exceeded!");
 			ofy().save().entity(this).now();
 		}
 		if(subTasks.isEmpty()){
@@ -122,7 +128,8 @@ public abstract class Job {
 
 	private boolean needToStop(){
 		long rem = ApiProxy.getCurrentEnvironment().getRemainingMillis();
-		return rem < 30000;
+		LOG.info("\n\t"+rem/1000.0+" remaining seconds!");
+		return rem < 60000;
 	}
 	
 	private ArrayList< byte[]> fetchFileData(ArrayList<String> urls){

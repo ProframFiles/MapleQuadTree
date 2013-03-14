@@ -4,7 +4,8 @@
 package com.cpsc310.treespotter.server;
 
 import java.io.Serializable;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 
@@ -34,6 +35,7 @@ public class TreeData2 implements Serializable, TreeDataProvider, LatLongProvide
 	private String species;
 	private String commonName;
 	private LatLong latLong;
+	private String keywords;
 	
 	
 	public void setLatLong(LatLong ll){
@@ -255,39 +257,60 @@ public class TreeData2 implements Serializable, TreeDataProvider, LatLongProvide
 	public void setCommonName(String commonName) {
 		this.commonName = commonName;
 	}
-	
 	public String getKeywordString(){
+		if(keywords==null){
+			makeKeywordString();
+		}
+		return keywords;
+	}
+	public void makeKeywordString(){
+		SortedSet<String> kw_set = new TreeSet<String>();
 		StringBuilder sb = new StringBuilder();
 			if(commonName != null){
+				kw_set.addAll(Arrays.asList(commonName.split(" ")));
 				sb.append(commonName);
 				sb.append(" ");
 			}
 			if(cultivar != null){
+				kw_set.addAll(Arrays.asList(cultivar.split(" ")));
 				sb.append(cultivar);
 				sb.append(" ");
 			}
 			if(genus != null){
+				kw_set.addAll(Arrays.asList(genus.split(" ")));
 				sb.append(genus);
 				sb.append(" ");
 			}
 			if(species != null){
+				kw_set.addAll(Arrays.asList(species.split(" ")));
 				sb.append(species);
 				sb.append(" ");
 			}
 			if(neighbourhood != null){
+				kw_set.addAll(Arrays.asList(neighbourhood.split(" ")));
 				sb.append(neighbourhood);
 				sb.append(" ");
 			}
 			if(street != null){
+				kw_set.addAll(Arrays.asList(street.split(" ")));
 				sb.append(street);
 				sb.append(" ");
 			}
 			if(stdStreet != null){
+				kw_set.addAll(Arrays.asList(stdStreet.split(" ")));
 				sb.append(stdStreet);
 				sb.append(" ");
 			}
+			sb.setLength(0);
+			for(String s: kw_set){
+				if(s.length()>2)
+				sb.append(s);
+				sb.append(" ");
+			}
 			
-		return sb.toString().trim();
+		keywords = new String(sb.toString().trim());
+		sb = null;
+		kw_set = null;
 	}
 
 

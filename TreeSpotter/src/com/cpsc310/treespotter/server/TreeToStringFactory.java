@@ -52,4 +52,26 @@ public class TreeToStringFactory {
 		};
 		return tsp;
 	}
+	static TreeStringProvider getTreeToCommonName(){
+		TreeStringProvider tsp = new TreeStringProvider(){
+
+			@Override
+			public String treeToString(TreeDataProvider tree) {
+				return tree.getCommonName();
+			}
+			
+		};
+		return tsp;
+	}
+	static TreeStringProvider getTreeToKeywords(){
+		TreeStringProvider tsp = new TreeStringProvider(){
+
+			@Override
+			public String treeToString(TreeDataProvider tree) {
+				return tree.getKeywordString();
+			}
+			
+		};
+		return tsp;
+	}
 }

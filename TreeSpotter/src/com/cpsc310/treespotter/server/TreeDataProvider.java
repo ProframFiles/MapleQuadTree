@@ -65,4 +65,6 @@ public interface TreeDataProvider {
 	
 	public String getCommonName();
 	public void setCommonName(String commonName);
+	
+	public String getKeywordString();
 }

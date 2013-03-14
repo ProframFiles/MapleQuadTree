@@ -24,7 +24,6 @@ import com.cpsc310.treespotter.client.TreeDataService;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.taskqueue.QueueFactory;
-import com.google.appengine.api.taskqueue.TaskOptions;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import static com.google.appengine.api.taskqueue.TaskOptions.Builder.*;
 
@@ -177,8 +176,14 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		try {
 			
 			SearchParam sp = query.iterator().next();
-			if(sp.fieldID == SearchFieldID.SPECIES){
-				SortedSet<TreeData2> trees = treeDepot().getTreesMatchingSpecies(sp.value.toUpperCase());
+			if(sp.fieldID == SearchFieldID.SPECIES || sp.fieldID == SearchFieldID.KEYWORD){
+				SortedSet<TreeData2> trees;
+				if(sp.fieldID == SearchFieldID.SPECIES){
+					trees = treeDepot().getTreesWithSpecies(sp.value.toUpperCase());
+				}
+				else{
+					trees = treeDepot().getTreesWithKeyword(sp.value.toUpperCase());
+				}
 				LOG.info("\tFound " + trees.size() + " special species tree results in the Objectify DB");
 				results = new ArrayList<ClientTreeData>();
 				int counter = 0;
@@ -273,6 +278,21 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		Set<String> all_set = null;
 		if(field_id == SearchFieldID.SPECIES){
 			all_set = treeDepot().getSpeciesSet();
+		}
+		else if(field_id == SearchFieldID.COMMON){
+			all_set = treeDepot().getCommonNameSet();
+		}
+		else if(field_id == SearchFieldID.NEIGHBOUR){
+			all_set = treeDepot().getNeighbourhoodSet();
+		}
+		else if(field_id == SearchFieldID.GENUS){
+			all_set = treeDepot().getGenusSet();
+		}
+		else if(field_id == SearchFieldID.ADDRESS){
+			all_set = treeDepot().getStreetSet();
+		}
+		else if(field_id == SearchFieldID.KEYWORD){
+			all_set = treeDepot().getKeywordSet();
 		}
 		
 		if(all_set != null && hint != null && hint.length() > 0)

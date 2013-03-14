@@ -14,10 +14,14 @@ import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 import java.util.zip.CheckedOutputStream;
 
+import com.googlecode.objectify.Key;
 import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.Ref;
+import com.googlecode.objectify.Result;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Ignore;
+import com.googlecode.objectify.annotation.Load;
 import com.googlecode.objectify.annotation.Unindex;
 
 
@@ -30,10 +34,11 @@ import com.googlecode.objectify.annotation.Unindex;
 @Entity
 public class PersistentFile {
 	@Id private  String name;
-	@Unindex private ArrayList<Ref<ByteArrayEntity>> chunkIds;
+	@Unindex @Load private ArrayList<Ref<ByteArrayEntity>> chunkIds;
 	@Unindex private int numBytes;
 	@Unindex private long checksum;
 	@Unindex private Date dateStamp;
+	@Ignore private ArrayList<Result<Key<ByteArrayEntity>>> asyncSaveResults;
 	
 	// objectify needs a no-arg constructor
 	@SuppressWarnings("unused")
@@ -50,8 +55,19 @@ public class PersistentFile {
 		ByteArrayEntity temp_blob = new ByteArrayEntity("");
 		ObjectifyService.register(temp_blob.getClass());
 	}
+	public void saveAsync(InputStream source){
+		asyncSaveResults = saveImpl(source);
+	}
+	public  Result<Key<PersistentFile>> completeSave(){
+		for(Result<Key<ByteArrayEntity>> r: asyncSaveResults){
+			chunkIds.add(Ref.create(r.now()));
+		}
+		Result<Key<PersistentFile>>  r=ofy().save().entity(this);
+		asyncSaveResults = null;
+		return r;
+	}
 	
-	public void save(InputStream source){
+	private ArrayList<Result<Key<ByteArrayEntity>>> saveImpl(InputStream source){
 		CRC32 check_crc = new CRC32();
 		InputStream in_stream = new CheckedInputStream(source, check_crc);
 		String blob_id = name;
@@ -59,14 +75,15 @@ public class PersistentFile {
 		ByteArrayEntity blob = new ByteArrayEntity(blob_id+blob_index);
 		numBytes = 0;
 		int written = 0;
-		
+		ArrayList<Result<Key<ByteArrayEntity>>> results = new ArrayList<Result<Key<ByteArrayEntity>>>();
 		try {
+			
 			written = blob.copyBytes(in_stream);
 			while(written > 0){
 				// persist this chunk of the file
-				ofy().save().entity(blob).now();
+				results.add(ofy().save().entity(blob));
 				// save a reference to the saved chunk
-				chunkIds.add(Ref.create(blob));
+				
 				// that chunks done, update numBytes
 				numBytes += written; 
 				
@@ -78,10 +95,16 @@ public class PersistentFile {
 			
 			dateStamp = new Date();
 			checksum = check_crc.getValue();
-			ofy().save().entity(this).now();
+			
 		} catch (IOException e) {
 			throw new RuntimeException("IOError while trying to persist file " + name + " from stream:\n\t" + e.getMessage(), e);
 		}
+		return results;
+	}
+	
+	public void save(InputStream source){
+		asyncSaveResults = saveImpl(source);
+		completeSave().now();
 	}
 	
 	public byte[] load(){
@@ -95,7 +118,6 @@ public class PersistentFile {
 		long retrieved_long = 0L;
 		try {
 			for( Ref<ByteArrayEntity> chunk_ref: chunkIds){
-				ofy().load().ref(chunk_ref);
 				ByteArrayEntity blob = chunk_ref.safeGet();
 				byte_wrapper.write(blob.getBytes());
 				current_index += blob.getBytes().length;

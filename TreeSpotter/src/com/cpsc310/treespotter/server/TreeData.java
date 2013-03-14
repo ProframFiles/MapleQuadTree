@@ -268,4 +268,10 @@ public class TreeData implements TreeDataProvider{
 		}
 		return s.toUpperCase();
 	}
+
+	@Override
+	public String getKeywordString() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

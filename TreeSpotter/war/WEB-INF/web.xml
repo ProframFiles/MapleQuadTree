@@ -72,7 +72,7 @@
 	</filter>
 	<filter-mapping>
 		<filter-name>appstats</filter-name>
-		<url-pattern>/treespotter/*</url-pattern>
+		<url-pattern>/treespotter/treedata</url-pattern>
 	</filter-mapping>
 	<servlet>
 		<servlet-name>appstats</servlet-name>

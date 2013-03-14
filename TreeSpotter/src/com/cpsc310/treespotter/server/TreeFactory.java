@@ -75,6 +75,7 @@ public class TreeFactory {
 			tree.setSpecies(values[17]);
 		}
 		tree.setCommonName(values[18]);
+		tree.makeKeywordString();
 		return tree;
 	}
 	static private boolean valueToBoolean(String b) {
