@@ -37,8 +37,10 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FocusWidget;
+import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -51,6 +53,7 @@ import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -593,14 +596,66 @@ public class TreeSpotter implements EntryPoint {
 		HorizontalPanel btnsPanel = new HorizontalPanel();
 		btnsPanel.add(submitBtn);
 		btnsPanel.add(cancel);
+		
 		btnsPanel.setWidth("100%");
 
 		addForm.add(btnsPanel);
+		
+		addForm.add(addTreesCSV());
+		
 		addPanel.add(addForm);
 		addPanel.setWidth("350px");
 		addPanel.setStyleName("add-popup");
 		addPanel.center();
 		addFormTooltips();
+	}
+	
+	
+	private HorizontalPanel addTreesCSV() {
+		HorizontalPanel panel = new HorizontalPanel();
+		final FormPanel form = new FormPanel();
+		final FileUpload fileUpload = new FileUpload();
+		
+		form.setAction(GWT.getModuleBaseURL() + "importCSV");
+		form.setMethod(FormPanel.METHOD_POST);
+		form.setWidget(fileUpload);
+	
+		Label selectLabel = new Label("Select a CSV file:");
+		Button uploadButton = new Button("Upload");
+		
+		uploadButton.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				String fileName = fileUpload.getFilename();				
+				if (fileName.length() == 0) {
+					Window.alert("No file specified!");
+					return;
+				}
+				String extn = fileName.substring(fileName.lastIndexOf('.'), fileName.length());
+				if (!extn.equals(".csv")) {
+					Window.alert("Not an CSV file!");
+				}
+				else {
+					form.submit();
+				}
+			}
+		});
+		
+		
+		form.addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
+			
+			@Override
+			public void onSubmitComplete(SubmitCompleteEvent event) {
+				Window.alert(event.getResults());				
+			}
+		});
+		
+		panel.add(selectLabel);
+		panel.add(form);
+		panel.add(uploadButton);
+		panel.setWidth("100%");
+		return panel;
+		
 	}
 
 	private void addComment() {
