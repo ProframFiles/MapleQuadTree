@@ -5,16 +5,24 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.maps.client.geocode.Geocoder;
 import com.google.gwt.maps.client.geocode.LocationCallback;
 import com.google.gwt.maps.client.geocode.Placemark;
 import com.google.gwt.maps.client.geom.LatLng;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 
 public class TreeSpotterClient {
 	ClientTreeData addTree = null;
@@ -168,8 +176,20 @@ public class TreeSpotterClient {
 		});
 	}
 
+	
+	/**
+	 * export search results into csv
+	 * @param rlist
+	 */
+	
 	public void exportData(ArrayList<ClientTreeData> rlist) {
 		
+		StringBuilder stringBuilder = buildCSV(rlist);
+		sendToServer(stringBuilder);
+		
+	}
+
+	private StringBuilder buildCSV(ArrayList<ClientTreeData> rlist) {
 		StringBuilder stringBuilder = new StringBuilder();
 		
 		// Columns
@@ -184,7 +204,7 @@ public class TreeSpotterClient {
 		stringBuilder.append("\"" + TreeSpotter.PLANTED + "\",");
 		
 		stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-		stringBuilder.append("\n");
+		stringBuilder.append("/n");
 		
 		// Data
 		for (int i=0; i<rlist.size(); i++) {
@@ -199,27 +219,24 @@ public class TreeSpotterClient {
 			stringBuilder.append("\"" + convertToHeight(tree.getHeightRange()) + "\",");
 			stringBuilder.append("\"" + emptyOrValue(tree.getPlanted()) + "\"");
 			
-			stringBuilder.append("\n");
+			stringBuilder.append("/n");
 		}
-		
-		sendToServer(stringBuilder);
-		
+		return stringBuilder;
 	}
 
 	private void sendToServer(StringBuilder csvText) {
-		String csv = csvText.toString();
-		parent.treeDataService.exportCSV(csv, new AsyncCallback<String>() {
-			public void onFailure(Throwable caught) {
-				
-			}
-			
-			public void onSuccess(String result) {
-				final HTML serverResponseLabel = new HTML();
-				serverResponseLabel.removeStyleName("serverResponseLabelError");
-				serverResponseLabel.setHTML(result);
-			}
-		});
 		
+		FormPanel formPanel = new FormPanel();
+		TextBox textBox = new TextBox();
+		
+		textBox.setName("textbox");
+		textBox.setValue(csvText.toString());
+		
+		formPanel.setAction(GWT.getModuleBaseURL() + "export");
+		formPanel.setMethod(FormPanel.METHOD_POST);
+		formPanel.setWidget(textBox);
+		
+		formPanel.submit();
 	}
 
 	private String convertToHeight(int heightRange) {
