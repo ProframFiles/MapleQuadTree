@@ -363,7 +363,9 @@ public class TreeDepot {
 		commonNameIndexRef = Ref.create(commonNameIndex);
 		neighbourhoodIndexRef = Ref.create(neighbourhoodIndex);
 		spatialIndexRef = Ref.create(spatialIndex);
-		nameIndexRef = Ref.create(nameIndex);
+		if(nameIndex != null){
+			nameIndexRef = Ref.create(nameIndex);
+		}
 		saveTrees(this);
 	}
 	
