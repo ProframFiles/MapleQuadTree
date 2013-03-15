@@ -40,11 +40,24 @@ public class TreeFactory {
 		server_data.setCommonName(tree_data.getCommonName());
 		return server_data;
 	}
+	static public  TreeData2 makeTreeData2(ClientTreeData tree_data, int id_number) {
+		TreeData2 server_data = new TreeData2("U", id_number);
+		server_data.setCivicNumber(tree_data.getCivicNumber());
+		server_data.setNeighbourhood(tree_data.getNeighbourhood());
+		server_data.setStreet(tree_data.getStreet());
+		server_data.setHeightRange(tree_data.getHeightRange());
+		server_data.setDiameter(tree_data.getDiameter());
+		server_data.setPlanted(tree_data.getPlanted());
+		server_data.setCultivar(tree_data.getCultivar());
+		server_data.setGenus(tree_data.getGenus());
+		server_data.setSpecies(tree_data.getSpecies());
+		server_data.setCommonName(tree_data.getCommonName());
+		return server_data;
+	}
 	
 	static public TreeData2 makeTreeData2(String[] values){
 		//thanks for this handy method, Samantha
-		TreeData2 tree = new TreeData2();
-		tree.setID("V",Integer.parseInt(values[0]) );
+		TreeData2 tree = new TreeData2("V",Integer.parseInt(values[0]) );
 		tree.setCivicNumber(Integer.parseInt(values[1]));
 		tree.setStdStreet(values[2]);
 		tree.setNeighbourhood(values[3]);
@@ -75,7 +88,7 @@ public class TreeFactory {
 			tree.setSpecies(values[17]);
 		}
 		tree.setCommonName(values[18]);
-		tree.makeKeywordString();
+		//tree.makeKeywordString();
 		return tree;
 	}
 	static private boolean valueToBoolean(String b) {

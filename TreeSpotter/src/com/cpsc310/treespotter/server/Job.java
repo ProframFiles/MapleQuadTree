@@ -18,18 +18,22 @@ import com.cpsc310.treespotter.shared.Util;
 import com.google.apphosting.api.ApiProxy;
 import com.google.apphosting.api.DeadlineExceededException;
 import com.googlecode.objectify.Ref;
+import com.googlecode.objectify.VoidWork;
+import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
 import com.googlecode.objectify.annotation.Load;
 import com.googlecode.objectify.annotation.Serialize;
-import static com.googlecode.objectify.ObjectifyService.ofy;
+
+import static com.cpsc310.treespotter.server.OfyService.ofy;
 
 /**
  * @author maple-quadtree
  *
  */
 @Entity
+@Cache
 public abstract class Job {
 	private static Logger LOG = Logger.getLogger(Job.class.getName());
 	private static final double DAY_MS = 86400000.0;
@@ -45,6 +49,14 @@ public abstract class Job {
 	@Ignore long initialMillis = ApiProxy.getCurrentEnvironment().getRemainingMillis();
 	public Job(){
 		
+	}
+	
+	static public void saveJobState(final Job job){
+		ofy().transact(new VoidWork() {
+			public void vrun() {
+				ofy().save().entity(job).now();
+			}
+		});
 	}
 	
 	public Job(String job_name){
@@ -70,7 +82,7 @@ public abstract class Job {
 	{
 		if(fileDataRef != null){
 			ofy().load().ref(fileDataRef);
-			fileData = fileDataRef.getValue();
+			fileData = fileDataRef.safeGet();
 			LOG.fine("\n\tfound existing file data.");
 		}
 		else{
@@ -81,12 +93,13 @@ public abstract class Job {
 			ArrayList<byte[]> file_blobs = fetchFileData(getFileUrls());
 			byte[] b = preProcessDataFiles(file_blobs);
 			LOG.info("Done preprocessing files.\n\tPersisting " + b.length +" bytes to datastore");
+			
 			fileData.save(new ByteArrayInputStream(b));
 			fileDataRef = Ref.create(fileData);
 			LOG.fine("\n\tCreating subtasks");
 			subTasks = createSubTasks(new ByteArrayInputStream(b));
 			LOG.fine("\n\tPersisting job state");
-			ofy().save().entity(this).now();
+			saveJobState(this);
 			return true;
 		}
 		// if we made it here, that means we already have up-to-date persisted data
@@ -100,8 +113,8 @@ public abstract class Job {
 				int progress;
 				while((progress = processSubTask(is, st)) > 0){
 					st.task_progress = progress;
-					ofy().save().entity(this).now();
-					LOG.info("\n\tSave task" + st.task_string + " with progress "+ st.task_progress);
+					saveJobState(this);
+					LOG.info("\n\tSave task \"" + st.task_string + "\" with progress "+ st.task_progress);
 					if(needToStop()){
 						LOG.info("\n\tNeed to stop!");
 						break;
@@ -111,12 +124,11 @@ public abstract class Job {
 				if(progress == 0){
 					subTasks.remove(subTasks.size()-1);
 				}
-				ofy().save().entity(this).now();
+				saveJobState(this);
 			}
 		}
 		catch(DeadlineExceededException e){
 			LOG.info("\n\tDeadline Exceeded!");
-			ofy().save().entity(this).now();
 		}
 		if(subTasks.isEmpty()){
 			return false;
@@ -129,8 +141,12 @@ public abstract class Job {
 
 	private boolean needToStop(){
 		long rem = ApiProxy.getCurrentEnvironment().getRemainingMillis();
+		if(initialMillis < 120000){
+			LOG.info("\n\tOn dev server, time limit is wrong");
+			return false;
+		}
 		LOG.info("\n\t"+rem/1000.0+" remaining seconds!");
-		return (rem < 60000 && initialMillis > 120000);
+		return (rem < 60000);
 	}
 	
 	private ArrayList< byte[]> fetchFileData(ArrayList<String> urls){

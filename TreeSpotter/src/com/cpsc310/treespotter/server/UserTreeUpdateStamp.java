@@ -5,35 +5,32 @@ package com.cpsc310.treespotter.server;
 
 import java.util.Date;
 
-import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.Persistent;
-import javax.jdo.annotations.PrimaryKey;
 
-import com.google.appengine.api.datastore.Key;
+import com.googlecode.objectify.annotation.Entity;
+import com.googlecode.objectify.annotation.Id;
 
 /**
  * @author maple-quadtree
  *
  */
-@PersistenceCapable
+@Entity
 public class UserTreeUpdateStamp {
-	@PrimaryKey
-	@Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
-	private Key key;
+
+	@Id private String key;
 	
-	@Persistent
 	private String treeID;
-	
-	@Persistent
 	Date timeStamp;
 	
-	public UserTreeUpdateStamp(Key key) {
+	public UserTreeUpdateStamp(String key) {
 		timeStamp = new Date();
 		treeID = "U0";
 		this.key = key;
 	}
-	
+	public UserTreeUpdateStamp(String key, String id) {
+		timeStamp = new Date();
+		treeID = id;
+		this.key = key;
+	}
 	/**
 	 * @return the treeID
 	 */

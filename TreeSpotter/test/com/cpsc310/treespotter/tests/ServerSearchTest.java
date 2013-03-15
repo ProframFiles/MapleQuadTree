@@ -9,8 +9,8 @@ import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
 import com.cpsc310.treespotter.server.DataFetcher;
 import com.cpsc310.treespotter.server.Job;
 import com.cpsc310.treespotter.server.LocationProcessor;
-import com.cpsc310.treespotter.server.StreetDataUpdateJob;
-import com.cpsc310.treespotter.server.StreetDataUpdater;
+import com.cpsc310.treespotter.server.DataUpdateJob;
+import com.cpsc310.treespotter.server.DataUpdater;
 import com.cpsc310.treespotter.server.TreeData;
 import com.cpsc310.treespotter.server.TreeDataServiceImpl;
 import com.cpsc310.treespotter.server.PMF;
@@ -38,23 +38,7 @@ public class ServerSearchTest {
 	public void setUp() throws Exception {
 		helper.setSimulateProdLatencies(true);
 		helper.setUp();
-		
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try {
-			pm.makePersistent(makeTestTree("JIM", 1));
-			pm.makePersistent(makeTestTree("BOB", 2));
-			pm.makePersistent(makeTestTree("MARY", 3));
-			pm.makePersistent(makeTestTree("RASTAPOUPOULOS", 4));
-			TreeData highbury_tree = makeTestTree("HIGHBURY TREE", 5);
-			highbury_tree.setStreet("HIGHBURY ST");
-			highbury_tree.setCivicNumber(2632);
-			pm.makePersistent(highbury_tree);
-		}
-		finally{
-			pm.close();
-		}
 		dataService = new TreeDataServiceImpl();
-		
 	}
 
 	@After
@@ -64,11 +48,11 @@ public class ServerSearchTest {
 
 	@Test
 	public void testStreetUpdateJob() {
-		StreetDataUpdater updater = new StreetDataUpdater();
+		DataUpdater updater = new DataUpdater();
 		updater.init();
 		Job job = ofy().load().type(Job.class).id("street data update job").get();
 		if(job == null){
-			job = new StreetDataUpdateJob("street data update job");
+			job = new DataUpdateJob("street data update job");
 		}
 		boolean has_more_work = job.run();
 		if(has_more_work){
@@ -80,15 +64,40 @@ public class ServerSearchTest {
 		SearchQuery loc_query = new AdvancedSearch();
 		loc_query.addSearchParam(SearchFieldID.SPECIES, "Betulus");
 		ArrayList<ClientTreeData> results = dataService.searchTreeData(loc_query);
-		assert(!results.isEmpty());
+		assertEquals(results.size(), 100);
+		loc_query.setNumResults(4700);
+		results = dataService.searchTreeData(loc_query);
+		assertEquals(results.size(), 4700);
+		
+		loc_query.setNumResults(10000);
+		results = dataService.searchTreeData(loc_query);
+		assertEquals(results.size(), 4705);
+		
+		loc_query = new AdvancedSearch();
+		loc_query.addSearchParam(SearchFieldID.KEYWORD, "maple");
+		results = dataService.searchTreeData(loc_query);
+		assertEquals(results.size(),100);
 		
 		ArrayList<String> suggestions = dataService.getSearchSuggestions(SearchFieldID.SPECIES, "be");
+		assertEquals(3, suggestions.size());
+		
+		suggestions = dataService.getSearchSuggestions(SearchFieldID.SPECIES, "b");
+		assertEquals(37, suggestions.size());
+		
+		suggestions = dataService.getSearchSuggestions(SearchFieldID.SPECIES, "");
+		assertEquals(264, suggestions.size());
+		
 		for(String s: suggestions){
 			System.out.println(s);
 		}
+		
+		 testAddressSearch();
+		 
+		 
+		
 	}
 	
-	@Test
+	
 	public void testKeywordSearch() {
 		ArrayList<ClientTreeData> results;
 		results = doKeywordSearch("MARY");
@@ -119,7 +128,6 @@ public class ServerSearchTest {
 		
 	}
 	
-	@Test
 	public void testLocationSearch() {
 		LocationProcessor lp = new LocationProcessor();
 		AdvancedSearch loc_query;
@@ -154,31 +162,27 @@ public class ServerSearchTest {
 		assertTrue(results.get(0).getCommonName().equalsIgnoreCase("HIGHBURY TREE") );
 	}
 	
-	@Test
 	public void testAddressSearch() {
 	
 		AdvancedSearch query = new AdvancedSearch();
 		query.addSearchParam(SearchFieldID.ADDRESS, "240 the crescent");
 		ArrayList<ClientTreeData> results = dataService.searchTreeData(query);
-		assertEquals(4,results.size() );
+		assertEquals(53,results.size() );
 		assertTrue(results.get(0).getStreet().equalsIgnoreCase("The Crescent") );
 		
 		results.clear();
 		query = new AdvancedSearch();
 		query.addSearchParam(SearchFieldID.ADDRESS, "230-250 the crescent");
 		results = dataService.searchTreeData(query);
-		assertEquals(4,results.size() );
-		assertTrue(results.get(0).getStreet().equalsIgnoreCase("The Crescent") );
+		assertEquals(53,results.size() );
 		
 		results.clear();
 		query = new AdvancedSearch();
 		query.addSearchParam(SearchFieldID.ADDRESS, "2600-2700 highbury st");
 		results = dataService.searchTreeData(query);
-		assertEquals(1,results.size() );
-		assertTrue(results.get(0).getStreet().equalsIgnoreCase("highbury st") );
+		assertEquals(100,results.size() );
 	}
 	
-	@Test
 	public void testHeightSearch() {
 		
 		AdvancedSearch query = new AdvancedSearch();
@@ -204,7 +208,6 @@ public class ServerSearchTest {
 		assertEquals(0,results.size());
 	}
 	
-	@Test
 	public void importDataWithoutDyingTest() {
 		//LocationProcessor lp = new LocationProcessor();
 		//lp.doPost(null, null);
@@ -220,7 +223,7 @@ public class ServerSearchTest {
 	}
 	
 	
-	@Test
+	
 	public void testDiameterSearch() {
 	
 		AdvancedSearch query = new AdvancedSearch();

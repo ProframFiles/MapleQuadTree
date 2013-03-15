@@ -8,12 +8,13 @@ import static com.cpsc310.treespotter.server.OfyService.ofy;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -22,10 +23,12 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.DeflaterOutputStream;
 
 import com.esotericsoftware.kryo.Kryo;
 
 import com.googlecode.objectify.Ref;
+import com.googlecode.objectify.VoidWork;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
@@ -49,6 +52,14 @@ public class TreesIndexedByString {
 	@Ignore TreeStringProvider tsp = null;
 	@Ignore  ArrayList<Ref<PersistentFile>> futuresList = null;
 	
+	static public void saveIndexState(final TreesIndexedByString indx){
+		ofy().transact(new VoidWork() {
+			public void vrun() {
+				ofy().save().entity(indx).now();
+			}
+		});
+	}
+	
 	//for use by objectify
 	@SuppressWarnings("unused")
 	private TreesIndexedByString(){
@@ -59,70 +70,59 @@ public class TreesIndexedByString {
 		LOG.setLevel(Level.FINE);
 		this.id = id;
 		blobRefs = new LinkedHashMap<String, Ref<PersistentFile>>();
+		//numStored = new LinkedHashMap<String, Integer>();
 	}
 	
 	public void setStringProvider(TreeStringProvider provider){
 		tsp = provider;
 	}
 	
+	private int addSingleToMap(TreeData2 tree){
+		int ret = 0;
+		String key = filterKey(tsp.treeToString(tree));
+		SortedSet<TreeData2> tree_set = null;
+		tree_set = treeMap.get(key);
+		
+		if(tree_set == null){
+			tree_set = new TreeSet<TreeData2>();
+			treeMap.put(key, tree_set);
+			ret ++;
+		}
+		boolean added = tree_set.add(tree);
+		if(!added){
+			tree_set.remove(tree);
+			tree_set.add(tree);
+		}
+		return ret;
+	}
 	
 	public void addTrees(Collection<TreeData2> trees){
 		int create_count = 0;
 		for(TreeData2 tree: trees){
-			String key = filterKey(tsp.treeToString(tree));
-			SortedSet<TreeData2> tree_set = null;
-			tree_set = treeMap.get(key);
-			
-			if(tree_set == null){
-				tree_set = new TreeSet<TreeData2>();
-				treeMap.put(key, tree_set);
-				create_count++;
-			}
-			boolean added = tree_set.add(tree);
-			if(!added){
-				tree_set.remove(tree);
-				tree_set.add(tree);
-			}
+			create_count += addSingleToMap(tree);
 		}
-		LOG.fine("\n\tCreated " + create_count + " new keys for " + id + "\n\t" + treeMap.size() +" to serialize");
 		mergeWithDatastore();
 		serializeMapping();
-		ofy().save().entity(this).now();
+		LOG.fine("\n\tAdded to " + create_count + " keys for " + id + "\n\t" + blobRefs.size() +" keys total.");
+		saveIndexState(this);
 	}
-	
-	public void addTreesSplit(Collection<TreeData2> trees){
-		int create_count = 0;
-		for(TreeData2 tree: trees){
-			String[] keys = filterKey(tsp.treeToString(tree)).trim().split(" +");
-			for(String key: keys){
-				SortedSet<TreeData2> tree_set = null;
-				tree_set = treeMap.get(key);
-				
-				if(tree_set == null){
-					tree_set = new TreeSet<TreeData2>();
-					treeMap.put(key, tree_set);
-					create_count++;
-				}
-				boolean added = tree_set.add(tree);
-				if(!added){
-					tree_set.remove(tree);
-					tree_set.add(tree);
-				}
-			}
-		}
-		LOG.fine("\n\tCreated " + create_count + " new keys for " + id + "\n\t" + treeMap.size() +" to serialize");
-		mergeWithDatastore();
-		serializeMapping();
-		ofy().save().entity(this).now();
-		LOG.fine("\n\tCurrently " + blobRefs.size() + " keys in the " + id +" index");
-	}
+
 	
 	private String filterKey(String s){
 		return s.replace('.','_');
 	}
+	public String getKeyForTree(TreeData2 tree){
+		return filterKey(tsp.treeToString(tree));
+	}
 	
-	public void addTree(TreeData2 tree){
-		//TODO: implement
+	public Ref<PersistentFile> addTree(TreeData2 tree){
+		int create_count = addSingleToMap(tree);
+		mergeWithDatastore();
+		serializeMapping();
+		LOG.fine("\n\tAdded to " + create_count + " keys for " + id + "\n\t" + blobRefs.size() +" keys total.");
+		
+		saveIndexState(this);
+		return blobRefs.get(getKeyForTree(tree));
 	}
 	
 	public void modifyTree(TreeData2 tree){
@@ -140,6 +140,21 @@ public class TreesIndexedByString {
 		return loadList(filterKey(s));
 	}
 	
+	public Set< Entry<String, Ref<PersistentFile>>> getRefEntries(){
+		return blobRefs.entrySet();
+	}
+	
+	public Set<Ref<PersistentFile>> getAllRefsWith(String s){
+		String key = filterKey(s);
+		Set<Ref<PersistentFile>> refSet = new LinkedHashSet<Ref<PersistentFile>>();
+		for(Entry<String, Ref<PersistentFile>> entry: blobRefs.entrySet()){
+			if(entry.getValue()!=null && entry.getKey().contains(key) ){
+				refSet.add(entry.getValue());
+			}
+		}
+		return refSet;
+	}
+	
 	public void getAllTreesWithAsync(String s){
 		if(s == null){
 			return;
@@ -151,7 +166,7 @@ public class TreesIndexedByString {
 				futuresList.add(entry.getValue());
 			}
 		}
-		ofy().load().refs(futuresList);
+		TreeDepot.loadAllRefs(futuresList);
 	}
 	
 	public SortedSet<TreeData2> getAllTreesWith(String s){
@@ -163,7 +178,7 @@ public class TreesIndexedByString {
 		SortedSet<TreeData2> ret = new TreeSet<TreeData2>();
 		if(futuresList != null){
 			for( Ref<PersistentFile> ref: futuresList ){
-				ret.addAll(deSerializeRef(ref));
+				ret.addAll(TreeDepot.deSerializeRef(ref));
 			}
 			futuresList.clear();
 		}
@@ -171,26 +186,7 @@ public class TreesIndexedByString {
 	}
 	
 	
-	@SuppressWarnings("unchecked")
-	private SortedSet<TreeData2> deSerializeRef( Ref<PersistentFile> ref){
-		PersistentFile pFile = ref.get();
-		byte[] b = pFile.load();
-		SortedSet<TreeData2> ret = null;
-		try {
-		//	InflaterInputStream inflater = new InflaterInputStream;
-			ObjectInputStream in = new ObjectInputStream((new ByteArrayInputStream(b)));
-			ret = (SortedSet<TreeData2>) in.readObject();
-			in.close();
-			b = null;
-			pFile = null;
-		} catch (IOException e) {
-			throw new RuntimeException("IOException while deserializing " + ref.toString() + "\n\t"+e.getMessage(), e);
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException("ClassNotFoundException while deserializing " + ref.toString() + "\n\t"+e.getMessage(), e);
-		}
-		//Collections.addAll(ret, kryo.readObject(input, TreeData2[].class));
-		return ret;
-	}
+
 	
 	// need to perform unchecked conversions when deserializing 
 	// Collections
@@ -207,7 +203,7 @@ public class TreesIndexedByString {
 		ofy().load().refs(reflist);
 		
 		for(int i =0; i< reflist.size(); ++i){
-			SortedSet<TreeData2> set = deSerializeRef(reflist.get(i));
+			SortedSet<TreeData2> set = TreeDepot.deSerializeRef(reflist.get(i));
 			treeMap.get(keylist.get(i)).addAll(set); 
 		}
 	}
@@ -224,7 +220,7 @@ public class TreesIndexedByString {
 	
 	private SortedSet<TreeData2> loadList(Ref<PersistentFile> ref){
 		ofy().load().ref(ref);
-		return deSerializeRef(ref);
+		return TreeDepot.deSerializeRef(ref);
 	}
 	
 	public void serializeMapping(){
@@ -234,23 +230,24 @@ public class TreesIndexedByString {
 	public int serializeMapping(int start, int num){
 		int count = 0;
 		int written = 0;
-		int max_bytes = 4*1024;
-		Map<String, PersistentFile> keys_w_files = new HashMap<String, PersistentFile>();
+		int max_bytes = 1;
+		final Map<String, PersistentFile> keys_w_files = new HashMap<String, PersistentFile>();
 		for(Entry<String,SortedSet<TreeData2>> tree_entry: treeMap.entrySet()){
 			if(tree_entry.getValue()!=null && !tree_entry.getValue().isEmpty()){
 				if(count >= start && count < start+num){
 					ByteArrayOutputStream byte_stream = new ByteArrayOutputStream();
-					//DeflaterOutputStream deflater = new DeflaterOutputStream(byte_stream);
+					DeflaterOutputStream deflater = new DeflaterOutputStream(byte_stream);
+					OutputStream sink = deflater;
 					ObjectOutputStream out;
 					byte[] b;
 					try {
-						out = new ObjectOutputStream(byte_stream);
+						out = new ObjectOutputStream(sink);
 						out.writeObject(tree_entry.getValue());
 						out.close();
 						byte_stream.flush();
 						b= byte_stream.toByteArray();
-						byte_stream.close();
-						//deflater.flush();
+						deflater.finish();
+						out.close();
 					}
 					catch (IOException e) {
 						throw new RuntimeException("IOException while serializing " + tree_entry.getKey() + "\n\t"+e.getMessage(), e);
@@ -262,12 +259,14 @@ public class TreesIndexedByString {
 					keys_w_files.put(tree_entry.getKey(),f);
 					written += b.length;
 					if(written > max_bytes){
-						for(Entry<String, PersistentFile> entry: keys_w_files.entrySet()){
-							//LOG.fine("\n\tPutting " + entry.getKey() +" into datastore");
-							blobRefs.put(entry.getKey(), Ref.create(entry.getValue().completeSave().now()));
-						//	LOG.info("\n\tSerialized " + written +" bytes in " + keys_w_files.size() + " files for " + id);
-						}
-						
+						ofy().transact(new VoidWork() {
+						    public void vrun() {
+						    	for(Entry<String, PersistentFile> entry: keys_w_files.entrySet()){
+									blobRefs.put(entry.getKey(), Ref.create(entry.getValue().completeSave().now()));
+								}
+						    }
+						});
+						//LOG.fine("\n\tSerialized " + written +" bytes in " + keys_w_files.size() + " files for " + id);		
 						keys_w_files.clear();
 						written = 0;
 					}
@@ -277,10 +276,13 @@ public class TreesIndexedByString {
 			
 		}
 		if(written > 0){
-			for(Entry<String, PersistentFile> entry: keys_w_files.entrySet()){
-				//LOG.fine("\n\tPutting " + entry.getKey() +" into datastore");
-				blobRefs.put(entry.getKey(), Ref.create(entry.getValue().completeSave().now()));
-			}
+			ofy().transact(new VoidWork() {
+			    public void vrun() {
+			    	for(Entry<String, PersistentFile> entry: keys_w_files.entrySet()){
+						blobRefs.put(entry.getKey(), Ref.create(entry.getValue().completeSave().now()));
+					}
+			    }
+			});
 			//LOG.info("\n\tSerialized " + written +" bytes in " + keys_w_files.size() + " files for " + id);
 			keys_w_files.clear();
 			written = 0;
