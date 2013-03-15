@@ -11,7 +11,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.appengine.api.taskqueue.QueueFactory;
-import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.Work;
 
 import static com.cpsc310.treespotter.server.OfyService.ofy;
@@ -25,7 +24,8 @@ import static com.google.appengine.api.taskqueue.TaskOptions.Builder.withUrl;
 
 public class DataUpdater extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private static Logger LOG = Logger.getLogger(DataUpdater.class.getName());
+	private static Logger LOG = Logger.getLogger("Update task");
+	public static final String TASK_URL = "/treespotter/tasks/fetchandprocessdata";
 	private static final String JOB_NAME = "street data update job";
 	
 	public DataUpdater(){
@@ -37,6 +37,18 @@ public class DataUpdater extends HttpServlet {
 		LOG.info("recieved StreetDataUpdater request, about to fetch job record...");
 		Job job = getJob(JOB_NAME);
 		job.setLogLevel(LOG.getLevel());
+		String[] force = request.getParameterValues("force tasks");
+		if(force != null && force.length>0){
+			job.setOptions("force tasks", "true");
+		}
+		String[] tasks = request.getParameterValues("add task");
+		if(tasks != null && tasks.length>0){
+			for(String task: tasks){
+				if (task!=null){
+					job.setOptions("add task", task);
+				}
+			}
+		}
 		LOG.fine("\n\trunning the job.");
 		boolean has_more_work = job.run();
 		LOG.fine("\n\tDone this run portion.");
@@ -51,9 +63,6 @@ public class DataUpdater extends HttpServlet {
 	
 	public void init(){
 		LOG.setLevel(Level.FINE);
-		ObjectifyService.register(DataUpdateJob.class);
-		ObjectifyService.register(PersistentFile.class);
-		ObjectifyService.register(ByteArrayEntity.class);
 	}
 	
 	private static Job getJob(final String job_name){
@@ -75,7 +84,7 @@ public class DataUpdater extends HttpServlet {
 		return job;
 	}
 	
-	static public void queueThisTask(){
-		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/fetchandprocessdata"));
+	static private void queueThisTask(){
+		QueueFactory.getDefaultQueue().add(withUrl(TASK_URL));
 	}
 }

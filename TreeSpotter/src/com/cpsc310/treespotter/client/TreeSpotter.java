@@ -154,14 +154,13 @@ public class TreeSpotter implements EntryPoint {
 				start = LatLng.newInstance(49.26102, -123.249339);
 			}
 		});
-
+		
 		initFacebookAPI();
 		initHomePage();
 		initSearchOracle();
 		initButtons();
 		initLoginLogout();
 		initAdminButton();
-		
 				
 		History.addValueChangeHandler(new ValueChangeHandler<String>() {
 			public void onValueChange(ValueChangeEvent<String> event) { 
@@ -891,45 +890,7 @@ public class TreeSpotter implements EntryPoint {
 
 	private void loadAdminPage() {
 		// put another check, since possible to force button to show
-		if (loginInfo == null || !loginInfo.isAdmin()) {
-			final HTMLPanel panel = new HTMLPanel("<h1> GO AWAY </h1>");
-			RootPanel.get("content").clear();
-			RootPanel.get("content").add(panel);	
-			return;
-		}
-		
-		System.out.println("Info " +loginInfo.isAdmin());
-		
-		final HTMLPanel panel = new HTMLPanel("<h1> Admin Page </h1>");
-		Button importBtn = new Button("Full Update");
-		
-		importBtn.addClickHandler(new ClickHandler() {
-			public void onClick(ClickEvent event) {
-				treeDataService.importFromSite("", new AsyncCallback<Void>() {
-
-					@Override
-					public void onFailure(Throwable caught) {
-						panel.add(new HTML("Something went wrong! <br>" + caught.getMessage()));						
-					}
-
-					@Override
-					public void onSuccess(Void result) {
-						panel.add(new HTML("Import success!"));						
-					}					
-				});
-			}			
-		});
-		
-		Button debugBtn = new Button("Debug Update");		
-		debugBtn.addClickHandler(new ClickHandler() {
-			public void onClick(ClickEvent event) {
-
-			}			
-		});
-		
-		panel.add(importBtn);
-		RootPanel.get("content").clear();
-		RootPanel.get("content").add(panel);	
+		AdminButtonPage.load(loginInfo, treeDataService);
 	}
 
 	private void loadLoadingBar() {

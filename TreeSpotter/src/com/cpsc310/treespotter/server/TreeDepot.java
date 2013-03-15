@@ -48,8 +48,8 @@ public class TreeDepot {
 	@Ignore private TreesIndexedByString speciesIndex;
 	Ref<TreesIndexedByString> speciesIndexRef;
 	
-	@Ignore private TreesIndexedByString idIndex;
-	Ref<TreesIndexedByString> idIndexRef;
+	@Ignore private TreesIndexedByString spatialIndex;
+	Ref<TreesIndexedByString> spatialIndexRef;
 	
 	@Ignore private TreesIndexedByString streetIndex;
 	Ref<TreesIndexedByString> streetIndexRef;
@@ -62,6 +62,9 @@ public class TreeDepot {
 	
 	@Ignore private TreesIndexedByString genusIndex;
 	Ref<TreesIndexedByString> genusIndexRef;
+	
+	@Ignore private TreesIndexedByString nameIndex;
+	Ref<TreesIndexedByString> nameIndexRef;
 	
 	@Ignore ArrayList<TreesIndexedByString> stringIndices;
 	
@@ -214,13 +217,29 @@ public class TreeDepot {
 			    }
 			});
 		}
-		if(idIndexRef != null){
-			idIndex = ofy().transact(new Work<TreesIndexedByString>() {
+		if(spatialIndexRef != null){
+			spatialIndex = ofy().transact(new Work<TreesIndexedByString>() {
 			    public TreesIndexedByString run() {
-			    	return ofy().load().ref(idIndexRef).getValue();
+			    	return ofy().load().ref(spatialIndexRef).getValue();
 			    }
 			});
 		}
+		//load the name refs on demand, not now
+		
+	}
+	private void loadNameIndex(){
+		if(nameIndexRef != null){
+			nameIndex = ofy().transact(new Work<TreesIndexedByString>() {
+			    public TreesIndexedByString run() {
+			    	return ofy().load().ref(nameIndexRef).getValue();
+			    }
+			});
+		}
+		if(nameIndex == null){
+			nameIndex = new TreesIndexedByString("nameIndex");
+		}
+		nameIndex.setStringProvider(TreeToStringFactory.getTreeToChunkedID());
+		nameIndex.setBinTracking(false);
 	}
 	
 	private void Init(){
@@ -241,8 +260,8 @@ public class TreeDepot {
 		if(neighbourhoodIndex == null){
 			neighbourhoodIndex = new TreesIndexedByString("neighbourhoodIndex");
 		}
-		if(idIndex == null){
-			idIndex = new TreesIndexedByString("idIndex");
+		if(spatialIndex == null){
+			spatialIndex = new TreesIndexedByString("spatialIndex");
 		}
 	
 		speciesIndex.setStringProvider(TreeToStringFactory.getTreeToSpecies());
@@ -250,7 +269,8 @@ public class TreeDepot {
 		genusIndex.setStringProvider(TreeToStringFactory.getTreeToGenus());
 		commonNameIndex.setStringProvider(TreeToStringFactory.getTreeToCommonName());
 		neighbourhoodIndex.setStringProvider(TreeToStringFactory.getTreeToNeighbourhood());
-		idIndex.setStringProvider(TreeToStringFactory.getBinner());
+		spatialIndex.setStringProvider(TreeToStringFactory.getBinner());
+		spatialIndex.setBinTracking(false);
 		
 		stringIndices = new ArrayList<TreesIndexedByString>();
 		
@@ -259,7 +279,7 @@ public class TreeDepot {
 		stringIndices.add(genusIndex);
 		stringIndices.add(commonNameIndex);
 		stringIndices.add(neighbourhoodIndex);
-		stringIndices.add(idIndex);
+		stringIndices.add(spatialIndex);
 		
 		keywordBins = new HashMap<String, Set<String>>();
 		keywordRefs = new HashMap<String, Set<Ref<PersistentFile>>>();
@@ -312,8 +332,15 @@ public class TreeDepot {
 		AddAllRefsToKeyWords(neighbourhoodIndex.getRefEntries());
 		saveTrees();
 	}
-	public void putTreesByID(Collection<TreeData> trees){
-		idIndex.addTrees(trees);
+	public void putTreesBySpatialBin(Collection<TreeData> trees){
+		spatialIndex.addTrees(trees);
+		saveTrees();
+	}
+	public void putTreesByName(Collection<TreeData> trees){
+		if(nameIndex == null){
+			loadNameIndex();
+		}
+		nameIndex.addTrees(trees);
 		saveTrees();
 	}
 	
@@ -326,7 +353,7 @@ public class TreeDepot {
 	}
 	
 	public Set<String> getBinSet(){
-		return idIndex.getKeySet();
+		return spatialIndex.getKeySet();
 	}
 	
 	public void saveTrees(){
@@ -335,7 +362,8 @@ public class TreeDepot {
 		genusIndexRef = Ref.create(genusIndex);
 		commonNameIndexRef = Ref.create(commonNameIndex);
 		neighbourhoodIndexRef = Ref.create(neighbourhoodIndex);
-		idIndexRef = Ref.create(idIndex);
+		spatialIndexRef = Ref.create(spatialIndex);
+		nameIndexRef = Ref.create(nameIndex);
 		saveTrees(this);
 	}
 	
@@ -343,8 +371,23 @@ public class TreeDepot {
 		return new TreeRequest(this);
 	}
 	
+	public TreeData getTreeByID(String exact_id){
+		if(nameIndex == null){
+			loadNameIndex();
+		}
+		if(exact_id != null){
+			SortedSet<TreeData> set = nameIndex.getAllTreesWith(TreeToStringFactory.chunkedID(exact_id));
+			for(TreeData tree: set){
+				if(tree.getID() != null && tree.getID().equals(exact_id)){
+					return tree;
+				}
+			}
+		}
+		return null;
+	}
+	
 	public Set<Ref<PersistentFile>> getAllRefsInBins(Set<String> bins){
-		return Collections.unmodifiableSet(idIndex.getAllMatching(bins));
+		return Collections.unmodifiableSet(spatialIndex.getAllMatching(bins));
 	}
 	
 	public SortedSet<TreeData> getTreesWithSpecies(String species){

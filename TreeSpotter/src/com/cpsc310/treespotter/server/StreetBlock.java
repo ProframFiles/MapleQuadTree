@@ -49,7 +49,6 @@ public class StreetBlock implements LatLongProvider {
 	public StreetBlock(String blockString){
 		String block_string = blockString.trim();
 		parseAddress(block_string);	
-		blockEnd -= 100;
 		blockCenter = (blockStart+blockEnd)/2;
 	}
 	public String getBlockStart(){
@@ -98,19 +97,19 @@ public class StreetBlock implements LatLongProvider {
 		String address_part = block_string.substring(0, block_name_split);
 		
 
-		if(address_part.length() > 0 && address_part.matches("\\d+(|-\\d+)")){
+		if(address_part.length() > 0 && address_part.matches("\\d+(-\\d+)?")){
 			String[] address_range = address_part.split("-");
 			int top_index = address_range.length - 1;
 			blockStart = Integer.parseInt(address_range[0]);
-			blockEnd = Integer.parseInt(address_range[top_index]) + 100;
+			blockEnd = Integer.parseInt(address_range[top_index]);
 		}
-		else if(address_part.length() > 0 && address_part.charAt(0) == '-'){
+		else if(address_part.length() > 1 && address_part.charAt(0) == '-'){
 			blockStart = 0;
 			blockEnd = 10000000;
 		}
 		else{
-			blockStart = 0;
-			blockEnd =  10000000;
+			blockStart = -1;
+			blockEnd =  -1;
 			block_name_split = 0;
 		}
 		//the name part

@@ -17,6 +17,7 @@ import com.cpsc310.treespotter.client.SearchQueryInterface;
 import com.cpsc310.treespotter.client.TreeComment;
 import com.cpsc310.treespotter.client.TreeDataService;
 import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.VoidWork;
@@ -37,8 +38,23 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 	
 	@Override
-	public void importFromSite(String url) {
-		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/fetchandprocessdata"));
+	public void importFromSite(String options) {
+		TaskOptions opt = withUrl(DataUpdater.TASK_URL);
+		if(options != null){
+			LOG.info("setting option \"" +options+ "\"");
+			if(options.equalsIgnoreCase("force tasks")){
+				opt = opt.param("force tasks","true");
+			}
+			else{
+				String[] tasks = options.split(",");
+				for(String task: tasks){
+					opt = opt.param("add task", task.trim());
+					LOG.info("setting task \"" +task+ "\"");
+				}
+			}
+				
+		}
+		QueueFactory.getDefaultQueue().add(opt);
 	}
 
 	@Override
@@ -111,7 +127,11 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public ClientTreeData getTreeData(String queryID, String userType) {
-		ClientTreeData ret = TreeFactory.makeUserTreeData(TreeFactory.makeTestTree(queryID));
+		TreeData tree = treeDepot().getTreeByID(queryID);
+		ClientTreeData ret = null;
+		if(tree != null){
+			ret = TreeFactory.makeUserTreeData(tree);
+		}
 		return ret;
 	}
 
@@ -138,6 +158,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 				else if(sp.fieldID == SearchFieldID.ADDRESS){
 					StreetBlock address_block = new StreetBlock(sp.value);
 					req.onlyTreesWithStreet(address_block.getStreetName().toUpperCase());
+					req.onlyTreesWithStreetNumber(address_block.getAddressBottom(), address_block.getAddressTop() );
 				}
 				else if(sp.fieldID == SearchFieldID.GENUS){
 					req.onlyTreesWithGenus(sp.value.toUpperCase());
