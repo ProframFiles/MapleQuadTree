@@ -80,18 +80,20 @@ public class TreesIndexedByString {
 	private int addSingleToMap(TreeData tree){
 		int ret = 0;
 		String key = filterKey(tsp.treeToString(tree));
-		SortedSet<TreeData> tree_set = null;
-		tree_set = treeMap.get(key);
-		
-		if(tree_set == null){
-			tree_set = new TreeSet<TreeData>();
-			treeMap.put(key, tree_set);
-			ret ++;
-		}
-		boolean added = tree_set.add(tree);
-		if(!added){
-			tree_set.remove(tree);
-			tree_set.add(tree);
+		if(key != null){
+			SortedSet<TreeData> tree_set = null;
+			tree_set = treeMap.get(key);
+			
+			if(tree_set == null){
+				tree_set = new TreeSet<TreeData>();
+				treeMap.put(key, tree_set);
+				ret ++;
+			}
+			boolean added = tree_set.add(tree);
+			if(!added){
+				tree_set.remove(tree);
+				tree_set.add(tree);
+			}
 		}
 		return ret;
 	}
@@ -109,6 +111,9 @@ public class TreesIndexedByString {
 
 	
 	private String filterKey(String s){
+		if (s == null){
+			return null;
+		}
 		return s.replace('.','_');
 	}
 	public String getKeyForTree(TreeData tree){
@@ -117,11 +122,12 @@ public class TreesIndexedByString {
 	
 	public Ref<PersistentFile> addTree(TreeData tree){
 		int create_count = addSingleToMap(tree);
-		mergeWithDatastore();
-		serializeMapping();
-		LOG.fine("\n\tAdded to " + create_count + " keys for " + id + "\n\t" + blobRefs.size() +" keys total.");
-		
-		saveIndexState(this);
+		if(create_count >0){
+			mergeWithDatastore();
+			serializeMapping();
+			LOG.fine("\n\tAdded to " + create_count + " keys for " + id + "\n\t" + blobRefs.size() +" keys total.");
+			saveIndexState(this);
+		}
 		return blobRefs.get(getKeyForTree(tree));
 	}
 	

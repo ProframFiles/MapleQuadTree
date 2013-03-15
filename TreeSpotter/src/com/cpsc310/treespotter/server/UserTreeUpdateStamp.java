@@ -21,6 +21,11 @@ public class UserTreeUpdateStamp {
 	private String treeID;
 	Date timeStamp;
 	
+	// for objectify
+	@SuppressWarnings("unused")
+	private UserTreeUpdateStamp(){
+		
+	}
 	public UserTreeUpdateStamp(String key) {
 		timeStamp = new Date();
 		treeID = "U0";
