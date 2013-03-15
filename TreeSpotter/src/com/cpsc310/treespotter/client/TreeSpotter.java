@@ -10,6 +10,9 @@ import java.util.Set;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.MetaElement;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -21,6 +24,8 @@ import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.maps.client.InfoWindowContent;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.Maps;
@@ -33,6 +38,7 @@ import com.google.gwt.maps.client.geom.Point;
 import com.google.gwt.maps.client.overlay.Icon;
 import com.google.gwt.maps.client.overlay.Marker;
 import com.google.gwt.maps.client.overlay.MarkerOptions;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
@@ -102,6 +108,8 @@ public class TreeSpotter implements EntryPoint {
 	private List<ClientTreeData> treeResults = new ArrayList<ClientTreeData>();
 	private LatLngBounds searchMapBound;
 	
+	private ClientTreeData displayTree;
+	
 	// for adding tree
 	private Address geoAddr;
 	private ClientTreeData addTree;
@@ -147,26 +155,44 @@ public class TreeSpotter implements EntryPoint {
 			}
 		});
 
+		initFacebookAPI();
 		initHomePage();
 		initSearchOracle();
 		initButtons();
 		initLoginLogout();
 		initAdminButton();
 		
-		/*
-		 * History.addValueChangeHandler(new ValueChangeHandler<String>() {
-		 * public void onValueChange(ValueChangeEvent<String> event) { String
-		 * historyToken = event.getValue(); String role = ""; if (loginInfo ==
-		 * null) { role = "user"; } else if (loginInfo.isAdmin()) { role =
-		 * "admin"; }
-		 * 
-		 * // TODO: not working yet, need to check getTreeInfo() // Parse the
-		 * history token try { if (historyToken.substring(0, 4).equals("tree"))
-		 * { String treeId = historyToken.substring(4); getTreeInfo(treeId,
-		 * role); } } catch (Exception e) { // what exception is returned if no
-		 * tree matches ID?
-		 * Window.alert("Tree ID is invalid. Please check your URL."); } } });
-		 */
+				
+		History.addValueChangeHandler(new ValueChangeHandler<String>() {
+			public void onValueChange(ValueChangeEvent<String> event) { 
+				String historyToken = event.getValue(); 
+				String role = ""; 
+				
+				if (loginInfo == null || !loginInfo.isAdmin()) {
+					role = "user"; 
+				} 
+				else { 
+					role = "admin"; 
+				}
+				  
+				// TODO: not working yet, need to check getTreeInfo() 
+				// Parse the history token 
+				try { 
+					if (!historyToken.isEmpty() && historyToken.substring(0, 4).equals("tree")) { 
+						String treeId = historyToken.substring(4); 
+						treeId = treeId.split("&", 2)[0];	// facebook redirects add &post
+						if (displayTree == null || !treeId.equals(displayTree.getID())) 
+							getTreeInfo(treeId, role);
+					} 
+				} catch (Exception e) { 
+					// what exception is returned if no tree matches ID?
+					Window.alert("Tree ID is invalid. Please check your URL."); 
+				} 
+			} 
+		});
+		
+		History.fireCurrentHistoryState();
+	
 	}
 
 	protected void handleError(Throwable error) {
@@ -176,6 +202,20 @@ public class TreeSpotter implements EntryPoint {
 		}
 	}
 
+	private native String initFacebookAPI()
+	/*-{
+		$wnd.FB.init({
+			'appId': "438492076225696", 
+			'status': true, 
+			'cookie': true, 
+			'xfbml': true});
+	}-*/;
+	
+	protected static native String initSocialMedia() 
+	/*-{
+		$wnd.FB.XFBML.parse();
+	}-*/;
+	
 	/*
 	 * add click handlers to buttons, search form
 	 */
@@ -469,6 +509,25 @@ public class TreeSpotter implements EntryPoint {
 					}
 
 					public void onSuccess(ClientTreeData data) {
+						String baseURL = "http://kchen-cs310.appspot.com";
+						
+						NodeList<Element> tags = Document.get().getElementsByTagName("meta");
+						String content;
+						for (int i = 0; i < tags.getLength(); i++) {
+					        MetaElement metaTag = ((MetaElement) tags.getItem(i));
+					        if (metaTag.getName().equals("fb_url")) {
+					        	content = baseURL + "/TreeSpotter.html#tree" + data.getID();
+					        	metaTag.setContent(content);
+					        }
+					        else if (metaTag.getName().equals("fb_img")) {
+					        	content = baseURL + "/image/facebook.png";
+					        	metaTag.setContent(content);
+					        }
+					        else if (metaTag.getName().equals("fb_title")) {
+					        	content = "Vancouver TreeSpotter - " + data.getCommonName();
+					        	metaTag.setContent(content);
+					        }
+					    }
 						displayTreeInfoPage(data);
 					}
 				});
@@ -494,6 +553,10 @@ public class TreeSpotter implements EntryPoint {
 		if (!isLoggedIn) {
 			((RegularTreeInfoPage) treePage).addImageTooltips();
 		}
+		displayTree = t;
+		
+		History.newItem("tree" + t.getID());
+		// triggers value changed
 	}
 
 	/**

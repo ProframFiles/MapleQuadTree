@@ -3,6 +3,7 @@ import static com.cpsc310.treespotter.server.TreeDepot.treeDepot;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.logging.Level;
@@ -135,12 +136,13 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		LOG.fine("Trying to find tree with id " + queryID);
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
-			Query q = pm.newQuery(TreeData.class, "treeID == id");
-			q.declareParameters("string id");
-			q.setUnique(true); 
+			Query q = pm.newQuery(TreeData.class, "treeID == " + queryID);
+//			q.declareParameters("string id");
+//			q.setUnique(true); 
 			
 			LOG.fine("about to  make query: " + q.toString());
-			TreeData query_result = (TreeData) q.execute(queryID);
+			TreeData query_result = ((List<TreeData>) q.execute()).get(0);
+//			TreeData query_result = (TreeData) q.execute();
 
 			if (query_result != null) {
 				LOG.info("tree " + queryID + " found, creating ClientTreeData");

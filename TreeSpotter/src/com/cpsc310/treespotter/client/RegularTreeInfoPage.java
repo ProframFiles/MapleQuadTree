@@ -13,6 +13,7 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -33,6 +34,9 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 	@UiField(provided=true)
 	VerticalPanel commentsPanel; 
 
+	@UiField(provided=true)
+	HorizontalPanel shareLinks;
+
 	// HashMap of the flags and their flag status
 	// true if flagged as inaccurate
 	LinkedHashMap<String, Boolean> flags = new LinkedHashMap<String, Boolean>();
@@ -45,10 +49,12 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 		treeInfoTable = new FlexTable();
 		infoMapPanel = new VerticalPanel();
 		commentsPanel = new VerticalPanel();
+		shareLinks = new HorizontalPanel();
 		
 		setGeocoder(parent.geo);
 		populateTreeInfoTable(treeInfoTable, tree);
 		setTreeInfoMap(infoMapPanel, tree);
+		setShareLinks(shareLinks, tree);
 		
 		ArrayList<TreeComment> list = new ArrayList<TreeComment>();
 		// TODO

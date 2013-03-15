@@ -2,14 +2,24 @@ package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.MetaElement;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.geocode.Geocoder;
 import com.google.gwt.maps.client.geocode.LatLngCallback;
 import com.google.gwt.maps.client.geom.LatLng;
 import com.google.gwt.maps.client.overlay.Marker;
 import com.google.gwt.user.cellview.client.CellList;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -24,6 +34,8 @@ public abstract class TreeInfoPage extends Composite {
 	
 	private Geocoder geo;
 	private VerticalPanel infoMapPanel;
+	private HorizontalPanel shareLinks;
+	private ClientTreeData displayTree;
 	
 	public void setGeocoder(Geocoder aGeo) {
 		this.geo = aGeo;
@@ -31,6 +43,7 @@ public abstract class TreeInfoPage extends Composite {
 	
 	
 	protected void populateTreeInfoTable(FlexTable treeInfoTable, ClientTreeData t) {
+		displayTree = t;
 		treeInfoTable.removeAllRows();
 		
 		treeInfoTable.setStyleName("tree-info-table");
@@ -130,4 +143,74 @@ public abstract class TreeInfoPage extends Composite {
 		 }
 		 return value;
 	 }
+
+	 protected void setShareLinks(HorizontalPanel shareLinks, ClientTreeData t) {
+		this.shareLinks = shareLinks;
+//		String baseURL = GWT.getHostPageBaseURL();
+		String baseURL = "http://kchen-cs310.appspot.com";
+		String token = "tree" + t.getID();
+		Button fbButton = new Button("Share on Facebook");
+		
+		fbButton.addClickHandler(new ClickHandler() {
+			
+			@Override
+			public void onClick(ClickEvent event) {
+//				String baseURL = GWT.getHostPageBaseURL();
+				String baseURL = "http://kchen-cs310.appspot.com";
+				String url = baseURL + "#tree" + displayTree.getID();
+				String name = "Vancouver Tree Spotter - " + 
+							ParseUtils.capitalize(displayTree.getCommonName(), false);
+				String caption = ParseUtils.capitalize(displayTree.getGenus(), false) + " " +
+							ParseUtils.capitalize(displayTree.getSpecies(), true);
+				String desc = "Located at " + displayTree.getCivicNumber() + " " + 
+							ParseUtils.capitalize(displayTree.getStreet(), false);
+				// TODO: use thumbnail of tree instead if possible
+				String img = baseURL + "/image/facebook.png";
+				postFacebook(url, name, caption, desc, img);
+			}
+		});
+
+		HTML facebook = new HTML("<div class=\"fb-like\" data-href=\"" + baseURL + "/TreeSpotter.html#" + token + 
+				"\" data-send=\"false\" data-layout=\"button_count\" data-width=\"80\" data-show-faces=\"false\"></div>");
+		
+		NodeList<Element> tags = Document.get().getElementsByTagName("meta");
+		String content;
+		for (int i = 0; i < tags.getLength(); i++) {
+	        MetaElement metaTag = ((MetaElement) tags.getItem(i));
+	        if (metaTag.getName().equals("fb_url")) {
+	        	content = baseURL + "/TreeSpotter.html#" + token;
+	        	metaTag.setContent(content);
+	        }
+	        else if (metaTag.getName().equals("fb_title")) {
+	        	content = "Vancouver TreeSpotter - " + ParseUtils.capitalize(t.getCommonName(), false);
+	        	metaTag.setContent(content);
+	        }
+	        else if (metaTag.getName().equals("fb_img")) {
+	        	content = baseURL + "/image/facebook.png";
+	        	metaTag.setContent(content);
+	        }
+	    }
+		
+		shareLinks.add(facebook);
+		shareLinks.add(fbButton);
+		
+	}
+	 
+	 @Override protected void onLoad() {
+		super.onLoad();
+		TreeSpotter.initSocialMedia();
+	 }
+	 
+	 protected native void postFacebook(String url, String name, String cap, String desc, String img) /*-{
+		$wnd.FB.ui({
+			'appId': "438492076225696", 
+			'method': "feed",
+			'link': url,
+			'picture': img,
+			'name': name,
+			'caption': cap,
+			'description': desc,
+			'redirect_uri': url
+			});
+	 }-*/;
 }

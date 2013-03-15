@@ -14,6 +14,7 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -39,6 +40,9 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 	@UiField(provided=true)
 	VerticalPanel commentsPanel; 
 	
+	@UiField(provided=true)
+	HorizontalPanel shareLinks;
+	
 	@UiField
 	HTMLPanel mainPanel;
 	
@@ -56,12 +60,14 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		treeInfoTable = new FlexTable();
 		infoMapPanel = new VerticalPanel();
 		commentsPanel = new VerticalPanel();
+		shareLinks = new HorizontalPanel();
 		this.tree = tree;
 		
 		setGeocoder(parent.geo);
 		
 		populateTreeInfoTable(treeInfoTable, tree);
 		setTreeInfoMap(infoMapPanel, tree);
+		setShareLinks(shareLinks, tree);
 		
 		initWidget(uiBinder.createAndBindUi(this));
 	}
