@@ -40,7 +40,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public void importFromSite(String options) {
 		TaskOptions opt = withUrl(DataUpdater.TASK_URL);
-		if(options != null){
+		if(options != null && options.length()>0){
 			LOG.info("setting option \"" +options+ "\"");
 			if(options.equalsIgnoreCase("force tasks")){
 				opt = opt.param("force tasks","true");

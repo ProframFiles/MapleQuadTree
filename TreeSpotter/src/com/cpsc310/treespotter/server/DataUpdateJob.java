@@ -60,12 +60,14 @@ public class DataUpdateJob extends Job {
 				LOG.info("\n\tSetting option \"force updates\"");
 				forceTasks = true;
 			}
-			if(option_name.equalsIgnoreCase("add task")){
+			else if(option_name.equalsIgnoreCase("add task")){
 				LOG.info("\n\tForcing task \""+ option_value + "\"");
 				tasksToStart.add(new SubTask(option_value));
 				forceTasks = true;
 			}
-			LOG.warning("Invalid option: \"" + option_name+ "\", ignoring");
+			else{
+				LOG.warning("Invalid option: \"" + option_name+ "\", ignoring");
+			}
 		}
 		LOG.warning("Null task option is invalid");
 	}
