@@ -40,9 +40,11 @@ public class TreeRequest {
 	
 	private void updateRequest(){
 		if(!currentRequest.isEmpty() && !currentTrees.isEmpty()){
+			TreeDepot.loadAllRefs(currentRequest);
 			currentTrees = TreeDepot.deSerializeAllRefsToSet(currentRequest, currentTrees);
 		}
 		else if (!currentRequest.isEmpty() && currentTrees.isEmpty()){
+			TreeDepot.loadAllRefs(currentRequest);
 			currentTrees.addAll(TreeDepot.deSerializeAllRefs(currentRequest, 230000));
 		}
 		currentRequest.clear();

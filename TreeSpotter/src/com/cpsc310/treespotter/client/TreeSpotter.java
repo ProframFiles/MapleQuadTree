@@ -555,7 +555,8 @@ public class TreeSpotter implements EntryPoint {
 		}
 		displayTree = t;
 		
-		History.newItem("tree" + t.getID());
+		// TODO: enable history token when getTreeData implemented on server
+//		History.newItem("tree" + t.getID());
 		// triggers value changed
 	}
 

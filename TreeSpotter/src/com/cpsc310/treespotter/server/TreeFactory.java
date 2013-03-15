@@ -107,4 +107,19 @@ public class TreeFactory {
 		admin_data.setCommonName(tree_data.getCommonName());
 		return admin_data;
 	}
+	
+	static public TreeData makeTestTree(String id){
+		TreeData tree = new TreeData(id);
+		tree.setSpecies("AFAKESPECIES");
+		tree.setStreet("BROKEN IMPLEMENTATION STREET");
+		tree.setCivicNumber(240);
+		tree.setNeighbourhood("THE BRONX");
+		tree.setCultivar("GILDED LILY");
+		tree.setGenus("RUGOSA");
+		tree.setCommonName("test tree");
+		tree.setHeightRange(3);
+		tree.setDiameter(3);
+		return tree;
+	}
+	
 }
