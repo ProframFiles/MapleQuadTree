@@ -1,19 +1,14 @@
 package com.cpsc310.treespotter.server;
+import static com.cpsc310.treespotter.server.OfyService.ofy;
 import static com.cpsc310.treespotter.server.TreeDepot.treeDepot;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
-import javax.jdo.Transaction;
-
 
 import com.cpsc310.treespotter.client.ClientTreeData;
 import com.cpsc310.treespotter.client.SearchFieldID;
@@ -21,60 +16,48 @@ import com.cpsc310.treespotter.client.SearchParam;
 import com.cpsc310.treespotter.client.SearchQueryInterface;
 import com.cpsc310.treespotter.client.TreeComment;
 import com.cpsc310.treespotter.client.TreeDataService;
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.googlecode.objectify.Key;
+import com.googlecode.objectify.VoidWork;
+import com.googlecode.objectify.Work;
+
 import static com.google.appengine.api.taskqueue.TaskOptions.Builder.*;
 
 public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		TreeDataService {
 	private static final long serialVersionUID = 1L; 
 	
-	private static final Key LAST_USER_TREE_STAMP_KEY = KeyFactory.createKey("UserTreeUpdateStamp", "last user tree id");
+	private static final String LAST_USER_TREE_STAMP_ID = "last user tree id";
 	private static final Logger LOG = Logger.getLogger(TreeDataServiceImpl.class.getName());
 	
-	// as it says: we'll only ever return this many 
-	private static int MAXRESULTS = 1000;
 
 	public TreeDataServiceImpl(){
 		LOG.setLevel(Level.FINER);
-	
-		//(aleksy) uncomment this to fetch data about street block locations on startup
-		//it will only do the full parse if the current data isn't up to date
-		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
-		
-		//and uncomment this to force tree data parsing on server start  
-		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/import").method(TaskOptions.Method.GET)); 
 	}
 	
 	@Override
 	public void importFromSite(String url) {
-		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/tasktest"));
-		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/streetblockupdate"));
-		//QueueFactory.getDefaultQueue().add(withUrl("/treespotter/import").method(TaskOptions.Method.GET));
+		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/fetchandprocessdata"));
 	}
 
 	@Override
 	public ClientTreeData addTree(ClientTreeData info) {
 		LOG.info("\n\trecieved call to create new user tree.");
 		ClientTreeData return_tree = null;
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		Transaction tx = pm.currentTransaction();
 		try { 
-			tx.begin();
-			// find the last update stamp, if there is one
-			Query last_update_query = pm.newQuery(UserTreeUpdateStamp.class, "key == id");
-			last_update_query.setUnique(true);
-			last_update_query.declareParameters("com.google.appengine.api.datastore.Key id");
 			LOG.info("\n\tFetching last user id from datastore.");
-			LOG.fine("\n\tAbout to execute query\n\t"+last_update_query.toString());
+			UserTreeUpdateStamp last_stamp = ofy().transact(new Work<UserTreeUpdateStamp>() {
+			    public UserTreeUpdateStamp run() {
+			    	return ofy().load().key(Key.create(UserTreeUpdateStamp.class, LAST_USER_TREE_STAMP_ID)).getValue();
+			    }
+			});
 			
-			UserTreeUpdateStamp last_stamp = (UserTreeUpdateStamp)last_update_query.execute(LAST_USER_TREE_STAMP_KEY);
+			
 			// create a new stamp if we didn't find one, die if we found a malformed stamp
 			if(last_stamp == null){
 				LOG.info("\n\tNo user tree adds found. This will be the first.");
-				last_stamp = new UserTreeUpdateStamp(LAST_USER_TREE_STAMP_KEY);
+				last_stamp = new UserTreeUpdateStamp(LAST_USER_TREE_STAMP_ID);
 			}
 			else if(!last_stamp.getTreeID().toUpperCase().matches("U\\d+")){
 				throw new RuntimeException("something is wrong with the stored last user id: \"" + last_stamp.getTreeID() +"\"");
@@ -87,22 +70,25 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			int id_number = Integer.parseInt(last_stamp.getTreeID().substring(1)) + 1;
 			
 			//make the new tree, server style
-			TreeData new_tree;
+			TreeData2 new_tree;
 			if(info != null){
-				new_tree = TreeFactory.makeTreeData(info, id_number);
+				new_tree = TreeFactory.makeTreeData2(info, id_number);
 			}
 			else{
 				throw new RuntimeException("Can't create an empty tree (null tree data)");
 			}
 			//persist the new tree
-			pm.makePersistent(new_tree);
-
+			
+			treeDepot().putTree(new_tree);
 			
 			//refresh the update stamp 
-			last_stamp.setTreeID(new_tree.getID());
-			last_stamp.updateTimeStamp();
-			pm.makePersistent(last_stamp);
-			tx.commit();
+			final UserTreeUpdateStamp new_stamp = new UserTreeUpdateStamp(LAST_USER_TREE_STAMP_ID, new_tree.getID());
+			
+			ofy().transact(new VoidWork() {
+				public void vrun() {
+					ofy().save().entity(new_stamp).now();
+				}
+			});
 			LOG.info("\n\tDone adding new tree \"" +new_tree.getID() + "\"");
 			
 			//everything went better than expected, set return to non-null
@@ -119,12 +105,6 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			}
 			LOG.severe("StackTrace from this method:\n" + sb.toString() + "\n");
 		}
-		finally {
-			if (tx.isActive()) {
-				tx.rollback();
-			}
-			pm.close();
-		}
 		
 		return return_tree;
 	}
@@ -132,31 +112,6 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	@Override
 	public ClientTreeData getTreeData(String queryID, String userType) {
 		ClientTreeData ret = null;
-		LOG.fine("Trying to find tree with id " + queryID);
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try {
-			Query q = pm.newQuery(TreeData.class, "treeID == id");
-			q.declareParameters("string id");
-			q.setUnique(true); 
-			
-			LOG.fine("about to  make query: " + q.toString());
-			TreeData query_result = (TreeData) q.execute(queryID);
-
-			if (query_result != null) {
-				LOG.info("tree " + queryID + " found, creating ClientTreeData");
-				if (userType != null && userType.equals("user")) {
-					ret = TreeFactory.makeUserTreeData(query_result);
-				}
-				if (userType != null && userType.equals("admin")) {
-					ret = TreeFactory.makeAdminTreeData(query_result);
-				}
-			}
-			else{
-				LOG.info("tree " + queryID + " not found in DB");
-			}
-		} finally {
-			pm.close();
-		}
 		return ret;
 	}
 
@@ -170,69 +125,46 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			return null;
 		}
 		
-		
-		
-		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
-			
-			SearchParam sp = query.iterator().next();
-			if(sp.fieldID == SearchFieldID.SPECIES || sp.fieldID == SearchFieldID.KEYWORD){
-				SortedSet<TreeData2> trees;
+			TreeRequest req = treeDepot().newRequest();
+			for(SearchParam sp: query){
+				LOG.info("Processing param\n\t" + sp.fieldID + " = \"" + sp.value + "\"");
 				if(sp.fieldID == SearchFieldID.SPECIES){
-					trees = treeDepot().getTreesWithSpecies(sp.value.toUpperCase());
+					req.onlyTreesWithSpecies(sp.value.toUpperCase());
 				}
-				else{
-					trees = treeDepot().getTreesWithKeyword(sp.value.toUpperCase());
+				else if(sp.fieldID == SearchFieldID.KEYWORD){
+					req.onlyTreesWithKeyword(sp.value.toUpperCase());
 				}
-				LOG.info("\tFound " + trees.size() + " special species tree results in the Objectify DB");
-				results = new ArrayList<ClientTreeData>();
-				int counter = 0;
-				
-				for (TreeDataProvider server_tree : trees) {
-					query.getResultsOffset();
-					if(counter >= query.getResultsOffset()){
-						results.add(TreeFactory.makeUserTreeData(server_tree));
-					}
-					if(results.size() >= query.getNumResults() ){
-						break;
-					}
-					counter ++;
+				else if(sp.fieldID == SearchFieldID.ADDRESS){
+					StreetBlock address_block = new StreetBlock(sp.value);
+					req.onlyTreesWithStreet(address_block.getStreetName().toUpperCase());
 				}
-				return results;
+				else if(sp.fieldID == SearchFieldID.GENUS){
+					req.onlyTreesWithGenus(sp.value.toUpperCase());
+				}
+				else if(sp.fieldID == SearchFieldID.COMMON){
+					req.onlyTreesWithCommonName(sp.value.toUpperCase());
+				}
+				else if(sp.fieldID == SearchFieldID.NEIGHBOUR){
+					req.onlyTreesWithNeighbourhood(sp.value.toUpperCase());
+				}
 			}
-			
-			SearchQueryProcessor sqp = new SearchQueryProcessor(pm);
-			
-			
-			
-			Set<TreeData> result_set = sqp.executeNonSpatialQueries(query);
-			Set<TreeData> spatial_set = sqp.executeSpatialQueries(query);
-			
-			
-			
-			if(spatial_set != null && result_set!=null){
-				result_set.retainAll(spatial_set);
-			}
-			else if(result_set == null && spatial_set != null){
-				result_set = spatial_set;
-			}
-			else if(result_set == null){
-				result_set = new HashSet<TreeData>();
-			}
-			int total_results = result_set.size();
-			LOG.info("\tFound " + total_results + " tree results in the DB");
+			Collection<TreeData2> trees = req.fetch();
+			LOG.info("\n\tFound: " + trees.size() + " trees matching query");
 			results = new ArrayList<ClientTreeData>();
-			if (total_results > 0) {
-				int result_count = 0;
-				for (TreeData server_tree : result_set) {
+			int counter = 0;
+			
+			for (TreeDataProvider server_tree : trees) {
+				query.getResultsOffset();
+				if(counter >= query.getResultsOffset()){
 					results.add(TreeFactory.makeUserTreeData(server_tree));
-					result_count++;
-					if(result_count > MAXRESULTS){
-						LOG.warning("\n\tNumber of results exceeded maximum, returning first" + MAXRESULTS);
-						break;
-					}
 				}
+				if(results.size() >= query.getNumResults() ){
+					break;
+				}
+				counter ++;
 			}
+			
 		} 
 		catch(Exception e){
 			LOG.severe("Unexpected exception during search process:\n\t\"" + e.getMessage() + "\"\n\tReturning no results, stack trace follows.");
@@ -245,9 +177,6 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			}
 			LOG.severe("StackTrace from this method:\n" + sb.toString() + "\n");
 			results = null;
-		}
-		finally {
-			pm.close();
 		}
 		
 		return results;

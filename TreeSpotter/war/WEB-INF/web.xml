@@ -39,16 +39,6 @@
 		<url-pattern>/treespotter/treedata</url-pattern>
 	</servlet-mapping>
 
-  <servlet>
-    <servlet-name>importDataServlet</servlet-name>
-    <servlet-class>com.cpsc310.treespotter.server.DataFetcher</servlet-class>
-  </servlet>
-  
-  <servlet-mapping>
-    <servlet-name>importDataServlet</servlet-name>
-    <url-pattern>/treespotter/import</url-pattern>
-  </servlet-mapping>
-
 	<!-- Default page to serve -->
 	<welcome-file-list>
 		<welcome-file>TreeSpotter.html</welcome-file>
@@ -101,20 +91,13 @@
 		<url-pattern>/appstats/*</url-pattern>
 	</servlet-mapping>
 	<servlet>
-		<servlet-name>locationUpdateTask</servlet-name>
-		<servlet-class>com.cpsc310.treespotter.server.LocationProcessor</servlet-class>
+		<servlet-name>dataUpdateTask</servlet-name>
+		<servlet-class>com.cpsc310.treespotter.server.DataUpdater</servlet-class>
 	</servlet>
 	<servlet-mapping>
-		<servlet-name>locationUpdateTask</servlet-name>
-		<url-pattern>/treespotter/tasks/streetblockupdate</url-pattern>
+		<servlet-name>dataUpdateTask</servlet-name>
+		<url-pattern>/treespotter/tasks/fetchandprocessdata</url-pattern>
 	</servlet-mapping>
-	<servlet>
-		<servlet-name>taskTest</servlet-name>
-		<servlet-class>com.cpsc310.treespotter.server.StreetDataUpdater</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>taskTest</servlet-name>
-		<url-pattern>/treespotter/tasks/tasktest</url-pattern>
-	</servlet-mapping>
+
 
 </web-app>

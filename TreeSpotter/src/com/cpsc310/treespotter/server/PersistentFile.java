@@ -18,10 +18,10 @@ import com.googlecode.objectify.Key;
 import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.Ref;
 import com.googlecode.objectify.Result;
+import com.googlecode.objectify.Work;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
-import com.googlecode.objectify.annotation.Load;
 import com.googlecode.objectify.annotation.Unindex;
 
 
@@ -34,7 +34,7 @@ import com.googlecode.objectify.annotation.Unindex;
 @Entity
 public class PersistentFile {
 	@Id private  String name;
-	@Unindex @Load private ArrayList<Ref<ByteArrayEntity>> chunkIds;
+	@Unindex private ArrayList<Ref<ByteArrayEntity>> chunkIds;
 	@Unindex private int numBytes;
 	@Unindex private long checksum;
 	@Unindex private Date dateStamp;
@@ -60,6 +60,7 @@ public class PersistentFile {
 	}
 	public  Result<Key<PersistentFile>> completeSave(){
 		for(Result<Key<ByteArrayEntity>> r: asyncSaveResults){
+			
 			chunkIds.add(Ref.create(r.now()));
 		}
 		Result<Key<PersistentFile>>  r=ofy().save().entity(this);
@@ -111,14 +112,19 @@ public class PersistentFile {
 		if(dateStamp == null){
 			throw new RuntimeException("Attempting to unpersist file " + name + " but it hasn't been persisted" );
 		}
+		ofy().load().refs(chunkIds);
 		ByteArrayOutputStream retrieved_bytes = new ByteArrayOutputStream(numBytes);
 		CRC32 retrieved_crc = new CRC32();
 		CheckedOutputStream byte_wrapper = new CheckedOutputStream(retrieved_bytes, retrieved_crc);
 		int current_index = 0;
 		long retrieved_long = 0L;
 		try {
-			for( Ref<ByteArrayEntity> chunk_ref: chunkIds){
-				ByteArrayEntity blob = chunk_ref.safeGet();
+			for( final Ref<ByteArrayEntity> chunk_ref: chunkIds){
+				ByteArrayEntity blob = ofy().transact(new Work<ByteArrayEntity>() {
+					public ByteArrayEntity run() {
+						return chunk_ref.safeGet();
+					}
+				});
 				byte_wrapper.write(blob.getBytes());
 				current_index += blob.getBytes().length;
 			}

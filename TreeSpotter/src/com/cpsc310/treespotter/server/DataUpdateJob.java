@@ -1,4 +1,5 @@
 package com.cpsc310.treespotter.server;
+import static com.cpsc310.treespotter.server.OfyService.ofy;
 import static com.cpsc310.treespotter.server.TreeDepot.treeDepot;
 
 import java.io.BufferedInputStream;
@@ -24,21 +25,22 @@ import java.util.zip.ZipOutputStream;
 
 import com.cpsc310.treespotter.shared.FilteredCSVReader;
 import com.cpsc310.treespotter.shared.Util;
+import com.googlecode.objectify.VoidWork;
 import com.googlecode.objectify.annotation.EntitySubclass;
 import com.googlecode.objectify.annotation.Ignore;
 
 @EntitySubclass
-public class StreetDataUpdateJob extends Job {
-	private static final Logger LOG = Logger.getLogger(StreetDataUpdateJob.class.getName());
+public class DataUpdateJob extends Job {
+	private static final Logger LOG = Logger.getLogger(DataUpdateJob.class.getName());
 	@Ignore private ArrayList<TreeData2> cachedTrees = null;
 	
 	// this is here for objectify
 	@SuppressWarnings("unused")
-	private StreetDataUpdateJob(){
+	private DataUpdateJob(){
 		
 	}
 	
-	public StreetDataUpdateJob(String job_name){
+	public DataUpdateJob(String job_name){
 		super(job_name);
 	}
 
@@ -234,17 +236,17 @@ public class StreetDataUpdateJob extends Job {
 		the_task4.task_string = "neighbourhood";
 		the_task4.task_progress = 0;
 		task_list.add(the_task4);
-		SubTask the_task5 = new SubTask();
-		the_task5.task_string = "keywords";
-		the_task5.task_progress = 0;
-		task_list.add(the_task5);
+//		SubTask the_task5 = new SubTask();
+//		the_task5.task_string = "keywords";
+//		the_task5.task_progress = 0;
+//		task_list.add(the_task5);
 		return task_list;
 	}
 
 
 	@Override
-	protected int processSubTask(InputStream is, SubTask st) {
-		LOG.info("starting subtask:\n\t"+st.task_string + "\n\t progress: " + st.task_progress);
+	protected int processSubTask(InputStream is, final SubTask st) {
+		LOG.info("starting subtask:\n\t"+st.task_string + "\n\tStarting progress = " + st.task_progress);
 		int max_records = 10000;
 		int count = 0;
 		if(cachedTrees == null){
@@ -300,8 +302,13 @@ public class StreetDataUpdateJob extends Job {
 		if(st.task_string.equals("neighbourhood")){
 			TreeComparator tc = new TreeComparator(TreeToStringFactory.getTreeToNeighbourhood());
 			Collections.sort(cachedTrees, tc);
-			int last_index = Math.min(st.task_progress+max_records, cachedTrees.size()-1);
+			final int last_index = Math.min(st.task_progress+max_records, cachedTrees.size()-1);
 			treeDepot().putTreesByNeighbourhood(cachedTrees.subList(st.task_progress, last_index));
+			ofy().transact(new VoidWork() {
+			    public void vrun() {
+			    	treeDepot().saveTrees();
+			    }
+			});
 			count = last_index - st.task_progress;
 		}
 		if(st.task_string.equals("commonName")){
@@ -318,6 +325,7 @@ public class StreetDataUpdateJob extends Job {
 			treeDepot().putTreesByGenus(cachedTrees.subList(st.task_progress, last_index));
 			count = last_index - st.task_progress;
 		}
+		/*
 		if(st.task_string.equals("keywords")){
 			int largest = 1000;
 			max_records = largest*2;
@@ -329,6 +337,7 @@ public class StreetDataUpdateJob extends Job {
 				count = last_index - st.task_progress;
 			}
 		}
+		*/
 		LOG.info("done subtask chunk:\n\twork unit count = " + count);
 		if(count  < max_records){
 			return 0;

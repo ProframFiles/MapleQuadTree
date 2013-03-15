@@ -38,6 +38,12 @@ public class TreeData2 implements Serializable, TreeDataProvider, LatLongProvide
 	private String keywords;
 	
 	
+	public TreeData2(String string, int id_number) {
+		setID(string, id_number);
+	}
+
+	
+	
 	public void setLatLong(LatLong ll){
 		latLong = ll;
 	}

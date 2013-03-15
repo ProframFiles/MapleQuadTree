@@ -18,7 +18,7 @@ public class OfyService {
 		factory().register(ByteArrayEntity.class);
 		factory().register(TreeDepot.class);
 		factory().register(Job.class);
-		factory().register(StreetDataUpdateJob.class);
+		factory().register(DataUpdateJob.class);
 	}
 
 	public static Objectify ofy() {
