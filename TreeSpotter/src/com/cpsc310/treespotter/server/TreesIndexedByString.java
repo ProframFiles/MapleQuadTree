@@ -46,8 +46,8 @@ public class TreesIndexedByString {
 	private static final Logger LOG = Logger.getLogger("TreeIndex");
 	@Id String id;
 	@Unindex Map<String, Ref<PersistentFile>> blobRefs;
-	@Ignore Map<String, SortedSet<TreeData2>> bulkMap;
-	@Ignore Map<String, SortedSet<TreeData2>> treeMap = new TreeMap<String, SortedSet<TreeData2>>();
+	@Ignore Map<String, SortedSet<TreeData>> bulkMap;
+	@Ignore Map<String, SortedSet<TreeData>> treeMap = new TreeMap<String, SortedSet<TreeData>>();
 	@Ignore Kryo kryoInstance = null;
 	@Ignore TreeStringProvider tsp = null;
 	@Ignore  ArrayList<Ref<PersistentFile>> futuresList = null;
@@ -77,14 +77,14 @@ public class TreesIndexedByString {
 		tsp = provider;
 	}
 	
-	private int addSingleToMap(TreeData2 tree){
+	private int addSingleToMap(TreeData tree){
 		int ret = 0;
 		String key = filterKey(tsp.treeToString(tree));
-		SortedSet<TreeData2> tree_set = null;
+		SortedSet<TreeData> tree_set = null;
 		tree_set = treeMap.get(key);
 		
 		if(tree_set == null){
-			tree_set = new TreeSet<TreeData2>();
+			tree_set = new TreeSet<TreeData>();
 			treeMap.put(key, tree_set);
 			ret ++;
 		}
@@ -96,9 +96,9 @@ public class TreesIndexedByString {
 		return ret;
 	}
 	
-	public void addTrees(Collection<TreeData2> trees){
+	public void addTrees(Collection<TreeData> trees){
 		int create_count = 0;
-		for(TreeData2 tree: trees){
+		for(TreeData tree: trees){
 			create_count += addSingleToMap(tree);
 		}
 		mergeWithDatastore();
@@ -111,11 +111,11 @@ public class TreesIndexedByString {
 	private String filterKey(String s){
 		return s.replace('.','_');
 	}
-	public String getKeyForTree(TreeData2 tree){
+	public String getKeyForTree(TreeData tree){
 		return filterKey(tsp.treeToString(tree));
 	}
 	
-	public Ref<PersistentFile> addTree(TreeData2 tree){
+	public Ref<PersistentFile> addTree(TreeData tree){
 		int create_count = addSingleToMap(tree);
 		mergeWithDatastore();
 		serializeMapping();
@@ -125,7 +125,7 @@ public class TreesIndexedByString {
 		return blobRefs.get(getKeyForTree(tree));
 	}
 	
-	public void modifyTree(TreeData2 tree){
+	public void modifyTree(TreeData tree){
 		//TODO: implement
 	}
 	
@@ -133,7 +133,7 @@ public class TreesIndexedByString {
 		return blobRefs.keySet();
 	}
 	
-	public SortedSet<TreeData2> getMatchingTrees(String s){
+	public SortedSet<TreeData> getMatchingTrees(String s){
 		if(s == null){
 			return null;
 		}
@@ -169,13 +169,13 @@ public class TreesIndexedByString {
 		TreeDepot.loadAllRefs(futuresList);
 	}
 	
-	public SortedSet<TreeData2> getAllTreesWith(String s){
+	public SortedSet<TreeData> getAllTreesWith(String s){
 		getAllTreesWithAsync(s);
 		return completeRequest();
 	}
 	
-	public SortedSet<TreeData2> completeRequest(){
-		SortedSet<TreeData2> ret = new TreeSet<TreeData2>();
+	public SortedSet<TreeData> completeRequest(){
+		SortedSet<TreeData> ret = new TreeSet<TreeData>();
 		if(futuresList != null){
 			for( Ref<PersistentFile> ref: futuresList ){
 				ret.addAll(TreeDepot.deSerializeRef(ref));
@@ -203,22 +203,22 @@ public class TreesIndexedByString {
 		ofy().load().refs(reflist);
 		
 		for(int i =0; i< reflist.size(); ++i){
-			SortedSet<TreeData2> set = TreeDepot.deSerializeRef(reflist.get(i));
+			SortedSet<TreeData> set = TreeDepot.deSerializeRef(reflist.get(i));
 			treeMap.get(keylist.get(i)).addAll(set); 
 		}
 	}
 	
-	private SortedSet<TreeData2> loadList(String key){
+	private SortedSet<TreeData> loadList(String key){
 		Ref<PersistentFile> ref = blobRefs.get(key);
 		if(ref != null){
 			return loadList(ref);
 		}
 		else{
-			return new TreeSet<TreeData2>();
+			return new TreeSet<TreeData>();
 		}
 	}
 	
-	private SortedSet<TreeData2> loadList(Ref<PersistentFile> ref){
+	private SortedSet<TreeData> loadList(Ref<PersistentFile> ref){
 		ofy().load().ref(ref);
 		return TreeDepot.deSerializeRef(ref);
 	}
@@ -232,7 +232,7 @@ public class TreesIndexedByString {
 		int written = 0;
 		int max_bytes = 1;
 		final Map<String, PersistentFile> keys_w_files = new HashMap<String, PersistentFile>();
-		for(Entry<String,SortedSet<TreeData2>> tree_entry: treeMap.entrySet()){
+		for(Entry<String,SortedSet<TreeData>> tree_entry: treeMap.entrySet()){
 			if(tree_entry.getValue()!=null && !tree_entry.getValue().isEmpty()){
 				if(count >= start && count < start+num){
 					ByteArrayOutputStream byte_stream = new ByteArrayOutputStream();

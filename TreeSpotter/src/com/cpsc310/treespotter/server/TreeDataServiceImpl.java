@@ -70,9 +70,9 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			int id_number = Integer.parseInt(last_stamp.getTreeID().substring(1)) + 1;
 			
 			//make the new tree, server style
-			TreeData2 new_tree;
+			TreeData new_tree;
 			if(info != null){
-				new_tree = TreeFactory.makeTreeData2(info, id_number);
+				new_tree = TreeFactory.makeTreeData(info, id_number);
 			}
 			else{
 				throw new RuntimeException("Can't create an empty tree (null tree data)");
@@ -149,12 +149,12 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 					req.onlyTreesWithNeighbourhood(sp.value.toUpperCase());
 				}
 			}
-			Collection<TreeData2> trees = req.fetch();
+			Collection<TreeData> trees = req.fetch();
 			LOG.info("\n\tFound: " + trees.size() + " trees matching query");
 			results = new ArrayList<ClientTreeData>();
 			int counter = 0;
 			
-			for (TreeDataProvider server_tree : trees) {
+			for (TreeData server_tree : trees) {
 				query.getResultsOffset();
 				if(counter >= query.getResultsOffset()){
 					results.add(TreeFactory.makeUserTreeData(server_tree));

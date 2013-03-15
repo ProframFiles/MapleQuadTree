@@ -1,4 +1,4 @@
-package com.cpsc310.treespotter.server;
+package com.cpsc310.treespotter.shared;
 
 import java.io.Serializable;
 
@@ -13,7 +13,7 @@ public class LatLong implements Serializable{
 		longitude = 0.0;
 	}
 	
-	LatLong(double latcoord, double longcoord){
+	public LatLong(double latcoord, double longcoord){
 		latitude = latcoord;
 		longitude = longcoord;
 	}

@@ -11,7 +11,7 @@ import com.cpsc310.treespotter.client.ClientTreeData;
  *
  */
 public class TreeFactory {
-	static public ClientTreeData makeUserTreeData(TreeDataProvider tree_data) {
+	static public ClientTreeData makeUserTreeData(TreeData tree_data) {
 		ClientTreeData user_data = new ClientTreeData();
 		user_data.setTreeID(tree_data.getID().toString());
 		user_data.setCivicNumber(tree_data.getCivicNumber());
@@ -24,8 +24,10 @@ public class TreeFactory {
 		user_data.setGenus(tree_data.getGenus());
 		user_data.setSpecies(tree_data.getSpecies());
 		user_data.setCommonName(tree_data.getCommonName());
+		user_data.setLatLong(tree_data.getLatLong());
 		return user_data;
 	}
+
 	static public  TreeData makeTreeData(ClientTreeData tree_data, int id_number) {
 		TreeData server_data = new TreeData("U", id_number);
 		server_data.setCivicNumber(tree_data.getCivicNumber());
@@ -38,26 +40,13 @@ public class TreeFactory {
 		server_data.setGenus(tree_data.getGenus());
 		server_data.setSpecies(tree_data.getSpecies());
 		server_data.setCommonName(tree_data.getCommonName());
-		return server_data;
-	}
-	static public  TreeData2 makeTreeData2(ClientTreeData tree_data, int id_number) {
-		TreeData2 server_data = new TreeData2("U", id_number);
-		server_data.setCivicNumber(tree_data.getCivicNumber());
-		server_data.setNeighbourhood(tree_data.getNeighbourhood());
-		server_data.setStreet(tree_data.getStreet());
-		server_data.setHeightRange(tree_data.getHeightRange());
-		server_data.setDiameter(tree_data.getDiameter());
-		server_data.setPlanted(tree_data.getPlanted());
-		server_data.setCultivar(tree_data.getCultivar());
-		server_data.setGenus(tree_data.getGenus());
-		server_data.setSpecies(tree_data.getSpecies());
-		server_data.setCommonName(tree_data.getCommonName());
+		server_data.setLatLong(tree_data.getLatLong());
 		return server_data;
 	}
 	
-	static public TreeData2 makeTreeData2(String[] values){
+	static public TreeData makeTreeData2(String[] values){
 		//thanks for this handy method, Samantha
-		TreeData2 tree = new TreeData2("V",Integer.parseInt(values[0]) );
+		TreeData tree = new TreeData("V",Integer.parseInt(values[0]) );
 		tree.setCivicNumber(Integer.parseInt(values[1]));
 		tree.setStdStreet(values[2]);
 		tree.setNeighbourhood(values[3]);

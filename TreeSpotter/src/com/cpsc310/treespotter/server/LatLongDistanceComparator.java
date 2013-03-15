@@ -5,6 +5,9 @@ package com.cpsc310.treespotter.server;
 
 import java.util.Comparator;
 
+import com.cpsc310.treespotter.shared.LatLong;
+import com.cpsc310.treespotter.shared.LatLongProvider;
+
 /**
  * @author maple-quadtree
  * compares a StreetBlock instances on the basis of how far away they are from a 
