@@ -249,15 +249,15 @@ public class ServerSearchTest {
 		assertEquals(0,results.size());
 	}
 	
-	static private TreeData makeTestTree(String common, int id){
-		TreeData tree = new TreeData("U", id);
+	static private TreeData makeTestTree(String id){
+		TreeData tree = new TreeData(id);
 		tree.setSpecies("AFAKESPECIES");
-		tree.setStreet("THE CRESCENT");
+		tree.setStreet("BROKEN IMPLEMENTATION STREET");
 		tree.setCivicNumber(240);
 		tree.setNeighbourhood("THE BRONX");
 		tree.setCultivar("GILDED LILY");
 		tree.setGenus("RUGOSA");
-		tree.setCommonName(common);
+		tree.setCommonName("test tree");
 		tree.setHeightRange(3);
 		tree.setDiameter(3);
 		return tree;

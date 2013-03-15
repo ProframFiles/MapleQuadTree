@@ -45,7 +45,9 @@ public class TreeData implements Serializable, TreeDataProvider, LatLongProvider
 		setID(string, id_number);
 	}
 
-	
+	public TreeData(String id) {
+		treeID = id;
+	}
 	
 	public void setLatLong(LatLong ll){
 		latLong = ll;

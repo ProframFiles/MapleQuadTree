@@ -111,7 +111,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public ClientTreeData getTreeData(String queryID, String userType) {
-		ClientTreeData ret = null;
+		ClientTreeData ret = TreeFactory.makeUserTreeData(TreeFactory.makeTestTree(queryID));
 		return ret;
 	}
 
