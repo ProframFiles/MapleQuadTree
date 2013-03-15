@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.cpsc310.treespotter.server;
+package com.cpsc310.treespotter.shared;
 
 /**
  * @author aleksy

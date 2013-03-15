@@ -212,7 +212,7 @@ public class TreeDepot {
 		
 	}
 	
-	public void putTree(TreeData2 tree){
+	public void putTree(TreeData tree){
 		for(TreesIndexedByString index: stringIndices){
 			String key = index.getKeyForTree(tree);
 			Ref<PersistentFile> ref = index.addTree(tree);
@@ -220,27 +220,27 @@ public class TreeDepot {
 		}
 		saveTrees();
 	}
-	public void putTreesByGenus(Collection<TreeData2> trees){
+	public void putTreesByGenus(Collection<TreeData> trees){
 		genusIndex.addTrees(trees);
 		AddAllRefsToKeyWords(genusIndex.getRefEntries());
 		saveTrees();
 	}
-	public void putTreesBySpecies(Collection<TreeData2> trees){
+	public void putTreesBySpecies(Collection<TreeData> trees){
 		speciesIndex.addTrees(trees);
 		AddAllRefsToKeyWords(speciesIndex.getRefEntries());
 		saveTrees();
 	}
-	public void putTreesByStreet(Collection<TreeData2> trees){
+	public void putTreesByStreet(Collection<TreeData> trees){
 		streetIndex.addTrees(trees);
 		AddAllRefsToKeyWords(streetIndex.getRefEntries());
 		saveTrees();
 	}
-	public void putTreesByCommonName(Collection<TreeData2> trees){
+	public void putTreesByCommonName(Collection<TreeData> trees){
 		commonNameIndex.addTrees(trees);
 		AddAllRefsToKeyWords(commonNameIndex.getRefEntries());
 		saveTrees();
 	}
-	public void putTreesByNeighbourhood(Collection<TreeData2> trees){
+	public void putTreesByNeighbourhood(Collection<TreeData> trees){
 		neighbourhoodIndex.addTrees(trees);
 		AddAllRefsToKeyWords(neighbourhoodIndex.getRefEntries());
 		saveTrees();
@@ -267,23 +267,23 @@ public class TreeDepot {
 		return new TreeRequest(this);
 	}
 	
-	public SortedSet<TreeData2> getTreesWithSpecies(String species){
+	public SortedSet<TreeData> getTreesWithSpecies(String species){
 		return Collections.unmodifiableSortedSet(speciesIndex.getAllTreesWith(species.toUpperCase()));
 	}
 	
-	public SortedSet<TreeData2> getTreesWithStreet(String street){
+	public SortedSet<TreeData> getTreesWithStreet(String street){
 		return Collections.unmodifiableSortedSet(streetIndex.getAllTreesWith(street.toUpperCase()));
 	}
 	
-	public SortedSet<TreeData2> getTreesWithGenus(String street){
+	public SortedSet<TreeData> getTreesWithGenus(String street){
 		return Collections.unmodifiableSortedSet(genusIndex.getAllTreesWith(street.toUpperCase()));
 	}
 
-	public SortedSet<TreeData2> getTreesWithCommonName(String street){
+	public SortedSet<TreeData> getTreesWithCommonName(String street){
 		return Collections.unmodifiableSortedSet(commonNameIndex.getAllTreesWith(street.toUpperCase()));
 	}
 	
-	public SortedSet<TreeData2> getTreesWithNeighbourHood(String street){
+	public SortedSet<TreeData> getTreesWithNeighbourHood(String street){
 		return Collections.unmodifiableSortedSet(neighbourhoodIndex.getAllTreesWith(street.toUpperCase()));
 	}
 	
@@ -340,8 +340,8 @@ public class TreeDepot {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static SortedSet<TreeData2> deSerializeAllRefs( Collection <Ref<PersistentFile>> reflist, int max_results){
-		SortedSet<TreeData2> ret = new TreeSet<TreeData2>(); 
+	public static SortedSet<TreeData> deSerializeAllRefs( Collection <Ref<PersistentFile>> reflist, int max_results){
+		SortedSet<TreeData> ret = new TreeSet<TreeData>(); 
 		for(Ref<PersistentFile> ref: reflist ){
 			PersistentFile pFile = ref.get();
 			byte[] b = pFile.load();
@@ -350,7 +350,7 @@ public class TreeDepot {
 				InflaterInputStream inflater = new InflaterInputStream(byte_stream);
 				InputStream source = inflater;
 				ObjectInputStream in = new ObjectInputStream(source);
-				SortedSet<TreeData2> treeSet = (SortedSet<TreeData2>) in.readObject();
+				SortedSet<TreeData> treeSet = (SortedSet<TreeData>) in.readObject();
 				ret.addAll(treeSet);
 				in.close();
 				b = null;
@@ -370,16 +370,43 @@ public class TreeDepot {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static SortedSet<TreeData2> deSerializeRef( Ref<PersistentFile> ref){
+	public static SortedSet<TreeData> deSerializeAllRefsToSet( Collection <Ref<PersistentFile>> reflist, SortedSet<TreeData> tree_set){
+		SortedSet<TreeData> ret = new TreeSet<TreeData>(); 
+		for(Ref<PersistentFile> ref: reflist ){
+			PersistentFile pFile = ref.get();
+			byte[] b = pFile.load();
+			try {
+				ByteArrayInputStream byte_stream = new ByteArrayInputStream(b);
+				InflaterInputStream inflater = new InflaterInputStream(byte_stream);
+				InputStream source = inflater;
+				ObjectInputStream in = new ObjectInputStream(source);
+				SortedSet<TreeData> treeSet = (SortedSet<TreeData>) in.readObject();
+				ret.addAll(treeSet);
+				in.close();
+				b = null;
+				pFile = null;
+			} catch (IOException e) {
+				throw new RuntimeException("IOException while deserializing " + ref.toString() + "\n\t"+e.getMessage(), e);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException("ClassNotFoundException while deserializing " + ref.toString() + "\n\t"+e.getMessage(), e);
+			}
+		}
+		//Collections.addAll(ret, kryo.readObject(input, TreeData2[].class));
+		tree_set.retainAll(ret);
+		return tree_set;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static SortedSet<TreeData> deSerializeRef( Ref<PersistentFile> ref){
 		PersistentFile pFile = ref.get();
 		byte[] b = pFile.load();
-		SortedSet<TreeData2> ret = null;
+		SortedSet<TreeData> ret = null;
 		try {
 			ByteArrayInputStream byte_stream = new ByteArrayInputStream(b);
 			InflaterInputStream inflater = new InflaterInputStream(byte_stream);
 			InputStream source = inflater;
 			ObjectInputStream in = new ObjectInputStream(source);
-			ret = (SortedSet<TreeData2>) in.readObject();
+			ret = (SortedSet<TreeData>) in.readObject();
 			in.close();
 			b = null;
 			pFile = null;

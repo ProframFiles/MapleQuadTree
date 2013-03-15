@@ -6,6 +6,8 @@ package com.cpsc310.treespotter.server;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import com.cpsc310.treespotter.shared.LatLong;
+
 /**
  * @author maple-quadtree
  *

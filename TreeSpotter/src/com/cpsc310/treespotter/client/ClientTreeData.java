@@ -2,6 +2,8 @@ package com.cpsc310.treespotter.client;
 
 import java.io.Serializable;
 
+import com.cpsc310.treespotter.shared.LatLong;
+
 public class ClientTreeData implements Serializable {
 	/**
 	 * 
@@ -19,6 +21,7 @@ public class ClientTreeData implements Serializable {
 	private String genus;
 	private String species;
 	private String commonName;
+	private LatLong latLong;
 
 	public ClientTreeData(){
 		
@@ -126,6 +129,16 @@ public class ClientTreeData implements Serializable {
 	public void setCommonName(String commonName) {
 		this.commonName = commonName;
 	}
+
+	public LatLong getLatLong() {
+		return latLong;
+	}
+
+	public void setLatLong(LatLong latLong) {
+		this.latLong = latLong;
+	}
+	
+	
 
 
 }

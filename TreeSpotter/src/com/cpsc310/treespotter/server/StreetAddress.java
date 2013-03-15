@@ -1,5 +1,8 @@
 package com.cpsc310.treespotter.server;
 
+import com.cpsc310.treespotter.shared.LatLong;
+import com.cpsc310.treespotter.shared.LatLongProvider;
+
 
 class StreetAddress implements LatLongProvider, Comparable<StreetAddress>
 {

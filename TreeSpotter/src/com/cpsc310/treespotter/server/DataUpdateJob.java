@@ -24,6 +24,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.cpsc310.treespotter.shared.FilteredCSVReader;
+import com.cpsc310.treespotter.shared.LatLong;
 import com.cpsc310.treespotter.shared.Util;
 import com.googlecode.objectify.VoidWork;
 import com.googlecode.objectify.annotation.EntitySubclass;
@@ -32,7 +33,7 @@ import com.googlecode.objectify.annotation.Ignore;
 @EntitySubclass
 public class DataUpdateJob extends Job {
 	private static final Logger LOG = Logger.getLogger(DataUpdateJob.class.getName());
-	@Ignore private ArrayList<TreeData2> cachedTrees = null;
+	@Ignore private ArrayList<TreeData> cachedTrees = null;
 	
 	// this is here for objectify
 	@SuppressWarnings("unused")
@@ -167,9 +168,9 @@ public class DataUpdateJob extends Job {
 		return ret;
 	}
 	
-	private ArrayList<TreeData2> testForStreetMatch(BufferedReader reader, Map<String, Street> streets) throws IOException{
+	private ArrayList<TreeData> testForStreetMatch(BufferedReader reader, Map<String, Street> streets) throws IOException{
 		String line_string;
-		ArrayList<TreeData2> tree_list = new ArrayList<TreeData2>();
+		ArrayList<TreeData> tree_list = new ArrayList<TreeData>();
 		Set<String> missing_strings = new HashSet<String>();
 
 		assert(streets != null);
@@ -178,7 +179,7 @@ public class DataUpdateJob extends Job {
 		LatLong min_ll = new LatLong(300, 300);
 		while((line_string = reader.readLine()) != null ){
 			String[] split_line = line_string.split(",");
-			TreeData2 new_tree = TreeFactory.makeTreeData2(Arrays.copyOf(split_line, split_line.length));
+			TreeData new_tree = TreeFactory.makeTreeData2(Arrays.copyOf(split_line, split_line.length));
 			String street_name = new_tree.getStdStreet();
 			if(!streets.containsKey(street_name)){
 				if((street_name.startsWith("N ") && streets.containsKey(street_name.substring(2,street_name.length())+" NORTH"))){
