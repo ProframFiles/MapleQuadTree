@@ -9,7 +9,7 @@ import java.util.Comparator;
  * @author aleksy
  *
  */
-public class TreeComparator implements Comparator<TreeDataProvider> {
+public class TreeComparator implements Comparator<TreeData> {
 
 	TreeStringProvider tsp;
 	
@@ -20,7 +20,7 @@ public class TreeComparator implements Comparator<TreeDataProvider> {
 	 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 	 */
 	@Override
-	public int compare(TreeDataProvider o1, TreeDataProvider o2) {
+	public int compare(TreeData o1, TreeData o2) {
 		return tsp.treeToString(o1).compareTo(tsp.treeToString(o2));
 	}
 

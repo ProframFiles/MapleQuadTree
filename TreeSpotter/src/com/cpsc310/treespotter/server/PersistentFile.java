@@ -120,11 +120,7 @@ public class PersistentFile {
 		long retrieved_long = 0L;
 		try {
 			for( final Ref<ByteArrayEntity> chunk_ref: chunkIds){
-				ByteArrayEntity blob = ofy().transact(new Work<ByteArrayEntity>() {
-					public ByteArrayEntity run() {
-						return chunk_ref.safeGet();
-					}
-				});
+				ByteArrayEntity blob =  chunk_ref.safeGet();
 				byte_wrapper.write(blob.getBytes());
 				current_index += blob.getBytes().length;
 			}

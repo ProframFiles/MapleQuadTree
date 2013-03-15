@@ -110,11 +110,11 @@
 	</servlet-mapping>
 	<servlet>
 		<servlet-name>taskTest</servlet-name>
-		<servlet-class>com.cpsc310.treespotter.server.StreetDataUpdater</servlet-class>
+		<servlet-class>com.cpsc310.treespotter.server.DataUpdater</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>taskTest</servlet-name>
-		<url-pattern>/treespotter/tasks/tasktest</url-pattern>
+		<url-pattern>/treespotter/tasks/fetchandprocessdata</url-pattern>
 	</servlet-mapping>
 
 </web-app>

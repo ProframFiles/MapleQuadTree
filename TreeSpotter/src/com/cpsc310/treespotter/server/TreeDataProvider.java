@@ -3,6 +3,8 @@
  */
 package com.cpsc310.treespotter.server;
 
+import com.cpsc310.treespotter.shared.LatLong;
+
 /**
  * @author maple-quadtree
  *
@@ -65,6 +67,8 @@ public interface TreeDataProvider {
 	
 	public String getCommonName();
 	public void setCommonName(String commonName);
+	
+	public LatLong getLatLong();
 	
 	public String getKeywordString();
 }

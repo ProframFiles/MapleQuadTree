@@ -74,4 +74,20 @@ public class TreeToStringFactory {
 		};
 		return tsp;
 	}
+	static TreeStringProvider getTreeToChunkedID(){
+		TreeStringProvider tsp = new TreeStringProvider(){
+			@Override
+			public String treeToString(TreeDataProvider tree) {
+				final int chunk_size = 100;
+				 int int_portion = Integer.parseInt(tree.getID().substring(1));
+				 return tree.getID().substring(0, 1)+String.format("%0$6d",int_portion/chunk_size);
+			
+			}
+			
+		};
+		return tsp;
+	}
+	static TreeStringProvider getBinner(){
+		return new TreeGridStore();
+	}
 }

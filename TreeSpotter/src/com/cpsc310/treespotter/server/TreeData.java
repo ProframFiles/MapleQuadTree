@@ -17,6 +17,36 @@ import com.cpsc310.treespotter.shared.LatLongProvider;
  *
  */
 public class TreeData implements Serializable, TreeDataProvider, LatLongProvider, Comparable<TreeData> {
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		int factor = treeID.substring(0,1).equals('U') ? -1 : 1;
+		result = prime * result + ((treeID == null) ? 0 : factor*Integer.parseInt(treeID.substring(1)));
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		TreeData other = (TreeData) obj;
+		if (treeID == null) {
+			if (other.treeID != null) {
+				return false;
+			}
+		} else if (!treeID.equals(other.treeID)) {
+			return false;
+		}
+		return true;
+	}
 	private static final long serialVersionUID = 1L;
 	private String treeID;
 	private int civicNumber;
@@ -269,12 +299,10 @@ public class TreeData implements Serializable, TreeDataProvider, LatLongProvider
 		this.commonName = commonName;
 	}
 	public String getKeywordString(){
-		if(keywords==null){
-			makeKeywordString();
-		}
-		return keywords;
+		return	makeKeywordString();
+		
 	}
-	public void makeKeywordString(){
+	public String makeKeywordString(){
 		SortedSet<String> kw_set = new TreeSet<String>();
 		StringBuilder sb = new StringBuilder();
 			if(commonName != null){
@@ -318,9 +346,10 @@ public class TreeData implements Serializable, TreeDataProvider, LatLongProvider
 				sb.append(s);
 				sb.append(" ");
 			}
-		keywords = new String(sb.toString().trim());
+		String keywo = new String(sb.toString().trim());
 		sb = null;
 		kw_set = null;
+		return keywo;
 	}
 
 

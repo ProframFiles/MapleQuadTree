@@ -237,10 +237,10 @@ public class DataUpdateJob extends Job {
 		the_task4.task_string = "neighbourhood";
 		the_task4.task_progress = 0;
 		task_list.add(the_task4);
-//		SubTask the_task5 = new SubTask();
-//		the_task5.task_string = "keywords";
-//		the_task5.task_progress = 0;
-//		task_list.add(the_task5);
+		SubTask the_task5 = new SubTask();
+		the_task5.task_string = "indices";
+		the_task5.task_progress = 0;
+		task_list.add(the_task5);
 		return task_list;
 	}
 
@@ -305,11 +305,6 @@ public class DataUpdateJob extends Job {
 			Collections.sort(cachedTrees, tc);
 			final int last_index = Math.min(st.task_progress+max_records, cachedTrees.size()-1);
 			treeDepot().putTreesByNeighbourhood(cachedTrees.subList(st.task_progress, last_index));
-			ofy().transact(new VoidWork() {
-			    public void vrun() {
-			    	treeDepot().saveTrees();
-			    }
-			});
 			count = last_index - st.task_progress;
 		}
 		if(st.task_string.equals("commonName")){
@@ -324,6 +319,13 @@ public class DataUpdateJob extends Job {
 			Collections.sort(cachedTrees, tc);
 			int last_index = Math.min(st.task_progress+max_records, cachedTrees.size()-1);
 			treeDepot().putTreesByGenus(cachedTrees.subList(st.task_progress, last_index));
+			count = last_index - st.task_progress;
+		}
+		if(st.task_string.equals("indices")){
+			TreeComparator tc = new TreeComparator(TreeToStringFactory.getBinner());
+			Collections.sort(cachedTrees, tc);
+			int last_index = Math.min(st.task_progress+max_records, cachedTrees.size()-1);
+			treeDepot().putTreesByID(cachedTrees.subList(st.task_progress, last_index));
 			count = last_index - st.task_progress;
 		}
 		/*

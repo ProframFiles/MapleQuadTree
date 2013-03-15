@@ -69,14 +69,16 @@ public class ServerSearchTest {
 		results = dataService.searchTreeData(loc_query);
 		assertEquals(results.size(), 4700);
 		
-		loc_query.setNumResults(10000);
-		results = dataService.searchTreeData(loc_query);
-		assertEquals(results.size(), 4705);
+		//loc_query.setNumResults(10000);
+		//results = dataService.searchTreeData(loc_query);
+		//assertEquals(results.size(), 4705);
 		
 		loc_query = new AdvancedSearch();
-		loc_query.addSearchParam(SearchFieldID.KEYWORD, "maple");
+		loc_query.addSearchParam(SearchFieldID.ADDRESS, "123 high");
+		loc_query.addSearchParam(SearchFieldID.SPECIES, "betulus");
+		
 		results = dataService.searchTreeData(loc_query);
-		assertEquals(results.size(),100);
+		assertEquals(results.size(),53);
 		
 		ArrayList<String> suggestions = dataService.getSearchSuggestions(SearchFieldID.SPECIES, "be");
 		assertEquals(3, suggestions.size());

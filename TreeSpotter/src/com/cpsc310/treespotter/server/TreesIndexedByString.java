@@ -12,7 +12,9 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -33,6 +35,7 @@ import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
+import com.googlecode.objectify.annotation.Serialize;
 import com.googlecode.objectify.annotation.Unindex;
 
 
@@ -46,10 +49,12 @@ public class TreesIndexedByString {
 	private static final Logger LOG = Logger.getLogger("TreeIndex");
 	@Id String id;
 	@Unindex Map<String, Ref<PersistentFile>> blobRefs;
+	@Serialize Map<String, Set<String>> binRefs;
 	@Ignore Map<String, SortedSet<TreeData>> bulkMap;
 	@Ignore Map<String, SortedSet<TreeData>> treeMap = new TreeMap<String, SortedSet<TreeData>>();
 	@Ignore Kryo kryoInstance = null;
 	@Ignore TreeStringProvider tsp = null;
+	@Ignore TreeStringProvider binner = null;
 	@Ignore  ArrayList<Ref<PersistentFile>> futuresList = null;
 	
 	static public void saveIndexState(final TreesIndexedByString indx){
@@ -70,30 +75,48 @@ public class TreesIndexedByString {
 		LOG.setLevel(Level.FINE);
 		this.id = id;
 		blobRefs = new LinkedHashMap<String, Ref<PersistentFile>>();
+		binRefs = new LinkedHashMap<String, Set<String>>();
 		//numStored = new LinkedHashMap<String, Integer>();
 	}
 	
 	public void setStringProvider(TreeStringProvider provider){
 		tsp = provider;
+		binner = TreeToStringFactory.getBinner();
 	}
 	
 	private int addSingleToMap(TreeData tree){
 		int ret = 0;
 		String key = filterKey(tsp.treeToString(tree));
-		if(key != null){
+		String bin = binner.treeToString(tree);
+		// System.out.println(tree.getID()+" " + key);
+		if(key != null && bin != null){
 			SortedSet<TreeData> tree_set = null;
+			Set<String> bin_set = null;
 			tree_set = treeMap.get(key);
+			
+			
+			if(!bin.equals(key)){
+				bin_set = binRefs.get(key);
+				if(bin_set == null){
+					bin_set = new HashSet<String>();
+					binRefs.put(key, bin_set);
+					ret = 1;
+				}
+				bin_set.add(bin);
+			}
 			
 			if(tree_set == null){
 				tree_set = new TreeSet<TreeData>();
 				treeMap.put(key, tree_set);
-				ret ++;
+				ret = 1;
 			}
 			boolean added = tree_set.add(tree);
 			if(!added){
 				tree_set.remove(tree);
 				tree_set.add(tree);
 			}
+			
+			
 		}
 		return ret;
 	}
@@ -136,6 +159,9 @@ public class TreesIndexedByString {
 	}
 	
 	public Set<String> getKeySet(){
+		if(binRefs.size() > blobRefs.size()){
+			binRefs.keySet();
+		}
 		return blobRefs.keySet();
 	}
 	
@@ -149,7 +175,9 @@ public class TreesIndexedByString {
 	public Set< Entry<String, Ref<PersistentFile>>> getRefEntries(){
 		return blobRefs.entrySet();
 	}
-	
+	public Set< Entry<String, Set<String>>> getBinEntries(){
+		return binRefs.entrySet();
+	}
 	public Set<Ref<PersistentFile>> getAllRefsWith(String s){
 		String key = filterKey(s);
 		Set<Ref<PersistentFile>> refSet = new LinkedHashSet<Ref<PersistentFile>>();
@@ -159,6 +187,31 @@ public class TreesIndexedByString {
 			}
 		}
 		return refSet;
+	}
+	
+	public Set<Ref<PersistentFile>> getAllMatching(Collection<String> list){
+		Set<Ref<PersistentFile>> refSet = new LinkedHashSet<Ref<PersistentFile>>();
+		for(String s: list){
+			String key = filterKey(s);
+			Ref<PersistentFile> ref = blobRefs.get(key);
+			if(ref!=null){
+				refSet.add(ref);
+			}
+		}
+		return refSet;
+	}
+	
+	public Set<String> getAllBinsWith(String s){
+		String key = filterKey(s);
+		LOG.fine("looking for " + key + " in "+binRefs.size() + " bin Sets in "+ id);
+		Set<String> binSet = new LinkedHashSet<String>();
+		for(Entry<String, Set<String>> entry: binRefs.entrySet()){
+			if(entry.getValue()!=null && entry.getKey().contains(key) ){
+				LOG.fine("\n\tAdding " + entry.getKey() + " bins to set");
+				binSet.addAll(entry.getValue());
+			}
+		}
+		return binSet;
 	}
 	
 	public void getAllTreesWithAsync(String s){
@@ -191,7 +244,9 @@ public class TreesIndexedByString {
 		return ret;
 	}
 	
-	
+	public Comparator<TreeData> getTreeComparator(){
+		return new TreeComparator(tsp);
+	}
 
 	
 	// need to perform unchecked conversions when deserializing 

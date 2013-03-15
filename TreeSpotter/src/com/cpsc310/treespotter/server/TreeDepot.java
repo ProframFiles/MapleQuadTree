@@ -41,10 +41,15 @@ public class TreeDepot {
 	private static final Logger LOG = Logger.getLogger("Tree");
 	static TreeDepot instance = null;
 	@Id private String id;
-	@Ignore HashMap<String, ArrayList<Ref<PersistentFile>>> keywordRefs;
+	@Ignore HashMap<String, Set<String>> keywordBins;
+	@Ignore HashMap<String, Set<Ref<PersistentFile>>> keywordRefs;
+	
 	
 	@Ignore private TreesIndexedByString speciesIndex;
 	Ref<TreesIndexedByString> speciesIndexRef;
+	
+	@Ignore private TreesIndexedByString idIndex;
+	Ref<TreesIndexedByString> idIndexRef;
 	
 	@Ignore private TreesIndexedByString streetIndex;
 	Ref<TreesIndexedByString> streetIndexRef;
@@ -100,7 +105,36 @@ public class TreeDepot {
 	}
 	
 	
-	private void AddAllRefsToKeyWords(Set<Entry<String, Ref<PersistentFile>>> entries){
+	private void AddAllBinsToKeyWords(Set<Entry<String, Set<String> >> entries){
+		for(Entry<String, Set<String>> entry: entries){
+			if(entry.getKey() != null){
+				AddBinToKeywords(entry.getKey(), entry.getValue());
+			}
+		}
+	}
+	
+	private void AddBinToKeywords(String key, Set<String> bins){
+		Set<String> list =  keywordBins.get(key);
+		if(list == null){
+			list = new HashSet<String>();
+			keywordBins.put(key, list);
+		}
+		
+		list.addAll(bins);
+		
+	}
+	private void AddSingleBinToKeywords(String key, String bin){
+		Set<String> list =  keywordBins.get(key);
+		if(list == null){
+			list = new HashSet<String>();
+			keywordBins.put(key, list);
+		}
+		
+		list.add(bin);
+		
+	}
+	
+	private void AddAllRefsToKeyWords(Set<Entry<String, Ref<PersistentFile> >> entries){
 		for(Entry<String, Ref<PersistentFile>> entry: entries){
 			if(entry.getKey() != null){
 				AddRefToKeywords(entry.getKey(), entry.getValue());
@@ -109,18 +143,28 @@ public class TreeDepot {
 	}
 	
 	private void AddRefToKeywords(String key, Ref<PersistentFile> ref){
-		ArrayList<Ref<PersistentFile>> list =  keywordRefs.get(key);
+		Set<Ref<PersistentFile>> list =  keywordRefs.get(key);
 		if(list == null){
-			list = new ArrayList<Ref<PersistentFile>>();
+			list = new HashSet<Ref<PersistentFile>>();
 			keywordRefs.put(key, list);
 		}
-		if(!list.contains(ref)){
-			list.add(ref);
-		}
+		
+		list.add(ref);
+		
 	}
-	Collection<Ref<PersistentFile>> getAllRefsWithKeyword(String key){
+	
+	Set<String> getAllBinsWithKeyword(String key){
+		Set<String> futuresSet = new HashSet<String>();
+		for(Entry<String, Set<String>> entry: keywordBins.entrySet()){
+			if(entry.getKey().contains(key)){
+				futuresSet.addAll(entry.getValue());
+			}
+		}
+		return futuresSet;
+	}
+	Set<Ref<PersistentFile>> getAllRefsWithKeyword(String key){
 		Set<Ref<PersistentFile>> futuresSet = new HashSet<Ref<PersistentFile>>();
-		for(Entry<String, ArrayList<Ref<PersistentFile>>> entry: keywordRefs.entrySet()){
+		for(Entry<String, Set<Ref<PersistentFile>>> entry: keywordRefs.entrySet()){
 			if(entry.getKey().contains(key)){
 				futuresSet.addAll(entry.getValue());
 			}
@@ -128,8 +172,8 @@ public class TreeDepot {
 		return futuresSet;
 	}
 	
-	public void addAllRefsToRequest( Set<Ref<PersistentFile>> currentRequest ){
-		for(Entry<String, ArrayList<Ref<PersistentFile>>> entry: keywordRefs.entrySet()){
+	public void addAllBinsToRequest( Set<String> currentRequest ){
+		for(Entry<String, Set<String>> entry: keywordBins.entrySet()){
 			currentRequest.addAll(entry.getValue());
 		}
 	}
@@ -170,6 +214,13 @@ public class TreeDepot {
 			    }
 			});
 		}
+		if(idIndexRef != null){
+			idIndex = ofy().transact(new Work<TreesIndexedByString>() {
+			    public TreesIndexedByString run() {
+			    	return ofy().load().ref(idIndexRef).getValue();
+			    }
+			});
+		}
 	}
 	
 	private void Init(){
@@ -190,12 +241,16 @@ public class TreeDepot {
 		if(neighbourhoodIndex == null){
 			neighbourhoodIndex = new TreesIndexedByString("neighbourhoodIndex");
 		}
+		if(idIndex == null){
+			idIndex = new TreesIndexedByString("idIndex");
+		}
 	
 		speciesIndex.setStringProvider(TreeToStringFactory.getTreeToSpecies());
 		streetIndex.setStringProvider(TreeToStringFactory.getTreeToStdStreet());
 		genusIndex.setStringProvider(TreeToStringFactory.getTreeToGenus());
 		commonNameIndex.setStringProvider(TreeToStringFactory.getTreeToCommonName());
 		neighbourhoodIndex.setStringProvider(TreeToStringFactory.getTreeToNeighbourhood());
+		idIndex.setStringProvider(TreeToStringFactory.getBinner());
 		
 		stringIndices = new ArrayList<TreesIndexedByString>();
 		
@@ -204,9 +259,12 @@ public class TreeDepot {
 		stringIndices.add(genusIndex);
 		stringIndices.add(commonNameIndex);
 		stringIndices.add(neighbourhoodIndex);
+		stringIndices.add(idIndex);
 		
-		keywordRefs = new HashMap<String, ArrayList<Ref<PersistentFile>>>();
+		keywordBins = new HashMap<String, Set<String>>();
+		keywordRefs = new HashMap<String, Set<Ref<PersistentFile>>>();
 		for(TreesIndexedByString index: stringIndices){
+			AddAllBinsToKeyWords(index.getBinEntries());
 			AddAllRefsToKeyWords(index.getRefEntries());
 		}
 		
@@ -215,34 +273,47 @@ public class TreeDepot {
 	public void putTree(TreeData tree){
 		for(TreesIndexedByString index: stringIndices){
 			String key = index.getKeyForTree(tree);
+			String bin = TreeToStringFactory.getBinner().treeToString(tree);
 			Ref<PersistentFile> ref = index.addTree(tree);
-			AddRefToKeywords(key, ref);
+			if(!key.equals(bin)){
+				AddSingleBinToKeywords(key, bin);
+				AddRefToKeywords(key, ref);
+			}
 		}
 		saveTrees();
 	}
 	public void putTreesByGenus(Collection<TreeData> trees){
 		genusIndex.addTrees(trees);
+		AddAllBinsToKeyWords(genusIndex.getBinEntries());
 		AddAllRefsToKeyWords(genusIndex.getRefEntries());
 		saveTrees();
 	}
 	public void putTreesBySpecies(Collection<TreeData> trees){
 		speciesIndex.addTrees(trees);
+		AddAllBinsToKeyWords(speciesIndex.getBinEntries());
 		AddAllRefsToKeyWords(speciesIndex.getRefEntries());
 		saveTrees();
 	}
 	public void putTreesByStreet(Collection<TreeData> trees){
 		streetIndex.addTrees(trees);
+		AddAllBinsToKeyWords(streetIndex.getBinEntries());
 		AddAllRefsToKeyWords(streetIndex.getRefEntries());
 		saveTrees();
 	}
 	public void putTreesByCommonName(Collection<TreeData> trees){
 		commonNameIndex.addTrees(trees);
+		AddAllBinsToKeyWords(commonNameIndex.getBinEntries());
 		AddAllRefsToKeyWords(commonNameIndex.getRefEntries());
 		saveTrees();
 	}
 	public void putTreesByNeighbourhood(Collection<TreeData> trees){
 		neighbourhoodIndex.addTrees(trees);
+		AddAllBinsToKeyWords(neighbourhoodIndex.getBinEntries());
 		AddAllRefsToKeyWords(neighbourhoodIndex.getRefEntries());
+		saveTrees();
+	}
+	public void putTreesByID(Collection<TreeData> trees){
+		idIndex.addTrees(trees);
 		saveTrees();
 	}
 	
@@ -254,17 +325,26 @@ public class TreeDepot {
 		});
 	}
 	
+	public Set<String> getBinSet(){
+		return idIndex.getKeySet();
+	}
+	
 	public void saveTrees(){
     	speciesIndexRef = Ref.create(speciesIndex);
 		streetIndexRef = Ref.create(streetIndex);
 		genusIndexRef = Ref.create(genusIndex);
 		commonNameIndexRef = Ref.create(commonNameIndex);
 		neighbourhoodIndexRef = Ref.create(neighbourhoodIndex);
+		idIndexRef = Ref.create(idIndex);
 		saveTrees(this);
 	}
 	
 	public TreeRequest newRequest(){
 		return new TreeRequest(this);
+	}
+	
+	public Set<Ref<PersistentFile>> getAllRefsInBins(Set<String> bins){
+		return Collections.unmodifiableSet(idIndex.getAllMatching(bins));
 	}
 	
 	public SortedSet<TreeData> getTreesWithSpecies(String species){
@@ -287,10 +367,6 @@ public class TreeDepot {
 		return Collections.unmodifiableSortedSet(neighbourhoodIndex.getAllTreesWith(street.toUpperCase()));
 	}
 	
-	Collection<Ref<PersistentFile>> getAllKeywordRefsWith(String kw){
-		return getAllRefsWithKeyword(kw);
-	}
-	
 	Collection<Ref<PersistentFile>>  getAllSpeciesRefsWith(String species){
 		return speciesIndex.getAllRefsWith(species.toUpperCase());
 	}
@@ -309,6 +385,26 @@ public class TreeDepot {
 	
 	Collection<Ref<PersistentFile>>  getAllNeighbourhoodRefsWith(String street){
 		return neighbourhoodIndex.getAllRefsWith(street.toUpperCase());
+	}
+	
+	Set<String>  getAllSpeciesBinsWith(String species){
+		return speciesIndex.getAllBinsWith(species.toUpperCase());
+	}
+	
+	Set<String>  getAllStreetBinsWith(String street){
+		return streetIndex.getAllBinsWith(street.toUpperCase());
+	}
+	
+	Set<String>  getAllGenusBinsWith(String street){
+		return genusIndex.getAllBinsWith(street.toUpperCase());
+	}
+
+	Set<String>  getAllCommonNameBinsWith(String street){
+		return commonNameIndex.getAllBinsWith(street.toUpperCase());
+	}
+	
+	Set<String>  getAllNeighbourhoodBinsWith(String street){
+		return neighbourhoodIndex.getAllBinsWith(street.toUpperCase());
 	}
 	
 	public static void loadAllRefs(Collection<Ref<PersistentFile>> refs){
@@ -336,7 +432,7 @@ public class TreeDepot {
 	}
 	
 	public Set<String> getKeywordSet(){
-		return Collections.unmodifiableSet(keywordRefs.keySet());
+		return Collections.unmodifiableSet(keywordBins.keySet());
 	}
 	
 	@SuppressWarnings("unchecked")
