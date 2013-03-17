@@ -116,7 +116,10 @@ public class TreeSearchMap{
 			if(ll.getLatitude()==ll.getLatitude() && ll.getLongitude() == ll.getLongitude()){
 				if(tree.getMapMarker() == null){
 					MarkerOptions options = MarkerOptions.newInstance();
-					options.setTitle(tree.getCommonName() +"\n"+ tree.getGenus() + " " + tree.getSpecies());
+					options.setTitle(ParseUtils.capitalize(tree.getCommonName(), false) +
+							"\n"+ ParseUtils.capitalize(tree.getGenus(), false) + " " + 
+							ParseUtils.capitalize(tree.getSpecies(), true) + "\n" 
+							+ ParseUtils.capitalize(tree.getLocation(), false));
 					options.setIcon(offPageIcon);
 					tree.setMapMarker(new Marker(tree.getLatLng(), options));
 				}
