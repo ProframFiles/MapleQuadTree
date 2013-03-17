@@ -99,15 +99,7 @@
 	<servlet-mapping>
 		<servlet-name>appstats</servlet-name>
 		<url-pattern>/appstats/*</url-pattern>
-	</servlet-mapping>
-	<servlet>
-		<servlet-name>locationUpdateTask</servlet-name>
-		<servlet-class>com.cpsc310.treespotter.server.LocationProcessor</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>locationUpdateTask</servlet-name>
-		<url-pattern>/treespotter/tasks/streetblockupdate</url-pattern>
-	</servlet-mapping>
+	</servlet-mapping>&gt;
 	<servlet>
 		<servlet-name>taskTest</servlet-name>
 		<servlet-class>com.cpsc310.treespotter.server.DataUpdater</servlet-class>

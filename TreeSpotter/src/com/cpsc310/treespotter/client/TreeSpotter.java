@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.cpsc310.treespotter.shared.ISharedTreeData;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -26,6 +27,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.maps.client.InfoWindowContent;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.Maps;
@@ -108,6 +110,7 @@ public class TreeSpotter implements EntryPoint {
 	private int listIndex;
 	private int listOffset;
 	private Icon icon;
+	private Icon offPageIcon;
 	private final String greenIconURL = "http://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_green.png";
 	private ArrayList<Marker> markers = new ArrayList<Marker>();
 	private LatLng start;
@@ -126,6 +129,7 @@ public class TreeSpotter implements EntryPoint {
 
 	// tab panel container for search results
 	private TabPanel searchResultsPanel = null;
+	private final int SEARCH_PAGE_SIZE = 25;
 
 	// is there a way to get a list of neighbourhoods from the dataset?
 	// from the file names or do a batch query on everything (ugh)
@@ -157,18 +161,19 @@ public class TreeSpotter implements EntryPoint {
 			public void run() {
 				geo = new Geocoder();
 				icon = Icon.newInstance(greenIconURL);
+				offPageIcon = Icon.newInstance("image/icon_blend.png");
+				offPageIcon.setIconAnchor(Point.newInstance(32, 32));
 				icon.setIconAnchor(Point.newInstance(6, 20));
 				start = LatLng.newInstance(49.26102, -123.249339);
 			}
 		});
-
+		
 		initFacebookAPI();
 		initHomePage();
 		initSearchOracles();
 		initButtons();
 		initLoginLogout();
 		initAdminButton();
-		
 				
 		History.addValueChangeHandler(new ValueChangeHandler<String>() {
 			public void onValueChange(ValueChangeEvent<String> event) { 
@@ -348,29 +353,29 @@ public class TreeSpotter implements EntryPoint {
 				}
 			}
 		}
-
 		if (q != null) {
 			loadLoadingBar();
 			treeDataService.searchTreeData(q,
-					new AsyncCallback<ArrayList<ClientTreeData>>() {
+					new AsyncCallback<ArrayList<ISharedTreeData>>() {
 						@Override
 						public void onFailure(Throwable error) {
 							handleError(error);
 						}
 
 						@Override
-						public void onSuccess(ArrayList<ClientTreeData> result) {
+						public void onSuccess(ArrayList<ISharedTreeData> result) {
 							if (result == null) {
 								RootPanel.get("content").clear();
 								RootPanel.get("content").add(
 										new Label("No results were found."));
 							}
 							if (result != null) {
-								treeList = result;
-								for (ClientTreeData data : result) {
+								treeList = new ArrayList<ClientTreeData>();
+								for (ISharedTreeData data : result) {
 									System.out.println(data.getCommonName());
+									treeList.add(new ClientTreeData(data));
 								}
-								displaySearchResults(treeList);
+								displaySearchResults(treeList, SEARCH_PAGE_SIZE);
 
 							}
 						}
@@ -385,7 +390,7 @@ public class TreeSpotter implements EntryPoint {
 	 * @param rlist
 	 *            List of ClientTreeData search results from the server
 	 */
-	private void displaySearchResults(final ArrayList<ClientTreeData> rlist) {
+	private void displaySearchResults(final ArrayList<ClientTreeData> rlist, final int page_size) {
 		RootPanel content = RootPanel.get("content");
 		content.clear();
 		
@@ -403,44 +408,58 @@ public class TreeSpotter implements EntryPoint {
 			Label noResults = new Label("No results were found.");
 			content.add(noResults);
 
-		} else if (rlist.size() <= 25) {
-			// don't bother with tabs if less than 25 results
-			FlexTable resultsTable = createSearchPage(0, rlist);
-			setPoints(rlist, 0);
-			content.add(searchMapPanel);
-			content.add(resultsTable);
-
-		} else {
+		}  else {
 			searchResultsPanel = new TabPanel();
-
-			for (int i = 0; i < rlist.size(); i = i + 25) {
-				// create the table for each set of 25 results
-				int end = Math.min(rlist.size(), i + 25);
-				List<ClientTreeData> rsublist = rlist.subList(i, end);
-				FlexTable resultsTable = createSearchPage(i, rsublist);
-				searchResultsPanel.add(resultsTable,
-						Integer.toString((i / 25) + 1));
-			}
-
-			// set map points to the same set
-			searchResultsPanel
-					.addSelectionHandler(new SelectionHandler<Integer>() {
-						public void onSelection(SelectionEvent<Integer> event) {
-							int start = event.getSelectedItem() * 25;
-							int end = Math.min(rlist.size(), start + 24);
-							List<ClientTreeData> pageList = rlist.subList(
-									start, end);
-							setPoints(pageList, start);
-						}
-					});
-
-			// add the tree search map
+			int first_page_size = Math.min(rlist.size(), page_size-1);
+			FlexTable resultsTable = createSearchPage(0, rlist.subList(0, first_page_size));
+			searchResultsPanel.add(resultsTable, "1");
 			content.add(searchMapPanel);
-			searchResultsPanel.selectTab(0);
 			content.add(searchResultsPanel);
+			// set map points to the same set
+			SearchTabSelectionHandler handler = new SearchTabSelectionHandler(rlist);
+			searchResultsPanel.addSelectionHandler(handler);
+			searchResultsPanel.setVisible(true);
+			searchResultsPanel.selectTab(0);
+			
+			
+		
 		}
 	}
-
+	class SearchTabSelectionHandler implements SelectionHandler<Integer> {
+		ArrayList<ClientTreeData> trees =null;
+		boolean done_the_rest = false;
+		SearchTabSelectionHandler(ArrayList<ClientTreeData> trees){
+			this.trees = trees;
+		}
+		
+		public void onSelection(SelectionEvent<Integer> event) {
+			for(ClientTreeData tree: trees){
+				if(tree.getMapMarker() != null){
+					tree.getMapMarker().setVisible(true);
+				}
+			}
+			initSearchInfoMap(trees);
+			int start = event.getSelectedItem() * SEARCH_PAGE_SIZE;
+			int end = Math.min(trees.size(), start + SEARCH_PAGE_SIZE -1);
+			List<ClientTreeData> pageList = trees.subList(
+					start, end);
+			setPoints(pageList, start);
+			if(!done_the_rest){
+				doTheRest();
+				done_the_rest=true;
+			}
+		}
+		private void doTheRest(){
+			for (int i = SEARCH_PAGE_SIZE; i < trees.size(); i = i + SEARCH_PAGE_SIZE) {
+				int end = Math.min(trees.size(), i + SEARCH_PAGE_SIZE-1);
+				FlexTable resultTable = createSearchPage(i, trees.subList(i, end));
+				searchResultsPanel.add(resultTable, Integer.toString((i / SEARCH_PAGE_SIZE) + 1));
+				System.out.println("Here: " + i);
+			}
+		}
+	}
+	
+	
 	private FlexTable createSearchPage(int start, List<ClientTreeData> rlist) {
 		FlexTable resultsTable = new FlexTable();
 		resultsTable.setWidth("480px");
@@ -498,12 +517,12 @@ public class TreeSpotter implements EntryPoint {
 	 */
 	private void getTreeInfo(String id, String user) {
 		treeDataService.getTreeData(id, user,
-				new AsyncCallback<ClientTreeData>() {
+				new AsyncCallback<ISharedTreeData>() {
 					public void onFailure(Throwable error) {
 						handleError(error);
 					}
 
-					public void onSuccess(ClientTreeData data) {
+					public void onSuccess(ISharedTreeData data) {
 						String baseURL = "http://kchen-cs310.appspot.com";
 						
 						NodeList<Element> tags = Document.get().getElementsByTagName("meta");
@@ -523,7 +542,7 @@ public class TreeSpotter implements EntryPoint {
 					        	metaTag.setContent(content);
 					        }
 					    }
-						displayTreeInfoPage(data);
+						displayTreeInfoPage(new ClientTreeData(data));
 					}
 				});
 	}
@@ -903,7 +922,7 @@ public class TreeSpotter implements EntryPoint {
 				"search-button"));
 		searchButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
-				displaySearchResults(treeList);
+				displaySearchResults(treeList, SEARCH_PAGE_SIZE);
 			}
 		});
 
@@ -950,45 +969,7 @@ public class TreeSpotter implements EntryPoint {
 
 	private void loadAdminPage() {
 		// put another check, since possible to force button to show
-		if (loginInfo == null || !loginInfo.isAdmin()) {
-			final HTMLPanel panel = new HTMLPanel("<h1> GO AWAY </h1>");
-			RootPanel.get("content").clear();
-			RootPanel.get("content").add(panel);	
-			return;
-		}
-		
-		System.out.println("Info " +loginInfo.isAdmin());
-		
-		final HTMLPanel panel = new HTMLPanel("<h1> Admin Page </h1>");
-		Button importBtn = new Button("Full Update");
-		
-		importBtn.addClickHandler(new ClickHandler() {
-			public void onClick(ClickEvent event) {
-				treeDataService.importFromSite("", new AsyncCallback<Void>() {
-
-					@Override
-					public void onFailure(Throwable caught) {
-						panel.add(new HTML("Something went wrong! <br>" + caught.getMessage()));						
-					}
-
-					@Override
-					public void onSuccess(Void result) {
-						panel.add(new HTML("Import success!"));						
-					}					
-				});
-			}			
-		});
-		
-		Button debugBtn = new Button("Debug Update");		
-		debugBtn.addClickHandler(new ClickHandler() {
-			public void onClick(ClickEvent event) {
-
-			}			
-		});
-		
-		panel.add(importBtn);
-		RootPanel.get("content").clear();
-		RootPanel.get("content").add(panel);	
+		AdminButtonPage.load(loginInfo, treeDataService);
 	}
 
 	private void loadLoadingBar() {
@@ -1028,29 +1009,60 @@ public class TreeSpotter implements EntryPoint {
 	 * Once search results have been made into markers, generate a map panned
 	 * and zoomed to contain all markers, then add it to SearchMapPanel
 	 */
-	private void setSearchInfoMap() {
+	private void initSearchInfoMap(ArrayList<ClientTreeData> trees) {
 		searchMapPanel.clear();
-		searchMap = new MapWidget();
+		if(searchMap == null){
+			searchMap = new MapWidget();
+		}
+		else{
+			searchMap.clearOverlays();
+		}
+		
 		searchMap.setSize(SEARCH_MAP_SIZE, SEARCH_MAP_SIZE);
 		searchMap.setUIToDefault();
 		searchMapBound = LatLngBounds.newInstance();
-
+		
 		// set this as default, should be updated in loop
-		searchMap.setCenter(start, ZOOM_LVL);
-
-		for (Marker m : markers) {
-			searchMap.addOverlay(m);
-			searchMapBound.extend(m.getLatLng());
+		//searchMap.setCenter(start, ZOOM_LVL);
+		for(ClientTreeData tree: trees){
+			
+			//options.setIcon(offPageIcon);
+			LatLng  ll =tree.getLatLng();
+			//checking for NaN
+			if(ll.getLatitude()==ll.getLatitude() && ll.getLongitude() == ll.getLongitude()){
+				if(tree.getMapMarker() == null){
+					MarkerOptions options = MarkerOptions.newInstance();
+					options.setTitle(tree.getCommonName() +"\n"+ tree.getGenus() + " " + tree.getSpecies());
+					options.setIcon(offPageIcon);
+					tree.setMapMarker(new Marker(tree.getLatLng(), options));
+				}
+				updateSearchInfoMap(tree.getMapMarker());
+			}
 		}
-		if (!searchMapBound.isEmpty()) {
-			// getBoundsZoomLevel returns ridiculously zoomed out values
-			int zoom = searchMap.getBoundsZoomLevel(searchMapBound) + 9;
-			zoom = ZOOM_LVL < zoom ? ZOOM_LVL : zoom;
-			searchMap.setCenter(searchMapBound.getCenter(), zoom);
+		//Marker marker = new Marker(LatLng.newInstance(), null);		
+		if(searchMapPanel.getWidgetIndex(searchMap) < 0){
+			searchMapPanel.add(searchMap);
+			searchMapPanel.setStyleName("results-map");
 		}
 		
-		searchMapPanel.add(searchMap);
-		searchMapPanel.setStyleName("results-map");
+	}
+
+	/**
+	 * 
+	 */
+	private void updateSearchInfoMap(Marker m) {
+		
+		searchMap.addOverlay(m);
+		searchMapBound.extend(m.getLatLng());
+		if (!searchMapBound.isEmpty()) {
+			// getBoundsZoomLevel returns ridiculously zoomed out values
+			int zoom = searchMap.getBoundsZoomLevel(searchMapBound);
+			//zoom = ZOOM_LVL < zoom ? ZOOM_LVL : zoom;
+			
+			searchMap.setCenter(searchMapBound.getCenter(), zoom);
+			System.out.println(searchMapBound);
+		}
+
 	}
 
 	/**
@@ -1064,6 +1076,14 @@ public class TreeSpotter implements EntryPoint {
 		treeResults = list;
 		listIndex = 0;
 		listOffset = offset;
+		for(ClientTreeData tree: list){
+			if(tree.getMapMarker() != null){
+				tree.getMapMarker().setVisible(false);
+			}
+		}
+		for (Marker marker: markers){
+			marker.setVisible(false);
+		}
 		markers.clear();
 		getNextPoint(listIndex);
 	}
@@ -1076,7 +1096,6 @@ public class TreeSpotter implements EntryPoint {
 	 */
 	private void getNextPoint(int idx) {
 		if (idx >= treeResults.size()) {
-			setSearchInfoMap();
 			return;
 		}
 
@@ -1106,13 +1125,13 @@ public class TreeSpotter implements EntryPoint {
 		options.setIcon(icon);
 		options.setTitle(Integer.toString(++listIndex + listOffset));
 		Marker mark = new Marker(pt, options);
+		markers.add(mark);
 		mark.addMarkerClickHandler(new MarkerClickHandler() {
 			public void onClick(MarkerClickEvent event) {
 				clickMarker(event.getSender());
 			}
 		});
-		markers.add(mark);
-
+		updateSearchInfoMap(mark);
 		getNextPoint(listIndex);
 	}
 
@@ -1126,7 +1145,7 @@ public class TreeSpotter implements EntryPoint {
 		LatLng pt = m.getLatLng();
 		try {
 			int idx = Integer.parseInt(m.getTitle());
-			ClientTreeData t = treeResults.get((idx % 25) - 1);
+			ClientTreeData t = treeResults.get((idx % SEARCH_PAGE_SIZE) - 1);
 			searchMap.getInfoWindow().open(
 					pt,
 					new InfoWindowContent("<p>" + idx + ". "

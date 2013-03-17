@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
+import com.cpsc310.treespotter.shared.ISharedTreeData;
+import com.cpsc310.treespotter.shared.TransmittedTreeData;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.http.client.Request;
@@ -25,7 +27,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 
 public class TreeSpotterClient {
-	ClientTreeData addTree = null;
+	TransmittedTreeData addTree = null;
 	Address geoAddr = null;
 	TreeSpotter parent = null;
 	LinkedHashMap<Label, TextBox> addFormMap = null;
@@ -44,12 +46,12 @@ public class TreeSpotterClient {
 	 * @throws InvalidFieldException
 	 *             thrown if input is not in valid format for any field
 	 */
-	protected void populateAddData(ClientTreeData t, LinkedHashMap<Label, TextBox> form) 
+	protected void populateAddData(TransmittedTreeData t, LinkedHashMap<Label, TextBox> form) 
 			throws InvalidFieldException {
 		addFormMap = form;
 		boolean parseLoc = true;
 		if (t == null) {
-			addTree = new ClientTreeData();
+			addTree = new TransmittedTreeData();
 		} else {
 			addTree = t;
 			parseLoc = false;
@@ -159,19 +161,19 @@ public class TreeSpotterClient {
 	 * @param t
 	 *            ClientTreeData to be sent for persistence
 	 */
-	private void sendAddTreeData(ClientTreeData t) {
-		parent.treeDataService.addTree(t, new AsyncCallback<ClientTreeData>() {
+	private void sendAddTreeData(TransmittedTreeData t) {
+		parent.treeDataService.addTree(t, new AsyncCallback<ISharedTreeData>() {
 			public void onFailure(Throwable error) {
 				parent.handleError(error);
 			}
 
-			public void onSuccess(ClientTreeData result) {
+			public void onSuccess(ISharedTreeData result) {
 				if (result != null) {
 					Window.alert(HTMLResource.ADD_TREE_SUCCESS);
 				} else {
-					Window.alert(HTMLResource.ADD_TREE_FAIL);
+					Window.alert(HTMLResource.ADD_TREE_FAIL); 
 				}
-				parent.displayTreeInfoPage(result);
+				parent.displayTreeInfoPage(new ClientTreeData(result));
 			}
 		});
 	}

@@ -56,6 +56,7 @@ public class TreesIndexedByString {
 	@Ignore TreeStringProvider tsp = null;
 	@Ignore TreeStringProvider binner = null;
 	@Ignore  ArrayList<Ref<PersistentFile>> futuresList = null;
+	@Ignore boolean shouldKeepTrackOfBins = true;
 	
 	static public void saveIndexState(final TreesIndexedByString indx){
 		ofy().transact(new VoidWork() {
@@ -84,6 +85,10 @@ public class TreesIndexedByString {
 		binner = TreeToStringFactory.getBinner();
 	}
 	
+	public void setBinTracking(boolean track_bins){
+		shouldKeepTrackOfBins = track_bins;
+	}
+	
 	private int addSingleToMap(TreeData tree){
 		int ret = 0;
 		String key = filterKey(tsp.treeToString(tree));
@@ -95,7 +100,7 @@ public class TreesIndexedByString {
 			tree_set = treeMap.get(key);
 			
 			
-			if(!bin.equals(key)){
+			if(shouldKeepTrackOfBins){
 				bin_set = binRefs.get(key);
 				if(bin_set == null){
 					bin_set = new HashSet<String>();

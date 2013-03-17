@@ -1,144 +1,96 @@
 package com.cpsc310.treespotter.client;
 
-import java.io.Serializable;
-
+import com.cpsc310.treespotter.shared.ISharedTreeData;
 import com.cpsc310.treespotter.shared.LatLong;
+import com.google.gwt.maps.client.geom.LatLng;
+import com.google.gwt.maps.client.overlay.Marker;
+import com.google.gwt.user.client.ui.FlexTable;
 
-public class ClientTreeData implements Serializable {
+public class ClientTreeData implements ISharedTreeData {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -1953579997954856450L;
-	
-	private int civicNumber = -1;
-	private String treeID;
-	private String neighbourhood;
-	private String street;
-	private int heightRange = -1;
-	private float diameter = -1.0f;
-	private String planted;
-	private String cultivar;
-	private String genus;
-	private String species;
-	private String commonName;
-	private LatLong latLong;
+	private ISharedTreeData data;
+	private Marker mapMarker = null;
+	private LatLng ll = null;
 
-	public ClientTreeData(){
-		
+	public ClientTreeData(ISharedTreeData data){
+		this.data=data;
 	}
 	
 	public String getID(){
-		return treeID;
+		return data.getID();
 	}
 
 	public String getLocation(){
-		String num = civicNumber < 0 ? "" : civicNumber + " ";
-		return num + street;
+		String num = data.getCivicNumber() < 0 ? "" : data.getCivicNumber() + " ";
+		return num + data.getStreet();
 	}
-
-	// depends on if we use the geocoded LatLng data
-	// TODO (someone) turn this into actual coordinates
-/*	public String getCoordinates(){
-		return getLocation();
-	}*/
 
 	public int getCivicNumber() {
-		return civicNumber;
-	}
-
-	public void setCivicNumber(int civicNumber) {
-		this.civicNumber = civicNumber;
+		return data.getCivicNumber();
 	}
 
 	public String getTreeID() {
-		return treeID;
-	}
-
-	public void setTreeID(String treeID) {
-		this.treeID = treeID;
+		return data.getTreeID();
 	}
 
 	public String getNeighbourhood() {
-		return neighbourhood;
+		return data.getNeighbourhood();
 	}
 
-	public void setNeighbourhood(String neighbourhood) {
-		this.neighbourhood = neighbourhood;
-	}
-
-	public String getStreet() {
-		return street;
-	}
-
-	public void setStreet(String street) {
-		this.street = street;
-	}
 
 	public int getHeightRange() {
-		return heightRange;
-	}
-
-	public void setHeightRange(int heightRange) {
-		this.heightRange = heightRange;
+		return data.getHeightRange();
 	}
 
 	public float getDiameter() {
-		return diameter;
-	}
-
-	public void setDiameter(float diameter) {
-		this.diameter = diameter;
+		return data.getDiameter();
 	}
 
 	public String getPlanted() {
-		return planted;
-	}
-
-	public void setPlanted(String planted) {
-		this.planted = planted;
+		return data.getPlanted();
 	}
 
 	public String getCultivar() {
-		return cultivar;
-	}
-
-	public void setCultivar(String cultivar) {
-		this.cultivar = cultivar;
+		return data.getCultivar();
 	}
 
 	public String getGenus() {
-		return genus;
-	}
-
-	public void setGenus(String genus) {
-		this.genus = genus;
+		return data.getGenus();
 	}
 
 	public String getSpecies() {
-		return species;
-	}
-
-	public void setSpecies(String species) {
-		this.species = species;
+		return data.getSpecies();
 	}
 
 	public String getCommonName() {
-		return commonName;
-	}
-
-	public void setCommonName(String commonName) {
-		this.commonName = commonName;
+		return data.getCommonName();
 	}
 
 	public LatLong getLatLong() {
-		return latLong;
+		return data.getLatLong();
 	}
 
-	public void setLatLong(LatLong latLong) {
-		this.latLong = latLong;
+	@Override
+	public String getStreet() {
+		return data.getStreet();
 	}
-	
-	
+
+	public LatLng getLatLng(){
+		if(ll == null){
+			ll = LatLng.newInstance(data.getLatLong().getLatitude(),data.getLatLong().getLongitude());
+		}
+		return ll;
+	}
+
+	public Marker getMapMarker() {
+		return mapMarker;
+	}
+
+	public void setMapMarker(Marker mapMarker) {
+		this.mapMarker = mapMarker;
+	}
 
 
 }

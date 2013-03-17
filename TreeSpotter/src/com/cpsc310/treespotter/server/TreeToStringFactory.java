@@ -78,14 +78,16 @@ public class TreeToStringFactory {
 		TreeStringProvider tsp = new TreeStringProvider(){
 			@Override
 			public String treeToString(TreeDataProvider tree) {
-				final int chunk_size = 100;
-				 int int_portion = Integer.parseInt(tree.getID().substring(1));
-				 return tree.getID().substring(0, 1)+String.format("%0$6d",int_portion/chunk_size);
-			
+				 return  chunkedID(tree.getID());
 			}
 			
 		};
 		return tsp;
+	}
+	static String chunkedID(String id){
+		final int chunk_size = 1000;
+		int int_portion = Integer.parseInt(id.substring(1));
+		return id.substring(0, 1)+String.format("%0$3d",int_portion/chunk_size);
 	}
 	static TreeStringProvider getBinner(){
 		return new TreeGridStore();

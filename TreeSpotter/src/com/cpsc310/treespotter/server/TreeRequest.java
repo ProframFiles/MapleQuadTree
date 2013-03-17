@@ -24,7 +24,7 @@ public class TreeRequest {
 	Set<Ref<PersistentFile>> currentRequest;
 	Set<String> requestBins;
 	SortedSet<TreeData> currentTrees = new TreeSet<TreeData>();
-	ArrayList<TreeMatcher> filters = new ArrayList<TreeMatcher>(); 
+	ArrayList<TreeFilter> filters = new ArrayList<TreeFilter>(); 
 	boolean anyFilters = false;
 	
 	TreeDepot depot;
@@ -50,7 +50,7 @@ public class TreeRequest {
 			Set<TreeData> filtered = new HashSet<TreeData>();
 			for(TreeData tree: ret){
 				boolean match = true;
-				for(TreeMatcher filt: filters){
+				for(TreeFilter filt: filters){
 					if(!filt.isMatch(tree)){
 						match=false;
 						break;
@@ -104,6 +104,13 @@ public class TreeRequest {
 		LOG.info("filtered request to " + requestBins.size() + " bins");
 		return this;
 	}
+	
+	public TreeRequest onlyTreesWithStreetNumber(int addressBottom, int addressTop) {
+		filters.add(new TreeAddressFilter(addressBottom, addressTop));
+		anyFilters = true;
+		return this;
+	}
+	
 	
 	public TreeRequest onlyTreesWithGenus(String genus){
 		if(!anyFilters){
@@ -163,4 +170,31 @@ public class TreeRequest {
 		}
 		
 	}
+	private class TreeAddressFilter implements TreeFilter{
+
+		int upper;
+		int lower;
+		public TreeAddressFilter(int lower, int upper){
+			this.upper = upper;
+			this.lower = lower;
+		}
+		
+		@Override
+		public boolean isMatch(TreeData tree) {
+			boolean match = false;
+			if(tree != null){
+				match = lower < 0 || upper < 0 || (tree.getCivicNumber()>=lower && tree.getCivicNumber()<=upper);
+				
+			}
+			if(match){
+				//LOG.info("match for " + matchString + " in " + tsp.treeToString(tree));
+			}
+			else{
+				//LOG.info("found match for " + matchString + " in " + tsp.treeToString(tree));
+			}
+			return match;
+		}
+		
+	}
+	
 }

@@ -19,11 +19,11 @@ import com.cpsc310.treespotter.shared.LatLongProvider;
 public class TreeData implements Serializable, TreeDataProvider, LatLongProvider, Comparable<TreeData> {
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		int factor = treeID.substring(0,1).equals('U') ? -1 : 1;
-		result = prime * result + ((treeID == null) ? 0 : factor*Integer.parseInt(treeID.substring(1)));
-		return result;
+		if(treeID == null){
+			return 0;
+		}
+		int factor = treeID.substring(0,1).equals("U") ? -1 : 1;
+		return  factor*Integer.parseInt(treeID.substring(1));
 	}
 
 	@Override

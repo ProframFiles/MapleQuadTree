@@ -10,13 +10,11 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import javax.jdo.PersistenceManager;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.cpsc310.treespotter.server.PMF;
 import com.cpsc310.treespotter.server.TreeData;
 
 public class DataFetcher extends HttpServlet {
@@ -91,12 +89,12 @@ public class DataFetcher extends HttpServlet {
 	}
 	
 	private void persistBlock(ArrayList<TreeData> trees){
-		PersistenceManager pm = PMF.get().getPersistenceManager();
+	//	PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
-			pm.makePersistentAll(curr_trees);
+		//	pm.makePersistentAll(curr_trees);
 			curr_trees.clear();
 		} finally {
-			pm.close();
+	//		pm.close();
 		}
 	}
 	

@@ -10,13 +10,14 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.cpsc310.treespotter.client.ClientTreeData;
 import com.cpsc310.treespotter.client.SearchFieldID;
 import com.cpsc310.treespotter.client.SearchParam;
 import com.cpsc310.treespotter.client.SearchQueryInterface;
 import com.cpsc310.treespotter.client.TreeComment;
 import com.cpsc310.treespotter.client.TreeDataService;
+import com.cpsc310.treespotter.shared.ISharedTreeData;
 import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.VoidWork;
@@ -37,14 +38,29 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 	
 	@Override
-	public void importFromSite(String url) {
-		QueueFactory.getDefaultQueue().add(withUrl("/treespotter/tasks/fetchandprocessdata"));
+	public void importFromSite(String options) {
+		TaskOptions opt = withUrl(DataUpdater.TASK_URL);
+		if(options != null && options.length()>0){
+			LOG.info("setting option \"" +options+ "\"");
+			if(options.equalsIgnoreCase("force tasks")){
+				opt = opt.param("force tasks","true");
+			}
+			else{
+				String[] tasks = options.split(",");
+				for(String task: tasks){
+					opt = opt.param("add task", task.trim());
+					LOG.info("setting task \"" +task+ "\"");
+				}
+			}
+				
+		}
+		QueueFactory.getDefaultQueue().add(opt);
 	}
 
 	@Override
-	public ClientTreeData addTree(ClientTreeData info) {
+	public ISharedTreeData addTree(ISharedTreeData info) {
 		LOG.info("\n\trecieved call to create new user tree.");
-		ClientTreeData return_tree = null;
+		ISharedTreeData return_tree = null;
 		try { 
 			LOG.info("\n\tFetching last user id from datastore.");
 			UserTreeUpdateStamp last_stamp = ofy().transact(new Work<UserTreeUpdateStamp>() {
@@ -110,15 +126,19 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public ClientTreeData getTreeData(String queryID, String userType) {
-		ClientTreeData ret = TreeFactory.makeUserTreeData(TreeFactory.makeTestTree(queryID));
+	public ISharedTreeData getTreeData(String queryID, String userType) {
+		TreeData tree = treeDepot().getTreeByID(queryID);
+		ISharedTreeData ret = null;
+		if(tree != null){
+			ret = TreeFactory.makeUserTreeData(tree);
+		}
 		return ret;
 	}
 
 	@Override
-	public ArrayList<ClientTreeData> searchTreeData(SearchQueryInterface query) {
+	public ArrayList<ISharedTreeData> searchTreeData(SearchQueryInterface query) {
 		LOG.setLevel(Level.FINER);
-		ArrayList<ClientTreeData> results = null;
+		ArrayList<ISharedTreeData> results = null;
 		
 		if(query == null || query.getSearchParams().isEmpty()){
 			LOG.info("recieved empty search query, returning.");
@@ -138,6 +158,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 				else if(sp.fieldID == SearchFieldID.ADDRESS){
 					StreetBlock address_block = new StreetBlock(sp.value);
 					req.onlyTreesWithStreet(address_block.getStreetName().toUpperCase());
+					req.onlyTreesWithStreetNumber(address_block.getAddressBottom(), address_block.getAddressTop() );
 				}
 				else if(sp.fieldID == SearchFieldID.GENUS){
 					req.onlyTreesWithGenus(sp.value.toUpperCase());
@@ -151,7 +172,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			}
 			Collection<TreeData> trees = req.fetch();
 			LOG.info("\n\tFound: " + trees.size() + " trees matching query");
-			results = new ArrayList<ClientTreeData>();
+			results = new ArrayList<ISharedTreeData>();
 			int counter = 0;
 			
 			for (TreeData server_tree : trees) {
@@ -183,7 +204,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public ClientTreeData modifyTree(ClientTreeData info) {
+	public ISharedTreeData modifyTree(ISharedTreeData info) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -195,7 +216,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public ClientTreeData addTreeComment(String treeID, TreeComment comment) {
+	public ISharedTreeData addTreeComment(String treeID, TreeComment comment) {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -89,22 +89,30 @@ public abstract class Job {
 			fileData = null;
 			LOG.fine("\n\tdid not find existing file data.");
 		}
+		byte[] b = null;
+		boolean got_data = false;
 		if(shouldFetchData()){
 			ArrayList<byte[]> file_blobs = fetchFileData(getFileUrls());
-			byte[] b = preProcessDataFiles(file_blobs);
+			b = preProcessDataFiles(file_blobs);
 			LOG.info("Done preprocessing files.\n\tPersisting " + b.length +" bytes to datastore");
-			
 			fileData.save(new ByteArrayInputStream(b));
 			fileDataRef = Ref.create(fileData);
+			got_data = true;
+		}
+		if(forceNewTasks() || got_data){
 			LOG.fine("\n\tCreating subtasks");
-			subTasks = createSubTasks(new ByteArrayInputStream(b));
+			subTasks = createSubTasks();
 			LOG.fine("\n\tPersisting job state");
 			saveJobState(this);
+			b = null;
 			return true;
+		}
+		if(b== null){
+			b = fileData.load();
 		}
 		// if we made it here, that means we already have up-to-date persisted data
 		// so we retrieve it from the dataStore and start processing
-		byte[] b = fileData.load();
+
 		LOG.info("\n\tRetrieved " + b.length + " bytes of file data from the datastore");
 		try{
 			while(subTasks.size() > 0 && !needToStop()){
@@ -112,9 +120,9 @@ public abstract class Job {
 				SubTask st = subTasks.get(subTasks.size()-1);
 				int progress;
 				while((progress = processSubTask(is, st)) > 0){
-					st.task_progress = progress;
+					st.progress = progress;
 					saveJobState(this);
-					LOG.info("\n\tSave task \"" + st.task_string + "\" with progress "+ st.task_progress);
+					LOG.info("\n\tSave task \"" + st.name + "\" with progress "+ st.progress);
 					if(needToStop()){
 						LOG.info("\n\tNeed to stop!");
 						break;
@@ -135,6 +143,11 @@ public abstract class Job {
 		}
 		
 		return true;
+	}
+
+	protected boolean forceNewTasks() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 	abstract protected byte[] preProcessDataFiles(ArrayList<byte[]> b) ;
@@ -190,5 +203,5 @@ public abstract class Job {
 		return ret;
 	}
 	abstract public void setOptions(String option_name, String option_value);
-	abstract protected ArrayList<SubTask> createSubTasks(InputStream is);
+	abstract protected ArrayList<SubTask> createSubTasks();
 }
