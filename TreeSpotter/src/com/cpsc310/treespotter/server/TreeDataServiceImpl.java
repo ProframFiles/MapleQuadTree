@@ -190,11 +190,17 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		catch(Exception e){
 			LOG.severe("Unexpected exception during search process:\n\t\"" + e.getMessage() + "\"\n\tReturning no results, stack trace follows.");
 			StringBuilder sb = new StringBuilder();
-			for(StackTraceElement ste: e.getStackTrace()){
-				sb.append("\n" + ste.toString());
-				if(ste.getMethodName() == "searchTreeData"){
-					break;
+			StackTraceElement[] ste_array = e.getStackTrace();
+			if(ste_array!=null){
+				for(StackTraceElement ste: e.getStackTrace()){
+					sb.append("\n" + ste.toString());
+					if(ste.getMethodName() == "searchTreeData"){
+						break;
+					}
 				}
+			}
+			else{
+				sb.append("No stackTrace available");
 			}
 			LOG.severe("StackTrace from this method:\n" + sb.toString() + "\n");
 			results = null;
@@ -223,7 +229,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public ArrayList<String> getSearchSuggestions(SearchFieldID field_id, String hint) {
-		
+		LOG.info("Recieved request for search suggestions: \"" + field_id + "\" hint = \"" +hint+ "\"");
 		ArrayList<String> ret = new ArrayList<String>();
 		Set<String> all_set = null;
 		if(field_id == SearchFieldID.SPECIES){
@@ -244,9 +250,10 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		else if(field_id == SearchFieldID.KEYWORD){
 			all_set = treeDepot().getKeywordSet();
 		}
-		
+		LOG.info("Found " + all_set.size() + " suggestions");
 		if(all_set != null && hint != null && hint.length() > 0)
 		{
+			LOG.info("Now filtering list");
 			Pattern regex = Pattern.compile(hint.toUpperCase());
 			for(String s: all_set){
 				Matcher matcher = regex.matcher(s);
@@ -258,6 +265,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		else if(all_set != null){
 			ret.addAll(all_set);
 		}
+		LOG.info("returning " + ret.size() + " suggestions");
 		return ret;
 	}
 

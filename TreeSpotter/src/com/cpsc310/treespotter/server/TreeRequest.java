@@ -13,6 +13,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.cpsc310.treespotter.shared.LatLong;
 import com.googlecode.objectify.Ref;
 
 /**
@@ -26,6 +27,7 @@ public class TreeRequest {
 	SortedSet<TreeData> currentTrees = new TreeSet<TreeData>();
 	ArrayList<TreeFilter> filters = new ArrayList<TreeFilter>(); 
 	boolean anyFilters = false;
+	boolean isSpatialSearch = false;
 	
 	TreeDepot depot;
 	
@@ -38,16 +40,27 @@ public class TreeRequest {
 	}
 	
 	public Collection<TreeData> fetch(){
+		Set<TreeData> ret = Collections.emptySet();
 		if(!anyFilters){
-			return Collections.emptyList();
+			return ret;
 		}
-		else if(filters.size()>1){
-			LOG.info("filtered request to " + requestBins.size() + " bins");
+		else if((filters.size()>1 && requestBins.size() < currentRequest.size()*2) || isSpatialSearch){
+			LOG.info("Doing a bin search with " + requestBins.size() + " bins instead of " + currentRequest.size() +" refs");
 			Set<Ref<PersistentFile>> req = depot.getAllRefsInBins(requestBins);
 			TreeDepot.loadAllRefs(req);
-			Set<TreeData> ret = TreeDepot.deSerializeAllRefs(req, 400000);
-			LOG.info("retrieved " + ret.size() + " trees from the depot");
-			Set<TreeData> filtered = new HashSet<TreeData>();
+			ret = TreeDepot.deSerializeAllRefs(req, 10000);
+			
+		}
+		else{
+			LOG.info("Doing a ref search with " + currentRequest.size() + " refs instead of " + requestBins.size() +" bins");
+			TreeDepot.loadAllRefs(currentRequest);
+			ret = TreeDepot.deSerializeAllRefs(currentRequest, 10000);
+		}
+		LOG.info("retrieved " + ret.size() + " trees from the depot");
+		Set<TreeData> filtered = ret;
+		if(filters.size()>1){
+			LOG.info("now filtering with " + filters.size() + " filters");
+			filtered = new HashSet<TreeData>();
 			for(TreeData tree: ret){
 				boolean match = true;
 				for(TreeFilter filt: filters){
@@ -60,13 +73,9 @@ public class TreeRequest {
 					filtered.add(tree);
 				}
 			}
-			return filtered;
 		}
-		TreeDepot.loadAllRefs(currentRequest);
-		Set<TreeData> ret = TreeDepot.deSerializeAllRefs(currentRequest, 10000);
-		
-		//currentRequest.clear();
-		return ret;
+		LOG.info("found " + filtered.size() + " results total");
+		return filtered;
 	}
 	
 	public TreeRequest onlyTreesWithKeyword(String kw){
@@ -89,6 +98,14 @@ public class TreeRequest {
 		requestBins.retainAll(depot.getAllSpeciesBinsWith(species.toUpperCase()));
 		filters.add(new TreeMatcher(species.toUpperCase(), TreeToStringFactory.getTreeToSpecies()));
 		anyFilters = true;
+		LOG.info("filtered request to " + requestBins.size() + " bins");
+		return this;
+	}
+	
+	public TreeRequest onlyTreesWithinRect(LatLong southWest, LatLong northEast){
+		requestBins.retainAll( TreeGridStore.getAllBinsWithin(southWest, northEast));
+		anyFilters = true;
+		isSpatialSearch = true;
 		LOG.info("filtered request to " + requestBins.size() + " bins");
 		return this;
 	}

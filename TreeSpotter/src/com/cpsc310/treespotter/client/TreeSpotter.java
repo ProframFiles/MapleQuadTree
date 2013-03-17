@@ -10,6 +10,7 @@ import java.util.Set;
 import com.cpsc310.treespotter.shared.ISharedTreeData;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.MetaElement;
@@ -81,14 +82,21 @@ public class TreeSpotter implements EntryPoint {
 	protected static final String PLANTED = "Date Planted";
 	private String[] basicFields = { LOCATION, GENUS, SPECIES, COMMON };
 	private String[] optionalFields = { NEIGHBOUR, HEIGHT, DIAMETER, PLANTED };
+	private String[] advancedSearch = { LOCATION, GENUS, SPECIES, COMMON, NEIGHBOUR };
 
+	private MultiWordSuggestOracle keywordOracle;
 	private MultiWordSuggestOracle speciesOracle;
+	private MultiWordSuggestOracle commonOracle;
+	private MultiWordSuggestOracle neighbourOracle;
+	private MultiWordSuggestOracle genusOracle;
+	private MultiWordSuggestOracle addressOracle;
 	
 	private boolean isBasicSearch = true;
 	private SuggestBox basicSearch = null;
+	private VerticalPanel advancedForm = null;
 
 	// list of the input boxes, so the values can be retrieved
-	private LinkedHashMap<Label, TextBox> advancedSearchMap = new LinkedHashMap<Label, TextBox>();
+	private LinkedHashMap<String, SuggestBox> advancedSearchMap = new LinkedHashMap<String, SuggestBox>();
 	private LinkedHashMap<Label, TextBox> addFormMap = new LinkedHashMap<Label, TextBox>();
 
 	protected final TreeDataServiceAsync treeDataService = GWT.create(TreeDataService.class);
@@ -133,6 +141,29 @@ public class TreeSpotter implements EntryPoint {
 	 */
 	public void onModuleLoad() {
 
+			GWT.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+				@Override
+				public void onUncaughtException(Throwable e) {
+						
+						StringBuilder sb = new StringBuilder();
+						StackTraceElement[] ste_array = e.getStackTrace();
+						if(ste_array!=null){
+							for(StackTraceElement ste: e.getStackTrace()){
+								sb.append("\n" + ste.toString());
+								if(ste.getClassName().contains("Tree")){
+									break;
+								}
+							}
+						}
+						else{
+							sb.append("No stackTrace available");
+						}
+						System.out.print("Unexpected exception in treespotter:\n\"" + e.getMessage() + "\"\n" + sb.toString() + "\n");
+						Window.alert("Unexpected exception in treespotter:\n\t\"" + e.getMessage() + "\"\n" + sb.toString());
+				}
+			});
+			
+		
 		/*
 		 * to see specific tree info page, use GET parameters eg.
 		 * treespotter.appspot.com/viewTree.html?id=xxx uncomment the following
@@ -162,9 +193,9 @@ public class TreeSpotter implements EntryPoint {
 			}
 		});
 		
-		initFacebookAPI();
+		//initFacebookAPI();
 		initHomePage();
-		initSearchOracle();
+		initSearchOracles();
 		initButtons();
 		initLoginLogout();
 		initAdminButton();
@@ -247,21 +278,9 @@ public class TreeSpotter implements EntryPoint {
 		basicSearch = searchInput;
 
 		/* set up advanced search elements */
-		final VerticalPanel advancedForm = new VerticalPanel();
+		advancedForm = new VerticalPanel();
 		advancedForm.setStyleName("main-search-fields");
-		for (String field : basicFields) {
-			HorizontalPanel advtb = createSearchPanel(field);
-			advancedForm.add(advtb);
-		}
-		for (String field : optionalFields) {
-			if (field.equals(PLANTED) || field.equals(DIAMETER)
-					|| field.equals(HEIGHT)) {
-				// not supported for now
-			} else {
-				HorizontalPanel advtb = createSearchPanel(field);
-				advancedForm.add(advtb);
-			}
-		}
+		createAdvancedSearch();
 		advancedForm.setVisible(false);
 
 		/* set up advanced search link */
@@ -332,8 +351,8 @@ public class TreeSpotter implements EntryPoint {
 				System.out.println("Keyword: " + input);
 			}
 
-			for (Map.Entry<Label, TextBox> entry : advancedSearchMap.entrySet()) {
-				String key = entry.getKey().getText();
+			for (Map.Entry<String, SuggestBox> entry : advancedSearchMap.entrySet()) {
+				String key = entry.getKey();
 				input = entry.getValue().isEnabled() ? entry.getValue()
 						.getValue().trim() : "";
 				if (!input.isEmpty()) {
@@ -749,57 +768,141 @@ public class TreeSpotter implements EntryPoint {
 	 *            String for the text box label
 	 * @return Panel containing one row for the advanced search panel
 	 */
-	private HorizontalPanel createSearchPanel(String text) {
-		HorizontalPanel panel = new HorizontalPanel();
-		final TextBox tb = new TextBox();
-		tb.setStyleName("disabled");
+	private void createAdvancedSearch() {
+		for (String fld : advancedSearch) {
+			HorizontalPanel panel = new HorizontalPanel();
+			final SuggestBox tb = new SuggestBox();
+			tb.setStyleName("disabled");
 
-		HTML label = new HTML(text);
-		label.setStyleName("advanced-search-panel");
+			HTML label = new HTML(fld);
+			label.setStyleName("advanced-search-panel");
 
-		// textbox will be enabled when clicked
-		// disabled if empty when clicking away
-		tb.addFocusHandler(new FocusHandler() {
-			public void onFocus(FocusEvent event) {
-				tb.setStyleName("enabled");
-			}
-		});
-
-		tb.addBlurHandler(new BlurHandler() {
-			@Override
-			public void onBlur(BlurEvent event) {
-				if (tb.getValue().trim().equals("")) {
-					tb.setStyleName("disabled");
+			// textbox will be enabled when clicked
+			// disabled if empty when clicking away
+			tb.getValueBox().addFocusHandler(new FocusHandler() {
+				public void onFocus(FocusEvent event) {
+					tb.setStyleName("enabled");
 				}
-			}
+			});
 
-		});
+			tb.getValueBox().addBlurHandler(new BlurHandler() {
+				@Override
+				public void onBlur(BlurEvent event) {
+					if (tb.getValue().trim().equals("")) {
+						tb.setStyleName("disabled");
+					}
+				}
 
-		/* add text box to the list */
-		advancedSearchMap.put(label, tb);
+			});
 
-		/* add all elements to the panel */
-		panel.add(label);
-		panel.add(tb);
-		
-		return panel;
+			/* add text box to the list */
+			advancedSearchMap.put(fld, tb);
+
+			/* add all elements to the panel */
+			panel.add(label);
+			panel.add(tb);
+			advancedForm.add(panel);
+		}
 	}
 
-	private void initSearchOracle() {
-		treeDataService.getSearchSuggestions(SearchFieldID.SPECIES, null, new AsyncCallback<ArrayList<String>>() {
-
+	private void initSearchOracles() {
+		// Keyword Search
+		treeDataService.getSearchSuggestions(SearchFieldID.KEYWORD, "", new AsyncCallback<ArrayList<String>>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				System.out.println("Failure initiating keyword search.");
+				System.out.println(caught.toString());
+				handleError(caught);
+				initAdressOracle();
+			}
+			@Override
+			public void onSuccess(ArrayList<String> result) {
+				keywordOracle = (MultiWordSuggestOracle) basicSearch.getSuggestOracle();				
+				keywordOracle.addAll(result);
+				System.out.println("Finished initiating keyword search.");
+				System.out.println(result.toString());
+				initAdressOracle();
+			}			
+		});
+	}
+	private void initAdressOracle(){
+		// Address Search
+		treeDataService.getSearchSuggestions(SearchFieldID.ADDRESS, "", new AsyncCallback<ArrayList<String>>() {
 			@Override
 			public void onFailure(Throwable caught) {
 				handleError(caught);
-				
+				initCommonNameOracle();
 			}
-
 			@Override
 			public void onSuccess(ArrayList<String> result) {
-				MultiWordSuggestOracle basicOracle = (MultiWordSuggestOracle) basicSearch.getSuggestOracle();				
-				basicOracle.addAll(result);
+				addressOracle = (MultiWordSuggestOracle) advancedSearchMap.get(LOCATION).getSuggestOracle();				
+				addressOracle.addAll(result);
+				initCommonNameOracle();
+			}	
+		});
+	}
+	private void initCommonNameOracle(){
+		// Common Name Search
+		treeDataService.getSearchSuggestions(SearchFieldID.COMMON, "", new AsyncCallback<ArrayList<String>>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				handleError(caught);
+				initGenusOracle();
 			}
-			
+			@Override
+			public void onSuccess(ArrayList<String> result) {
+				commonOracle = (MultiWordSuggestOracle) advancedSearchMap.get(COMMON).getSuggestOracle();				
+				commonOracle.addAll(result);
+				initGenusOracle();
+			}	
+		});
+	}
+	private void initGenusOracle(){
+		// Genus Search
+		treeDataService.getSearchSuggestions(SearchFieldID.GENUS, "", new AsyncCallback<ArrayList<String>>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				handleError(caught);
+				initSpeciesOracle();
+			}
+			@Override
+			public void onSuccess(ArrayList<String> result) {
+				genusOracle = (MultiWordSuggestOracle) advancedSearchMap.get(GENUS).getSuggestOracle();				
+				genusOracle.addAll(result);
+				initSpeciesOracle();
+			}	
+		});
+	}
+	private void initSpeciesOracle(){
+		// Species Search
+		treeDataService.getSearchSuggestions(SearchFieldID.SPECIES, "", new AsyncCallback<ArrayList<String>>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				handleError(caught);
+				initNeighbourhoodOracle();
+			}
+			@Override
+			public void onSuccess(ArrayList<String> result) {
+				speciesOracle = (MultiWordSuggestOracle) advancedSearchMap.get(SPECIES).getSuggestOracle();				
+				speciesOracle.addAll(result);
+				initNeighbourhoodOracle();
+			}	
+		});
+	}
+	private void initNeighbourhoodOracle(){
+		// Neighbourhood Search
+		treeDataService.getSearchSuggestions(SearchFieldID.NEIGHBOUR, "", new AsyncCallback<ArrayList<String>>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				handleError(caught);
+			}
+			@Override
+			public void onSuccess(ArrayList<String> result) {
+				neighbourOracle = (MultiWordSuggestOracle) advancedSearchMap.get(NEIGHBOUR).getSuggestOracle();				
+				neighbourOracle.addAll(result);
+				System.out.println("Finished initiating neighbourhood search.");
+				System.out.println(result.toString());
+			}	
 		});
 	}
 	
@@ -959,6 +1062,13 @@ public class TreeSpotter implements EntryPoint {
 		((FocusWidget) obj).addMouseOutHandler(tip);
 	}
 	
+	// different one for suggest boxes
+	private void addTooltip(SuggestBox obj, String txt, int left, int top) {
+		Tooltip tip = new Tooltip(obj, txt, left, top);
+		obj.getValueBox().addMouseOverHandler(tip);
+		obj.getValueBox().addMouseOutHandler(tip);
+	}
+	
 	private void addFormTooltips() {
 		for (Map.Entry<Label, TextBox> entry : addFormMap.entrySet()) {
 			TextBox tb = entry.getValue();
@@ -992,9 +1102,9 @@ public class TreeSpotter implements EntryPoint {
 	}
 	
 	private void addSearchTooltips() {
-		for (Map.Entry<Label, TextBox> entry : advancedSearchMap.entrySet()) {
-			TextBox tb = entry.getValue();
-			String key = entry.getKey().getText().split("\\s[*]")[0];
+		for (Map.Entry<String, SuggestBox> entry : advancedSearchMap.entrySet()) {
+			SuggestBox tb = entry.getValue();
+			String key = entry.getKey().split("\\s[*]")[0];
 			int top = tb.getAbsoluteTop();
 			int left = tb.getAbsoluteLeft() + tb.getOffsetWidth() + 10;
 			String text = null;
