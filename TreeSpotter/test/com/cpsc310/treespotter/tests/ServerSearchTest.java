@@ -2,21 +2,18 @@ package com.cpsc310.treespotter.tests;
 
 import java.util.ArrayList;
 
-import javax.jdo.PersistenceManager;
 
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig;
 import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
 import com.cpsc310.treespotter.server.DataFetcher;
 import com.cpsc310.treespotter.server.Job;
-import com.cpsc310.treespotter.server.LocationProcessor;
 import com.cpsc310.treespotter.server.DataUpdateJob;
 import com.cpsc310.treespotter.server.DataUpdater;
 import com.cpsc310.treespotter.server.TreeData;
 import com.cpsc310.treespotter.server.TreeDataServiceImpl;
-import com.cpsc310.treespotter.server.PMF;
 import com.cpsc310.treespotter.server.TreeDepot;
+import com.cpsc310.treespotter.shared.ISharedTreeData;
 import com.cpsc310.treespotter.client.AdvancedSearch;
-import com.cpsc310.treespotter.client.ClientTreeData;
 import com.cpsc310.treespotter.client.KeywordSearch;
 import com.cpsc310.treespotter.client.SearchFieldID;
 import com.cpsc310.treespotter.client.SearchQuery;
@@ -63,7 +60,7 @@ public class ServerSearchTest {
 		
 		SearchQuery loc_query = new AdvancedSearch();
 		loc_query.addSearchParam(SearchFieldID.SPECIES, "Betulus");
-		ArrayList<ClientTreeData> results = dataService.searchTreeData(loc_query);
+		ArrayList<ISharedTreeData> results = dataService.searchTreeData(loc_query);
 		assertEquals(results.size(), 100);
 		loc_query.setNumResults(4700);
 		results = dataService.searchTreeData(loc_query);
@@ -93,15 +90,12 @@ public class ServerSearchTest {
 			System.out.println(s);
 		}
 		
-		 testAddressSearch();
-		 
-		 
-		
+		 testAddressSearch();	
 	}
 	
 	
 	public void testKeywordSearch() {
-		ArrayList<ClientTreeData> results;
+		ArrayList<ISharedTreeData> results;
 		results = doKeywordSearch("MARY");
 		
 		assertEquals(1,results.size() );
@@ -131,13 +125,11 @@ public class ServerSearchTest {
 	}
 	
 	public void testLocationSearch() {
-		LocationProcessor lp = new LocationProcessor();
 		AdvancedSearch loc_query;
-		lp.doPost(null, null);
 		
 		loc_query = new AdvancedSearch();
 		loc_query.addSearchParam(SearchFieldID.LOCATION, "49.2626,-123.1878,200");
-		ArrayList<ClientTreeData> results = dataService.searchTreeData(loc_query);
+		ArrayList<ISharedTreeData> results = dataService.searchTreeData(loc_query);
 		assertEquals(1,results.size() );
 		assertTrue(results.get(0).getCommonName().equalsIgnoreCase("HIGHBURY TREE") );
 		
@@ -168,7 +160,7 @@ public class ServerSearchTest {
 	
 		AdvancedSearch query = new AdvancedSearch();
 		query.addSearchParam(SearchFieldID.ADDRESS, "240 the crescent");
-		ArrayList<ClientTreeData> results = dataService.searchTreeData(query);
+		ArrayList<ISharedTreeData> results = dataService.searchTreeData(query);
 		assertEquals(53,results.size() );
 		assertTrue(results.get(0).getStreet().equalsIgnoreCase("The Crescent") );
 		
@@ -189,7 +181,7 @@ public class ServerSearchTest {
 		
 		AdvancedSearch query = new AdvancedSearch();
 		query.addSearchParam(SearchFieldID.HEIGHT, "1-5");
-		ArrayList<ClientTreeData> results = dataService.searchTreeData(query);
+		ArrayList<ISharedTreeData> results = dataService.searchTreeData(query);
 		assertEquals(5,results.size() );
 		assertEquals(results.get(0).getHeightRange(), 3);
 		
@@ -224,13 +216,11 @@ public class ServerSearchTest {
 		}
 	}
 	
-	
-	
 	public void testDiameterSearch() {
 	
 		AdvancedSearch query = new AdvancedSearch();
 		query.addSearchParam(SearchFieldID.DIAMETER, "1-5");
-		ArrayList<ClientTreeData> results = dataService.searchTreeData(query);
+		ArrayList<ISharedTreeData> results = dataService.searchTreeData(query);
 		assertEquals(5,results.size() );
 		assertEquals(results.get(0).getHeightRange(), 3);
 		
@@ -265,7 +255,7 @@ public class ServerSearchTest {
 		return tree;
 	}
 	
-	private ArrayList<ClientTreeData> doKeywordSearch(String keyword){
+	private ArrayList<ISharedTreeData> doKeywordSearch(String keyword){
 		KeywordSearch q_lower = new KeywordSearch();
 		q_lower.addSearchParam(SearchFieldID.KEYWORD, keyword);
 		return dataService.searchTreeData(q_lower);

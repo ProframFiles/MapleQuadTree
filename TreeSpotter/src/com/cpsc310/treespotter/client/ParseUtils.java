@@ -86,7 +86,7 @@ public class ParseUtils {
 	public static boolean isLocationSearch(String str) {
 		str = str.trim();
 		//remove extra whitespaces
-		str.replaceAll("\\s+", " ");
+		str = str.replaceAll("\\s+", " ");
 		// not %f,%f,%f
 		if (str.matches("-?\\s*\\d+(\\.\\d+)?\\s*,\\s*-?\\s*\\d+(\\.\\d+)?\\s*,\\s*-?\\s*\\d+(\\.\\d+)?")) {
 			return true;

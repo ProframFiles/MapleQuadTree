@@ -72,25 +72,26 @@ public class TreeDepot {
 	static TreeDepot treeDepot(){
 		return treeDepot("TreeDepot");
 	}
-	static TreeDepot treeDepot(final String id){
-		if( instance != null){
-			return instance;
-		}
-		instance = ofy().transact(new Work<TreeDepot>() {
-		    public TreeDepot run() {
-		    	return ofy().load().key(Key.create(TreeDepot.class, id)).getValue();
-		    }
-		});
-		
-		if(instance == null){
-			instance = new TreeDepot(id);
-			instance.saveTrees();
-		}
-		else{
-			instance.Init();
-		}
-		
-		
+	static synchronized TreeDepot treeDepot(final String id){
+			if( instance != null){
+				return instance;
+			}
+			instance = ofy().transact(new Work<TreeDepot>() {
+			    public TreeDepot run() {
+			    	
+			    	TreeDepot depot =  ofy().load().key(Key.create(TreeDepot.class, id)).getValue();
+			    	
+			    	return depot;
+			    }
+			});
+			
+			if(instance == null){
+				instance = new TreeDepot(id);
+				instance.saveTrees();
+			}
+			else{
+				instance.Init();
+			}
 		return instance; 
 	}
 	
@@ -484,7 +485,13 @@ public class TreeDepot {
 	public static SortedSet<TreeData> deSerializeAllRefs( Collection <Ref<PersistentFile>> reflist, int max_results){
 		SortedSet<TreeData> ret = new TreeSet<TreeData>(); 
 		for(Ref<PersistentFile> ref: reflist ){
+			if(ref == null){
+				throw new RuntimeException("Why are we trying to load a null reference");
+			}
 			PersistentFile pFile = ref.get();
+			if(pFile == null){
+				throw new RuntimeException("persistent file came back as null, from a valid reference... How?\n\t Ref = "+ ref);
+			}
 			byte[] b = pFile.load();
 			try {
 				ByteArrayInputStream byte_stream = new ByteArrayInputStream(b);

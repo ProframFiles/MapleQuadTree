@@ -1,38 +1,29 @@
 package com.cpsc310.treespotter.server;
 import java.util.List;
 
-import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.Persistent;
-import javax.jdo.annotations.PrimaryKey;
 
 import com.cpsc310.treespotter.shared.LatLong;
 import com.cpsc310.treespotter.shared.LatLongProvider;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 
-@PersistenceCapable
 public class StreetBlock implements LatLongProvider {
-	@PrimaryKey
-	@Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
+
 	private Key blockID;
 	
-	@Persistent
+	
 	private int	blockStart;
 	
-	@Persistent
+
 	private int	blockEnd;
 	
-	@Persistent
+
 	private int	blockCenter; 
-	
-	@Persistent
+
 	private String streetName;
-	
-	@Persistent
+
 	private double	latitude = 0.0;
-	
-	@Persistent
+
 	private double	longitude = 0.0;
 	
 	public StreetBlock(){

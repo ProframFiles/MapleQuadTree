@@ -3,16 +3,16 @@
  */
 package com.cpsc310.treespotter.server;
 
-import com.cpsc310.treespotter.client.AdminTreeData;
-import com.cpsc310.treespotter.client.ClientTreeData;
+import com.cpsc310.treespotter.shared.ISharedTreeData;
+import com.cpsc310.treespotter.shared.TransmittedTreeData;
 
 /**
  * @author maple-quadtree
  *
  */
 public class TreeFactory {
-	static public ClientTreeData makeUserTreeData(TreeData tree_data) {
-		ClientTreeData user_data = new ClientTreeData();
+	static public ISharedTreeData makeUserTreeData(TreeData tree_data) {
+		TransmittedTreeData user_data = new TransmittedTreeData();
 		user_data.setTreeID(tree_data.getID().toString());
 		user_data.setCivicNumber(tree_data.getCivicNumber());
 		user_data.setNeighbourhood(tree_data.getNeighbourhood());
@@ -28,7 +28,7 @@ public class TreeFactory {
 		return user_data;
 	}
 
-	static public  TreeData makeTreeData(ClientTreeData tree_data, int id_number) {
+	static public TreeData makeTreeData(ISharedTreeData tree_data, int id_number) {
 		TreeData server_data = new TreeData("U", id_number);
 		server_data.setCivicNumber(tree_data.getCivicNumber());
 		server_data.setNeighbourhood(tree_data.getNeighbourhood());
@@ -91,22 +91,6 @@ public class TreeFactory {
 		throw new RuntimeException("can't get a boolean from " + b);
 	}
 
-	static public AdminTreeData makeAdminTreeData(TreeDataProvider tree_data) {
-		// TODO: differentiate this from user data
-		AdminTreeData admin_data = new AdminTreeData();
-		admin_data.setTreeID(tree_data.getID().toString());
-		admin_data.setCivicNumber(tree_data.getCivicNumber());
-		admin_data.setNeighbourhood(tree_data.getNeighbourhood());
-		admin_data.setStreet(tree_data.getStreet());
-		admin_data.setHeightRange(tree_data.getHeightRange());
-		admin_data.setDiameter(tree_data.getDiameter());
-		admin_data.setPlanted(tree_data.getPlanted());
-		admin_data.setCultivar(tree_data.getCultivar());
-		admin_data.setGenus(tree_data.getGenus());
-		admin_data.setSpecies(tree_data.getSpecies());
-		admin_data.setCommonName(tree_data.getCommonName());
-		return admin_data;
-	}
 	
 	static public TreeData makeTestTree(String id){
 		TreeData tree = new TreeData(id);
