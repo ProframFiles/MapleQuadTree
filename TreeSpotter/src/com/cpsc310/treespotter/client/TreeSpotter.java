@@ -192,7 +192,7 @@ public class TreeSpotter implements EntryPoint {
 			}
 		});
 		
-		//initFacebookAPI();
+		initFacebookAPI();
 		initHomePage();
 		initSearchOracles();
 		initButtons();
