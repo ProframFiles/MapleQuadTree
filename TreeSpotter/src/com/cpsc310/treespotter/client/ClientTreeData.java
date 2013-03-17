@@ -13,6 +13,8 @@ public class ClientTreeData implements ISharedTreeData {
 	private ISharedTreeData data;
 	private Marker mapMarker = null;
 	private LatLng ll = null;
+	private int index = -1;
+	private Marker onPageMarker = null;
 
 	public ClientTreeData(ISharedTreeData data){
 		this.data=data;
@@ -92,5 +94,13 @@ public class ClientTreeData implements ISharedTreeData {
 		this.mapMarker = mapMarker;
 	}
 
+	public Marker getOnPageMapMarker() {
+		return onPageMarker;
+	}
+
+	public void setOnPageMapMarker(Marker mapMarker) {
+		this.onPageMarker = mapMarker;
+	}
+	
 
 }
