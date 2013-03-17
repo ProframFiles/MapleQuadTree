@@ -797,6 +797,7 @@ public class TreeSpotter implements EntryPoint {
 				keywordOracle = (MultiWordSuggestOracle) basicSearch.getSuggestOracle();				
 				keywordOracle.addAll(result);
 				System.out.println("Finished initiating keyword search.");
+				System.out.println(result.toString());
 			}			
 		});
 		
