@@ -16,7 +16,7 @@ public class TreeFactory {
 		user_data.setTreeID(tree_data.getID().toString());
 		user_data.setCivicNumber(tree_data.getCivicNumber());
 		user_data.setNeighbourhood(tree_data.getNeighbourhood());
-		user_data.setStreet(tree_data.getStreet());
+		user_data.setStreet(tree_data.getStdStreet());
 		user_data.setHeightRange(tree_data.getHeightRange());
 		user_data.setDiameter(tree_data.getDiameter());
 		user_data.setPlanted(tree_data.getPlanted());
@@ -33,6 +33,7 @@ public class TreeFactory {
 		server_data.setCivicNumber(tree_data.getCivicNumber());
 		server_data.setNeighbourhood(tree_data.getNeighbourhood());
 		server_data.setStreet(tree_data.getStreet());
+		server_data.setStdStreet(tree_data.getStreet());
 		server_data.setHeightRange(tree_data.getHeightRange());
 		server_data.setDiameter(tree_data.getDiameter());
 		server_data.setPlanted(tree_data.getPlanted());

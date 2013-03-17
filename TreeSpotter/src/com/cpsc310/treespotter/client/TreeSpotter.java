@@ -10,6 +10,7 @@ import java.util.Set;
 import com.cpsc310.treespotter.shared.ISharedTreeData;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.MetaElement;
@@ -140,6 +141,29 @@ public class TreeSpotter implements EntryPoint {
 	 */
 	public void onModuleLoad() {
 
+			GWT.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+				@Override
+				public void onUncaughtException(Throwable e) {
+						
+						StringBuilder sb = new StringBuilder();
+						StackTraceElement[] ste_array = e.getStackTrace();
+						if(ste_array!=null){
+							for(StackTraceElement ste: e.getStackTrace()){
+								sb.append("\n" + ste.toString());
+								if(ste.getClassName().contains("Tree")){
+									break;
+								}
+							}
+						}
+						else{
+							sb.append("No stackTrace available");
+						}
+						System.out.print("Unexpected exception in treespotter:\n\"" + e.getMessage() + "\"\n" + sb.toString() + "\n");
+						Window.alert("Unexpected exception in treespotter:\n\t\"" + e.getMessage() + "\"\n" + sb.toString());
+				}
+			});
+			
+		
 		/*
 		 * to see specific tree info page, use GET parameters eg.
 		 * treespotter.appspot.com/viewTree.html?id=xxx uncomment the following
@@ -168,7 +192,7 @@ public class TreeSpotter implements EntryPoint {
 			}
 		});
 		
-		initFacebookAPI();
+		//initFacebookAPI();
 		initHomePage();
 		initSearchOracles();
 		initButtons();
@@ -790,7 +814,10 @@ public class TreeSpotter implements EntryPoint {
 		treeDataService.getSearchSuggestions(SearchFieldID.KEYWORD, "", new AsyncCallback<ArrayList<String>>() {
 			@Override
 			public void onFailure(Throwable caught) {
-				handleError(caught);			
+				System.out.println("Failure initiating keyword search.");
+				System.out.println(caught.toString());
+				handleError(caught);
+				initAdressOracle();
 			}
 			@Override
 			public void onSuccess(ArrayList<String> result) {
@@ -798,71 +825,87 @@ public class TreeSpotter implements EntryPoint {
 				keywordOracle.addAll(result);
 				System.out.println("Finished initiating keyword search.");
 				System.out.println(result.toString());
+				initAdressOracle();
 			}			
 		});
-		
+	}
+	private void initAdressOracle(){
 		// Address Search
 		treeDataService.getSearchSuggestions(SearchFieldID.ADDRESS, "", new AsyncCallback<ArrayList<String>>() {
 			@Override
 			public void onFailure(Throwable caught) {
-				handleError(caught);			
+				handleError(caught);
+				initCommonNameOracle();
 			}
 			@Override
 			public void onSuccess(ArrayList<String> result) {
 				addressOracle = (MultiWordSuggestOracle) advancedSearchMap.get(LOCATION).getSuggestOracle();				
 				addressOracle.addAll(result);
+				initCommonNameOracle();
 			}	
 		});
-		
+	}
+	private void initCommonNameOracle(){
 		// Common Name Search
 		treeDataService.getSearchSuggestions(SearchFieldID.COMMON, "", new AsyncCallback<ArrayList<String>>() {
 			@Override
 			public void onFailure(Throwable caught) {
-				handleError(caught);			
+				handleError(caught);
+				initGenusOracle();
 			}
 			@Override
 			public void onSuccess(ArrayList<String> result) {
 				commonOracle = (MultiWordSuggestOracle) advancedSearchMap.get(COMMON).getSuggestOracle();				
 				commonOracle.addAll(result);
+				initGenusOracle();
 			}	
 		});
-		
+	}
+	private void initGenusOracle(){
 		// Genus Search
 		treeDataService.getSearchSuggestions(SearchFieldID.GENUS, "", new AsyncCallback<ArrayList<String>>() {
 			@Override
 			public void onFailure(Throwable caught) {
-				handleError(caught);			
+				handleError(caught);
+				initSpeciesOracle();
 			}
 			@Override
 			public void onSuccess(ArrayList<String> result) {
 				genusOracle = (MultiWordSuggestOracle) advancedSearchMap.get(GENUS).getSuggestOracle();				
 				genusOracle.addAll(result);
+				initSpeciesOracle();
 			}	
 		});
-		
+	}
+	private void initSpeciesOracle(){
 		// Species Search
 		treeDataService.getSearchSuggestions(SearchFieldID.SPECIES, "", new AsyncCallback<ArrayList<String>>() {
 			@Override
 			public void onFailure(Throwable caught) {
-				handleError(caught);			
+				handleError(caught);
+				initNeighbourhoodOracle();
 			}
 			@Override
 			public void onSuccess(ArrayList<String> result) {
 				speciesOracle = (MultiWordSuggestOracle) advancedSearchMap.get(SPECIES).getSuggestOracle();				
 				speciesOracle.addAll(result);
+				initNeighbourhoodOracle();
 			}	
 		});
-		
+	}
+	private void initNeighbourhoodOracle(){
 		// Neighbourhood Search
 		treeDataService.getSearchSuggestions(SearchFieldID.NEIGHBOUR, "", new AsyncCallback<ArrayList<String>>() {
 			@Override
 			public void onFailure(Throwable caught) {
-				handleError(caught);			
+				handleError(caught);
 			}
 			@Override
 			public void onSuccess(ArrayList<String> result) {
 				neighbourOracle = (MultiWordSuggestOracle) advancedSearchMap.get(NEIGHBOUR).getSuggestOracle();				
 				neighbourOracle.addAll(result);
+				System.out.println("Finished initiating neighbourhood search.");
+				System.out.println(result.toString());
 			}	
 		});
 	}

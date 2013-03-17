@@ -8,17 +8,12 @@ import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 
 public class StreetBlock implements LatLongProvider {
-
-	private Key blockID;
-	
 	
 	private int	blockStart;
 	
 
 	private int	blockEnd;
 	
-
-	private int	blockCenter; 
 
 	private String streetName;
 
@@ -30,17 +25,9 @@ public class StreetBlock implements LatLongProvider {
 		
 	}
 	
-	public StreetBlock(String placemarkID, String blockString, List<Double> coords){
-		String block_string = blockString.trim();
-		blockID = KeyFactory.createKey("StreetBlock",placemarkID + block_string);
-		parseAddress(block_string);
-		parseCoords(coords);
-		blockCenter = (blockStart+blockEnd)/2;
-	}
 	public StreetBlock(String blockString){
 		String block_string = blockString.trim();
 		parseAddress(block_string);	
-		blockCenter = (blockStart+blockEnd)/2;
 	}
 	public String getBlockStart(){
 		return Integer.toString(blockStart);
@@ -51,7 +38,6 @@ public class StreetBlock implements LatLongProvider {
 	public void setBlockRange(int low, int high){
 		blockEnd = high;
 		blockStart = low;
-		blockCenter = (blockStart+blockEnd)/2;
 	}
 	public int getAddressTop()
 	{
@@ -106,30 +92,5 @@ public class StreetBlock implements LatLongProvider {
 		//the name part
 		streetName = block_string.substring(block_name_split).trim();
 	}
-	private void parseCoords(List<Double> coords ){
-		//TODO (aleksy) make this fancier than a simple mean
-				if(coords.size() == 0 || coords.size()%3 != 0){
-					throw new RuntimeException("coordinate list must have 3n coordinates, n > 0");
-				}
-				
-				int index = 0;
-				double lat_sum = 0.0;
-				double long_sum = 0.0;
-				double divisor = 1.0;
-				for(double coord: coords){
-					if(index == 3){
-						index = 0;
-						divisor += 1.0;
-					}
-					if(index == 0){
-						long_sum += coord;
-					}
-					else if(index == 1){
-						lat_sum += coord;
-					}
-					index++;
-				}
-				latitude = lat_sum /= divisor;
-				longitude = long_sum /= divisor;
-	}
+	
 }
