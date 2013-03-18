@@ -107,7 +107,7 @@ public class TreeSpotter implements EntryPoint {
 	private final String SEARCH_MAP_SIZE = "600px";
 	protected Geocoder geo;
 	private static final int ZOOM_LVL = 15;
-	private MapWidget searchMap;
+	private TreeSearchMap searchMap;
 	private int listIndex;
 	private int listOffset;
 	private Icon icon;
@@ -189,12 +189,13 @@ public class TreeSpotter implements EntryPoint {
 				offPageIcon.setIconAnchor(Point.newInstance(32, 32));
 				icon.setIconAnchor(Point.newInstance(6, 20));
 				start = LatLng.newInstance(49.26102, -123.249339);
+				searchMap = new TreeSearchMap();
 			}
 		});
 		
 		initFacebookAPI();
 		initHomePage();
-		initSearchOracles();
+		//initSearchOracles();
 		initButtons();
 		initLoginLogout();
 		initAdminButton();
@@ -396,7 +397,7 @@ public class TreeSpotter implements EntryPoint {
 							if (result != null) {
 								treeList = new ArrayList<ClientTreeData>();
 								for (ISharedTreeData data : result) {
-									System.out.println(data.getCommonName());
+									//System.out.println(data.getCommonName());
 									treeList.add(new ClientTreeData(data));
 								}
 								displaySearchResults(treeList, SEARCH_PAGE_SIZE);
@@ -437,7 +438,12 @@ public class TreeSpotter implements EntryPoint {
 			int first_page_size = Math.min(rlist.size(), page_size-1);
 			FlexTable resultsTable = createSearchPage(0, rlist.subList(0, first_page_size));
 			searchResultsPanel.add(resultsTable, "1");
+			
 			content.add(searchMapPanel);
+			searchMapPanel.clear();
+			searchMapPanel.add(searchMap.getMap());
+			searchMapPanel.setStyleName("results-map");
+			searchMap.newSearchResults(rlist);
 			content.add(searchResultsPanel);
 			// set map points to the same set
 			SearchTabSelectionHandler handler = new SearchTabSelectionHandler(rlist);
@@ -457,17 +463,7 @@ public class TreeSpotter implements EntryPoint {
 		}
 		
 		public void onSelection(SelectionEvent<Integer> event) {
-			for(ClientTreeData tree: trees){
-				if(tree.getMapMarker() != null){
-					tree.getMapMarker().setVisible(true);
-				}
-			}
-			initSearchInfoMap(trees);
-			int start = event.getSelectedItem() * SEARCH_PAGE_SIZE;
-			int end = Math.min(trees.size(), start + SEARCH_PAGE_SIZE -1);
-			List<ClientTreeData> pageList = trees.subList(
-					start, end);
-			setPoints(pageList, start);
+			searchMap.onTabPageChanged(event.getSelectedItem());
 			if(!done_the_rest){
 				doTheRest();
 				done_the_rest=true;
@@ -478,7 +474,7 @@ public class TreeSpotter implements EntryPoint {
 				int end = Math.min(trees.size(), i + SEARCH_PAGE_SIZE-1);
 				FlexTable resultTable = createSearchPage(i, trees.subList(i, end));
 				searchResultsPanel.add(resultTable, Integer.toString((i / SEARCH_PAGE_SIZE) + 1));
-				System.out.println("Here: " + i);
+				System.out.println("Flex table result page: " + i);
 			}
 		}
 	}
@@ -1049,159 +1045,10 @@ public class TreeSpotter implements EntryPoint {
 		return row;
 	}
 
-	/**
-	 * Once search results have been made into markers, generate a map panned
-	 * and zoomed to contain all markers, then add it to SearchMapPanel
-	 */
-	private void initSearchInfoMap(ArrayList<ClientTreeData> trees) {
-		searchMapPanel.clear();
-		if(searchMap == null){
-			searchMap = new MapWidget();
-		}
-		else{
-			searchMap.clearOverlays();
-		}
-		
-		searchMap.setSize(SEARCH_MAP_SIZE, SEARCH_MAP_SIZE);
-		searchMap.setUIToDefault();
-		searchMapBound = LatLngBounds.newInstance();
-		
-		// set this as default, should be updated in loop
-		//searchMap.setCenter(start, ZOOM_LVL);
-		for(ClientTreeData tree: trees){
-			
-			//options.setIcon(offPageIcon);
-			LatLng  ll =tree.getLatLng();
-			//checking for NaN
-			if(ll.getLatitude()==ll.getLatitude() && ll.getLongitude() == ll.getLongitude()){
-				if(tree.getMapMarker() == null){
-					MarkerOptions options = MarkerOptions.newInstance();
-					options.setTitle(tree.getCommonName() +"\n"+ tree.getGenus() + " " + tree.getSpecies());
-					options.setIcon(offPageIcon);
-					tree.setMapMarker(new Marker(tree.getLatLng(), options));
-				}
-				updateSearchInfoMap(tree.getMapMarker());
-			}
-		}
-		//Marker marker = new Marker(LatLng.newInstance(), null);		
-		if(searchMapPanel.getWidgetIndex(searchMap) < 0){
-			searchMapPanel.add(searchMap);
-			searchMapPanel.setStyleName("results-map");
-		}
-		
-	}
+	
 
-	/**
-	 * 
-	 */
-	private void updateSearchInfoMap(Marker m) {
-		
-		searchMap.addOverlay(m);
-		searchMapBound.extend(m.getLatLng());
-		if (!searchMapBound.isEmpty()) {
-			// getBoundsZoomLevel returns ridiculously zoomed out values
-			int zoom = searchMap.getBoundsZoomLevel(searchMapBound);
-			//zoom = ZOOM_LVL < zoom ? ZOOM_LVL : zoom;
-			
-			searchMap.setCenter(searchMapBound.getCenter(), zoom);
-			System.out.println(searchMapBound);
-		}
 
-	}
-
-	/**
-	 * Parse search results and generate points to place markers on search
-	 * results map
-	 * 
-	 * @param list
-	 *            search results returned from server
-	 */
-	private void setPoints(List<ClientTreeData> list, int offset) {
-		treeResults = list;
-		listIndex = 0;
-		listOffset = offset;
-		for(ClientTreeData tree: list){
-			if(tree.getMapMarker() != null){
-				tree.getMapMarker().setVisible(false);
-			}
-		}
-		for (Marker marker: markers){
-			marker.setVisible(false);
-		}
-		markers.clear();
-		getNextPoint(listIndex);
-	}
-
-	/**
-	 * Helper method for setPoints. Makes an async call to geocode location
-	 * 
-	 * @param idx
-	 *            index of next ClientTreeData to process in search results list
-	 */
-	private void getNextPoint(int idx) {
-		if (idx >= treeResults.size()) {
-			return;
-		}
-
-		ClientTreeData t = treeResults.get(idx);
-		String loc = t.getLocation() + ", Vancouver, BC";
-		geo.getLatLng(loc, new LatLngCallback() {
-			public void onFailure() {
-				// skip to next marker
-				getNextPoint(++listIndex);
-			}
-
-			public void onSuccess(LatLng pt) {
-				addPoint(pt);
-			}
-		});
-	}
-
-	/**
-	 * Helper method for setPoints. Creates a Maker from a LatLng point and
-	 * calls getNextPoint
-	 * 
-	 * @param pt
-	 *            geocoded coordinates to place on map
-	 */
-	private void addPoint(LatLng pt) {
-		MarkerOptions options = MarkerOptions.newInstance();
-		options.setIcon(icon);
-		options.setTitle(Integer.toString(++listIndex + listOffset));
-		Marker mark = new Marker(pt, options);
-		markers.add(mark);
-		mark.addMarkerClickHandler(new MarkerClickHandler() {
-			public void onClick(MarkerClickEvent event) {
-				clickMarker(event.getSender());
-			}
-		});
-		updateSearchInfoMap(mark);
-		getNextPoint(listIndex);
-	}
-
-	/**
-	 * Display tree info window in map when marker is clicked
-	 * 
-	 * @param m
-	 *            marker for tree location in search results map
-	 */
-	private void clickMarker(Marker m) {
-		LatLng pt = m.getLatLng();
-		try {
-			int idx = Integer.parseInt(m.getTitle());
-			ClientTreeData t = treeResults.get((idx % SEARCH_PAGE_SIZE) - 1);
-			searchMap.getInfoWindow().open(
-					pt,
-					new InfoWindowContent("<p>" + idx + ". "
-							+ ParseUtils.capitalize(t.getCommonName(), false) + "<br/>"
-							+ ParseUtils.capitalize(t.getLocation(), false) + "<br/>"
-							+ pt.getLatitude() + ", " + pt.getLongitude()
-							+ "</p>"));
-		} catch (Exception e) {
-			handleError(e);
-		}
-	}
-
+	
 	/**
 	 * Adds a tooltip to the given object
 	 * @param obj Widget to hover over
