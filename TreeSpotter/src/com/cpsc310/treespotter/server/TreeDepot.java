@@ -294,11 +294,13 @@ public class TreeDepot {
 	public void putTree(TreeData tree){
 		for(TreesIndexedByString index: stringIndices){
 			String key = index.getKeyForTree(tree);
-			String bin = TreeToStringFactory.getBinner().treeToString(tree);
-			Ref<PersistentFile> ref = index.addTree(tree);
-			if(!key.equals(bin)){
-				AddSingleBinToKeywords(key, bin);
-				AddRefToKeywords(key, ref);
+			if(key != null){
+				String bin = TreeToStringFactory.getBinner().treeToString(tree);
+				Ref<PersistentFile> ref = index.addTree(tree);
+				if(!key.equals(bin)){
+					AddSingleBinToKeywords(key, bin);
+					AddRefToKeywords(key, ref);
+				}
 			}
 		}
 		saveTrees();

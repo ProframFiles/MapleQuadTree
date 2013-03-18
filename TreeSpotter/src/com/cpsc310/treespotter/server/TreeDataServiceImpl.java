@@ -147,6 +147,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		
 		try {
 			TreeRequest req = treeDepot().newRequest();
+			req.setResultsRange(0, query.getNumResults());
 			for(SearchParam sp: query){
 				LOG.info("Processing param\n\t" + sp.fieldID + " = \"" + sp.value + "\"");
 				if(sp.fieldID == SearchFieldID.SPECIES){
