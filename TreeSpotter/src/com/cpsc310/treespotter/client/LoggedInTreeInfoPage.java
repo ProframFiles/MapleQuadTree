@@ -1,14 +1,19 @@
 package com.cpsc310.treespotter.client;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
@@ -63,11 +68,13 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		shareLinks = new HorizontalPanel();
 		this.tree = tree;
 		
-		setGeocoder(parent.geo);
+		setTreeSpotter(parent);
 		
 		populateTreeInfoTable(treeInfoTable, tree);
 		setTreeInfoMap(infoMapPanel, tree);
 		setShareLinks(shareLinks, tree);
+		
+		// TODO display comments
 		
 		initWidget(uiBinder.createAndBindUi(this));
 	}
@@ -176,4 +183,40 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		treeInfoTable.setWidget(rowNum, 0, fld);
 		treeInfoTable.setWidget(rowNum, 1, new HTML(value));
 	}
+	
+	
+	// TODO: will comment ID be generated server side or client side?
+	// assuming server side for now, so will sort comments by date when returned?
+	private void addComment(String treeID, String comment, String user)
+		throws NotLoggedInException {
+		if (user == null) {
+			throw new NotLoggedInException();
+		}
+		Date now = new Date();
+		DateTimeFormat dateFormat = DateTimeFormat.getFormat(ParseUtils.DATE_FORMAT);
+		TreeComment comm = new TreeComment(treeID, user, dateFormat.format(now), comment);
+		getTreeSpotter().treeDataService.addTreeComment(treeID, comm, new AsyncCallback<ArrayList<TreeComment>>() {
+			public void onFailure(Throwable error) {
+				getTreeSpotter().handleError(error);
+			}
+			
+			public void onSuccess(ArrayList<TreeComment> comments) {
+				Collections.sort(comments);
+				displayComments(commentsPanel, comments);
+			}
+		});
+	}
+	
+	private void fetchComments(String treeID) {
+		getTreeSpotter().treeDataService.getTreeComments(treeID, new AsyncCallback<ArrayList<TreeComment>>() {
+			public void onFailure(Throwable error){
+				getTreeSpotter().handleError(error);
+			}
+			
+			public void onSuccess(ArrayList<TreeComment> comments) {
+				displayComments(commentsPanel, comments);
+			}
+		});
+	}
+	
 }

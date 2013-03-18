@@ -5,6 +5,8 @@ import com.google.gwt.maps.client.geom.LatLng;
 
 public class ParseUtils {
 	
+	public static final String DATE_FORMAT = "dd MMM yyyy";
+	
 	/**
 	 * Validates LatLng coordinates
 	 * 
@@ -97,7 +99,7 @@ public class ParseUtils {
 	public static String formatDate(String str) 
 		throws InvalidFieldException {
 		try {
-			DateTimeFormat dtf = DateTimeFormat.getFormat("dd MMM yyyy");
+			DateTimeFormat dtf = DateTimeFormat.getFormat(DATE_FORMAT);
 			str = dtf.format(dtf.parse(str));
 			return str;
 		} catch (Exception e) {

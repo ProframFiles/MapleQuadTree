@@ -1,6 +1,7 @@
 package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
@@ -9,6 +10,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
@@ -51,15 +53,18 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 		commentsPanel = new VerticalPanel();
 		shareLinks = new HorizontalPanel();
 		
-		setGeocoder(parent.geo);
+		setTreeSpotter(parent);
 		populateTreeInfoTable(treeInfoTable, tree);
 		setTreeInfoMap(infoMapPanel, tree);
 		setShareLinks(shareLinks, tree);
 		
 		ArrayList<TreeComment> list = new ArrayList<TreeComment>();
-		// TODO
-		list.add(new TreeComment(1234, "Tree Guy", "Mar 12", "This tree is my favourite."));
-		list.add(new TreeComment(1234, "Tree Guy #2", "Mar 12", "Me too!"));
+		// TODO replace with fetchComments() when server side complete
+		// fetchComments(tree.getID());
+		list.add(new TreeComment(tree.getID(), "Troll", "12 Apr 2013", "This tree is ugly"));
+		list.add(new TreeComment(tree.getID(), "Tree Guy", "12 Mar 2013", "This tree is my favourite."));
+		list.add(new TreeComment(tree.getID(), "Tree Guy #2", "14 Mar 2013", "Me too!"));
+		Collections.sort(list);	// debug testing comments sorting
 		displayComments(commentsPanel, list);
 		initWidget(uiBinder.createAndBindUi(this));
 	}
@@ -129,4 +134,17 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 		img.addMouseOverHandler(tip);
 		img.addMouseOutHandler(tip);
 	 }
+	 
+		
+	private void fetchComments(String treeID) {
+		getTreeSpotter().treeDataService.getTreeComments(treeID, new AsyncCallback<ArrayList<TreeComment>>() {
+			public void onFailure(Throwable error){
+				getTreeSpotter().handleError(error);
+			}
+			
+			public void onSuccess(ArrayList<TreeComment> comments) {
+				displayComments(commentsPanel, comments);
+			}
+		});
+	}
 }

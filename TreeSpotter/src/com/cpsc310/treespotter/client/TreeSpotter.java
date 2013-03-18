@@ -120,7 +120,8 @@ public class TreeSpotter implements EntryPoint {
 	private LatLngBounds searchMapBound;
 	
 	private ClientTreeData displayTree;
-	
+	private TreeInfoPage treePage; 
+
 	// for adding tree
 	private Address geoAddr;
 	private ClientTreeData addTree;
@@ -574,7 +575,6 @@ public class TreeSpotter implements EntryPoint {
 	 *            ClientTreeData to display details of
 	 */
 	protected void displayTreeInfoPage(ClientTreeData t) {		
-		TreeInfoPage treePage; 
 		
 		// get the regular tree info page if not logged in
 		boolean isLoggedIn = loginInfo != null && loginInfo.isLoggedIn();
@@ -1126,4 +1126,5 @@ public class TreeSpotter implements EntryPoint {
 			}	
 		}
 	}
+	
 }

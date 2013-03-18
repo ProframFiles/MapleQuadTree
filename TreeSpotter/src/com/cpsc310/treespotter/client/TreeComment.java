@@ -5,14 +5,17 @@ package com.cpsc310.treespotter.client;
 
 import java.io.Serializable;
 
+import com.google.gwt.i18n.client.DateTimeFormat;
+
 /**
  * @author maple-quadtree
  *
  */
-public class TreeComment implements Serializable {
+public class TreeComment implements Serializable, Comparable<TreeComment> {
 	private static final long serialVersionUID = 1L;
 	
 	private long commentID;
+	private String treeID;	// hopefully not redundant; set on client side
 	private String user;
 	private String date;
 	private String commentText;
@@ -21,8 +24,8 @@ public class TreeComment implements Serializable {
 		
 	}
 	
-	public TreeComment(long id, String user, String date, String text){
-		commentID = id;
+	public TreeComment(String tid, String user, String date, String text){
+		treeID = tid;
 		this.user = user;
 		this.date = date;
 		commentText = text;
@@ -34,6 +37,14 @@ public class TreeComment implements Serializable {
 
 	public void setCommentID(long commentID) {
 		this.commentID = commentID;
+	}
+	
+	public String getTreeID() {
+		return treeID;
+	}
+
+	public void setTreeID(String treeID) {
+		this.treeID = treeID;
 	}
 
 	public String getUser() {
@@ -60,5 +71,10 @@ public class TreeComment implements Serializable {
 		this.commentText = commentText;
 	}
 	
+	@Override
+	public int compareTo(TreeComment c) {
+		DateTimeFormat format = DateTimeFormat.getFormat(ParseUtils.DATE_FORMAT);
+		return format.parse(date).compareTo(format.parse(c.getDate()));
+	}
 	
 }

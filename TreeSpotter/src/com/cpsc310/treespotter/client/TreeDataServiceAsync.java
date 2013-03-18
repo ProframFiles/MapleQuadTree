@@ -17,7 +17,9 @@ public interface TreeDataServiceAsync {
   
   public void getTreeData(String id, String userType, AsyncCallback<ISharedTreeData> async);
   
-  public void addTreeComment(String treeID, TreeComment comment,  AsyncCallback<ISharedTreeData> async);
+  public void addTreeComment(String treeID, TreeComment comment,  AsyncCallback<ArrayList<TreeComment>> async);
+  
+  public void getTreeComments(String treeID, AsyncCallback<ArrayList<TreeComment>> async);
   
   public void searchTreeData(SearchQueryInterface query, AsyncCallback<ArrayList<ISharedTreeData>> async);
   

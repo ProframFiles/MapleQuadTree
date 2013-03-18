@@ -15,6 +15,7 @@ import com.google.gwt.maps.client.geocode.LatLngCallback;
 import com.google.gwt.maps.client.geom.LatLng;
 import com.google.gwt.maps.client.overlay.Marker;
 import com.google.gwt.user.cellview.client.CellList;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -32,15 +33,18 @@ public abstract class TreeInfoPage extends Composite {
 	
 	private Label invalidLoc = new Label("Tree location could not be displayed");
 	
-	private Geocoder geo;
+	private TreeSpotter parent;
 	private VerticalPanel infoMapPanel;
 	private HorizontalPanel shareLinks;
 	private ClientTreeData displayTree;
 	
-	public void setGeocoder(Geocoder aGeo) {
-		this.geo = aGeo;
+	protected void setTreeSpotter(TreeSpotter p) {
+		parent = p;
 	}
 	
+	protected TreeSpotter getTreeSpotter() {
+		return parent;
+	}
 	
 	protected void populateTreeInfoTable(FlexTable treeInfoTable, ClientTreeData t) {
 		displayTree = t;
@@ -64,13 +68,13 @@ public abstract class TreeInfoPage extends Composite {
 	}
 
 	protected void displayComments(VerticalPanel panel, ArrayList<TreeComment> comments) {
+		panel.clear();
 		CommentCell cell = new CommentCell();
 		CellList<TreeComment> cellList = new CellList<TreeComment>(cell);
 		cellList.setRowData(comments);
 		panel.setStyleName("comments-panel");
 		panel.add(cellList);
 	}
-	
 	
 	protected abstract void createResultDataRow(String field, String value);
 
@@ -114,7 +118,7 @@ public abstract class TreeInfoPage extends Composite {
 		// just in case city is required in search
 		String loc = data.getLocation() + ", Vancouver, BC";
 		System.out.println("location: " + loc);
-		geo.getLatLng(loc, new LatLngCallback() {
+		parent.geo.getLatLng(loc, new LatLngCallback() {
 			public void onFailure() {
 				infoMapPanel.add(invalidLoc);
 			}

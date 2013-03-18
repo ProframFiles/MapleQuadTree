@@ -27,10 +27,10 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 
 public class TreeSpotterClient {
-	TransmittedTreeData addTree = null;
-	Address geoAddr = null;
-	TreeSpotter parent = null;
-	LinkedHashMap<Label, TextBox> addFormMap = null;
+	private TransmittedTreeData addTree = null;
+	private Address geoAddr = null;
+	private TreeSpotter parent = null;
+	private LinkedHashMap<Label, TextBox> addFormMap = null;
 	
 	public TreeSpotterClient(TreeSpotter parent) {
 		this.parent = parent;

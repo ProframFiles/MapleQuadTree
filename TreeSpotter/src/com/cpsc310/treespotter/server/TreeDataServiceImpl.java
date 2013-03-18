@@ -222,7 +222,13 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 
 	@Override
-	public ISharedTreeData addTreeComment(String treeID, TreeComment comment) {
+	public ArrayList<TreeComment> addTreeComment(String treeID, TreeComment comment) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	public ArrayList<TreeComment> getTreeComments(String treeID) {
 		// TODO Auto-generated method stub
 		return null;
 	}
