@@ -59,8 +59,12 @@ public class TreeGridStore implements TreeStringProvider{
 	}
 	
 	static private String latLongToString(LatLong ll){
-		int lat = Math.min(Math.max((int) (GRID_SIZE*((ll.getLatitude()-LAT_MIN)/LAT_RANGE)), 0), GRID_SIZE);
-		int lon = Math.min(Math.max((int) (GRID_SIZE*((ll.getLongitude()-LON_MIN)/LON_RANGE)), 0), GRID_SIZE);
+		int lat = 0;
+		int lon = 0;
+		if(ll != null ){
+			lat = Math.min(Math.max((int) (GRID_SIZE*((ll.getLatitude()-LAT_MIN)/LAT_RANGE)), 0), GRID_SIZE);
+			lon = Math.min(Math.max((int) (GRID_SIZE*((ll.getLongitude()-LON_MIN)/LON_RANGE)), 0), GRID_SIZE);
+		}
 		return String.format("%1$2d_%2$2d",lat, lon);
 	}
 

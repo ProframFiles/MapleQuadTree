@@ -28,6 +28,8 @@ public class TreeRequest {
 	ArrayList<TreeFilter> filters = new ArrayList<TreeFilter>(); 
 	boolean anyFilters = false;
 	boolean isSpatialSearch = false;
+	int resultsMax = 1000;
+	int resultsMin = 0;
 	
 	TreeDepot depot;
 	
@@ -54,7 +56,12 @@ public class TreeRequest {
 		else{
 			LOG.info("Doing a ref search with " + currentRequest.size() + " refs instead of " + requestBins.size() +" bins");
 			TreeDepot.loadAllRefs(currentRequest);
-			ret = TreeDepot.deSerializeAllRefs(currentRequest, 10000);
+			if(filters.size()<=1){
+				ret = TreeDepot.deSerializeAllRefs(currentRequest, resultsMax);
+			}
+			else{
+				ret = TreeDepot.deSerializeAllRefs(currentRequest, 10000);
+			}
 		}
 		LOG.info("retrieved " + ret.size() + " trees from the depot");
 		Set<TreeData> filtered = ret;
@@ -148,6 +155,11 @@ public class TreeRequest {
 		filters.add(new TreeMatcher(name.toUpperCase(), TreeToStringFactory.getTreeToCommonName()));
 		anyFilters = true;
 		LOG.info("filtered request to " + requestBins.size() + " bins");
+		return this;
+	}
+	public TreeRequest setResultsRange(int min, int max){
+		resultsMin = min;
+		resultsMax = max;
 		return this;
 	}
 	
