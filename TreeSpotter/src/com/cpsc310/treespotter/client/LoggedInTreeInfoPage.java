@@ -13,6 +13,7 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -21,6 +22,7 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RichTextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -46,14 +48,19 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 	VerticalPanel commentsPanel; 
 	
 	@UiField(provided=true)
+	VerticalPanel commentsEditor; 
+	
+	@UiField(provided=true)
 	HorizontalPanel shareLinks;
 	
 	@UiField
 	HTMLPanel mainPanel;
 	
 	@UiField
+	Anchor openEditorAnchor;
+	
+	@UiField
 	Button editButton; 
-
 	Button cancelButton; 
 	Button saveButton; 
 
@@ -66,15 +73,23 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		infoMapPanel = new VerticalPanel();
 		commentsPanel = new VerticalPanel();
 		shareLinks = new HorizontalPanel();
+		commentsEditor = new VerticalPanel();
 		this.tree = tree;
 		
 		setTreeSpotter(parent);
+		createCommentsEditor();
 		
 		populateTreeInfoTable(treeInfoTable, tree);
 		setTreeInfoMap(infoMapPanel, tree);
 		setShareLinks(shareLinks, tree);
 		
 		// TODO display comments
+		ArrayList<TreeComment> list = new ArrayList<TreeComment>();
+		// TODO
+		list.add(new TreeComment(tree.getID(), "Tree Guy", "Mar 12", "This tree is my favourite."));
+		list.add(new TreeComment(tree.getID(), "Tree Guy #2", "Mar 12", "Me too!"));
+		displayComments(commentsPanel, list);
+		setTreeSpotter(parent);
 		
 		initWidget(uiBinder.createAndBindUi(this));
 	}
@@ -85,6 +100,11 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		createEditForm();
 		addSaveButton();
 		addCancelButton();
+	}
+	
+	@UiHandler("openEditorAnchor")
+	void handleClickEditor(ClickEvent e) {
+		commentsEditor.setVisible(!commentsEditor.isVisible());
 	}
 	
 	private void createEditForm() {
@@ -104,6 +124,26 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		createEditRow(TreeSpotter.NEIGHBOUR, neighbour);
 		createEditRow(TreeSpotter.PLANTED, tree.getPlanted());
 		createEditRow(TreeSpotter.HEIGHT, intToHeightRange(tree.getHeightRange()));
+	}
+	
+	private void createCommentsEditor() {
+		final RichTextArea textarea = new RichTextArea();
+		commentsEditor.setStyleName("comment-editor");
+		RichTextToolbar toolbar = new RichTextToolbar(textarea);
+		Button postCommentBtn = new Button("Submit"); 
+		postCommentBtn.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				System.out.println(textarea.getText());			
+			}
+			
+		});
+		
+		commentsEditor.setVisible(false);
+		commentsEditor.add(toolbar);
+		commentsEditor.add(textarea);
+		commentsEditor.add(postCommentBtn);
 	}
 	
 	private void createEditRow(String field, String value) {

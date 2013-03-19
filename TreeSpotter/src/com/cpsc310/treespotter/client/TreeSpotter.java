@@ -265,8 +265,7 @@ public class TreeSpotter implements EntryPoint {
 		/* set up basic search elements */
 		HorizontalPanel searchPanel = new HorizontalPanel();
 		speciesOracle = new MultiWordSuggestOracle();
-		// TODO: replace with basic oracle later
-		final SuggestBox searchInput = new SuggestBox(speciesOracle);
+		final SuggestBox searchInput = new SuggestBox();
 		Button searchBtn = new Button("Find my tree!");
 		searchInput.setStyleName("main-search");
 		searchBtn.setStyleName("main-search");

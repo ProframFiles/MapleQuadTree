@@ -1,15 +1,34 @@
 <ui:UiBinder
    xmlns:gwt="urn:import:com.google.gwt.user.client.ui"
+   xmlns:my="urn:ui:com.cpsc310.treespotter.client"
    xmlns:ui="urn:ui:com.google.gwt.uibinder">
+   
+    <ui:style>
+		.anchor {
+			margin: 20px 50px;
+			font-size: 13.5px;
+			color: darkblue;
+		}
 
- <ui:style src="TreeInfoPage.css" />
+		.anchor:hover {
+			color: orangered;
+			text-decoration: none;      
+		}
+
+		.editor {
+			margin: 20px 50px;
+		}
+
+    </ui:style>
 
   <gwt:HTMLPanel ui:field="mainPanel"> 
     <gwt:VerticalPanel ui:field="infoMapPanel"></gwt:VerticalPanel>
     <gwt:FlexTable ui:field="treeInfoTable"/>
 	<gwt:Button ui:field="editButton"> Edit Details </gwt:Button>
-	<gwt:VerticalPanel ui:field="commentsPanel"></gwt:VerticalPanel>
 	<gwt:HorizontalPanel ui:field="shareLinks"></gwt:HorizontalPanel>
+	<gwt:VerticalPanel ui:field="commentsPanel"></gwt:VerticalPanel>
+	<gwt:Anchor ui:field="openEditorAnchor" styleName="{style.anchor}">Add Comment</gwt:Anchor>
+	<gwt:VerticalPanel ui:field="commentsEditor" styleName="{style.editor}"></gwt:VerticalPanel>
   </gwt:HTMLPanel>
 
 </ui:UiBinder>

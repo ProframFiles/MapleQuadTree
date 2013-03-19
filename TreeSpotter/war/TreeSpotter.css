@@ -231,6 +231,13 @@ a.main-search:hover {
 	opacity: 0.4;
 }
 
+.gwt-RichTextArea {
+	width: 800px;
+	border: thin solid grey;
+	margin-top: 10px;	
+}
+
+
 /* ADD TREE POPUP */
 
 .add-popup {
