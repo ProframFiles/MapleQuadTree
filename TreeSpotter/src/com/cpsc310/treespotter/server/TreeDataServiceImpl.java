@@ -1,6 +1,7 @@
 package com.cpsc310.treespotter.server;
 import static com.cpsc310.treespotter.server.OfyService.ofy;
 import static com.cpsc310.treespotter.server.TreeDepot.treeDepot;
+import static com.cpsc310.treespotter.server.CommentDepot.commentDepot;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -224,14 +225,12 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public ArrayList<TreeComment> addTreeComment(String treeID, TreeComment comment) {
-		// TODO Auto-generated method stub
-		return null;
+		return commentDepot().putComment(treeID, comment);
 	}
 	
 	@Override
 	public ArrayList<TreeComment> getTreeComments(String treeID) {
-		// TODO Auto-generated method stub
-		return null;
+		return commentDepot().getComments(treeID);
 	}
 
 	@Override

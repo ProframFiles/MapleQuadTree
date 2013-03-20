@@ -17,6 +17,8 @@ public class OfyService {
 		factory().register(UserTreeUpdateStamp.class);
 		factory().register(TreesIndexedByString.class);
 		factory().register(ByteArrayEntity.class);
+		factory().register(TreeCommentList.class);
+		factory().register(CommentDepot.class);
 		factory().register(TreeDepot.class);
 		factory().register(Job.class);
 		factory().register(DataUpdateJob.class);
