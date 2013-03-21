@@ -30,6 +30,8 @@ public abstract class TreeInfoPage extends Composite {
 	
 	private final String INFO_MAP_SIZE = "500px";
 	private static final int ZOOM_LVL = 15;
+	protected final int INFO_TAB = 0;
+	protected final int PHOTO_TAB = 1;
 	
 	private Label invalidLoc = new Label("Tree location could not be displayed");
 	

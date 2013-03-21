@@ -13,13 +13,12 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RichTextArea;
@@ -54,12 +53,14 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 	HorizontalPanel shareLinks;
 	
 	@UiField
-	HTMLPanel mainPanel;
+	HTMLPanel infoPanel;
 	
 	@UiField
 	Anchor openEditorAnchor;
 	
-	@UiField
+	@UiField(provided=true)
+	HorizontalPanel editButtonsBar;
+	
 	Button editButton; 
 	Button cancelButton; 
 	Button saveButton; 
@@ -74,6 +75,7 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		commentsPanel = new VerticalPanel();
 		shareLinks = new HorizontalPanel();
 		commentsEditor = new VerticalPanel();
+		editButtonsBar = new HorizontalPanel();
 		this.tree = tree;
 		
 		setTreeSpotter(parent);
@@ -83,6 +85,10 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		setTreeInfoMap(infoMapPanel, tree);
 		setShareLinks(shareLinks, tree);
 		
+		editButton = new Button("Edit Details");
+		editButton.addClickHandler(editClickHandler());
+		editButtonsBar.add(editButton);
+		
 		// TODO display comments
 		ArrayList<TreeComment> list = new ArrayList<TreeComment>();
 		// TODO
@@ -90,16 +96,21 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		list.add(new TreeComment(tree.getID(), "Tree Guy #2", "Mar 12", "Me too!"));
 		displayComments(commentsPanel, list);
 		setTreeSpotter(parent);
-		
+				
 		initWidget(uiBinder.createAndBindUi(this));
 	}
 	
 	
-	@UiHandler("editButton")
-	void handleClick(ClickEvent e) {
-		createEditForm();
-		addSaveButton();
-		addCancelButton();
+	private ClickHandler editClickHandler() {
+		return new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				createEditForm();
+				addSaveButton();
+				addCancelButton();
+			}
+		};
 	}
 	
 	@UiHandler("openEditorAnchor")
@@ -170,14 +181,14 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 			@Override
 			public void onClick(ClickEvent event) {
 				treeInfoTable.removeAllRows();
-				mainPanel.remove(cancelButton);
-				mainPanel.remove(saveButton);
-				mainPanel.add(editButton);
+				editButtonsBar.remove(cancelButton);
+				editButtonsBar.remove(saveButton);
+				editButtonsBar.add(editButton);
 				populateTreeInfoTable(treeInfoTable, tree);
 			}		
 		});
 		
-		mainPanel.add(cancelButton);
+		editButtonsBar.add(cancelButton);
 	}
 	
 	private void addSaveButton() {
@@ -192,14 +203,14 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 				
 				// TODO: send data over, then show the new data on callback
 				populateTreeInfoTable(treeInfoTable, tree);
-				mainPanel.remove(saveButton);
-				mainPanel.remove(cancelButton);
-				mainPanel.add(editButton);
+				editButtonsBar.remove(saveButton);
+				editButtonsBar.remove(cancelButton);
+				editButtonsBar.add(editButton);
 			}
 		});
 		
-		mainPanel.remove(editButton);
-		mainPanel.add(saveButton);		
+		editButtonsBar.remove(editButton);
+		editButtonsBar.add(saveButton);		
 	}
 	
 	/**

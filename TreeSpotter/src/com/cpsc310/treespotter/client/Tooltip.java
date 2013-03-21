@@ -1,5 +1,7 @@
 package com.cpsc310.treespotter.client;
 
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
@@ -11,17 +13,18 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class Tooltip extends Composite implements MouseOverHandler, MouseOutHandler, MouseMoveHandler {
+public class Tooltip extends Composite implements MouseOverHandler, MouseOutHandler, MouseDownHandler {
 	PopupPanel panel;
+	Widget obj;
 	String text;
 	int left;
 	int top;
 	
-	public Tooltip(Widget obj, String txt, int aleft, int atop) {
+	public Tooltip(Widget aobj, String txt, int aleft, int atop) {
 		left = aleft;
 		top = atop;
+		obj = aobj;
 		createTooltip(txt);
-		obj.addHandler(this, MouseOverEvent.getType());
 	}
 	
 	private void createTooltip(String txt) {
@@ -43,11 +46,7 @@ public class Tooltip extends Composite implements MouseOverHandler, MouseOutHand
 	public void onMouseOut(MouseOutEvent event) {
 		panel.hide();
 	}
-
-	@Override
-	public void onMouseMove(MouseMoveEvent event) {
-		panel.show();		
-	}
+	
 	
 	public void setText(String newText) {
 		text = newText;
@@ -55,5 +54,12 @@ public class Tooltip extends Composite implements MouseOverHandler, MouseOutHand
 		lbl.setWordWrap(true);		
 		panel.add(lbl);
 	}
+
+	@Override
+	// added to make sure tooltip closes if a dialog is open
+	public void onMouseDown(MouseDownEvent event) {
+		panel.hide();
+	}	
+
 	
 }
