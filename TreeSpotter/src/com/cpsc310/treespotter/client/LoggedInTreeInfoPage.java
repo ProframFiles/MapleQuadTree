@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -89,13 +88,8 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		editButton.addClickHandler(editClickHandler());
 		editButtonsBar.add(editButton);
 		
-		// TODO display comments
-		ArrayList<TreeComment> list = new ArrayList<TreeComment>();
-		// TODO
-		list.add(new TreeComment(tree.getID(), "Tree Guy", "Mar 12", "This tree is my favourite."));
-		list.add(new TreeComment(tree.getID(), "Tree Guy #2", "Mar 12", "Me too!"));
-		displayComments(commentsPanel, list);
 		setTreeSpotter(parent);
+		fetchComments(tree.getID());
 				
 		initWidget(uiBinder.createAndBindUi(this));
 	}
@@ -146,7 +140,12 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				System.out.println(textarea.getText());			
+				System.out.println(textarea.getText());		
+				try {
+					addComment(tree.getID(), textarea.getText(), getTreeSpotter().loggedInUser());
+				} catch (Exception e) {
+					getTreeSpotter().handleError(e);
+				}
 			}
 			
 		});
@@ -244,8 +243,7 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 			throw new NotLoggedInException();
 		}
 		Date now = new Date();
-		DateTimeFormat dateFormat = DateTimeFormat.getFormat(ParseUtils.DATE_FORMAT);
-		TreeComment comm = new TreeComment(treeID, user, dateFormat.format(now), comment);
+		TreeComment comm = new TreeComment(treeID, user, now.toString(), comment);
 		getTreeSpotter().treeDataService.addTreeComment(treeID, comm, new AsyncCallback<ArrayList<TreeComment>>() {
 			public void onFailure(Throwable error) {
 				getTreeSpotter().handleError(error);

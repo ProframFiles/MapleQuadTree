@@ -245,6 +245,13 @@ public class TreeSpotter implements EntryPoint {
 			Window.Location.replace(loginInfo.getLogoutUrl());
 		}
 	}
+	
+	public String loggedInUser() {
+		if (loginInfo != null && loginInfo.isLoggedIn())
+			return loginInfo.getNickname();
+		else
+			return null;
+	}
 
 	private native String initFacebookAPI()
 	/*-{

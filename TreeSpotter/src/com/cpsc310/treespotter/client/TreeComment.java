@@ -14,6 +14,8 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 public class TreeComment implements Serializable, Comparable<TreeComment> {
 	private static final long serialVersionUID = 1L;
 	
+	public static final String DATE_FORMAT = "EEE MMM dd HH:mm:ss ZZZZ yyyy";
+	
 	private long commentID;
 	private String treeID;	// hopefully not redundant; set on client side
 	private String user;
@@ -73,8 +75,14 @@ public class TreeComment implements Serializable, Comparable<TreeComment> {
 	
 	@Override
 	public int compareTo(TreeComment c) {
-		DateTimeFormat format = DateTimeFormat.getFormat(ParseUtils.DATE_FORMAT);
-		return format.parse(date).compareTo(format.parse(c.getDate()));
+		DateTimeFormat df = DateTimeFormat.getFormat(DATE_FORMAT);
+		int comp = 0;
+		try {
+			comp = df.parse(date).compareTo(df.parse(c.getDate()));
+		} catch (Exception e) {
+			// TODO what to do with error?
+		}
+		return comp;
 	}
 	
 }
