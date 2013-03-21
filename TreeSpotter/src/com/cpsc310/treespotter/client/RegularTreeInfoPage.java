@@ -5,17 +5,25 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
+import javax.swing.JFrame;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -42,6 +50,7 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 	// HashMap of the flags and their flag status
 	// true if flagged as inaccurate
 	LinkedHashMap<String, Boolean> flags = new LinkedHashMap<String, Boolean>();
+	LinkedHashMap<String, String> flagReasons = new LinkedHashMap<String, String>();
 	LinkedHashMap<String, Image> flagImages = new LinkedHashMap<String, Image>();
 	
 	interface MyUiBinder extends UiBinder<Widget, RegularTreeInfoPage> {}
@@ -108,13 +117,11 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 				
 				if (newState) {
 					flagImages.get(field).setStyleName("flagged");
+					createFlagPopup(field);
 				} else {
 					flagImages.get(field).setStyleName("unflagged");
+					flagReasons.remove(field);
 				}
-				
-//				for (String flag: flags.keySet()) {
-//					System.out.println(flag + ": " + flags.get(flag));
-//				}		
 			}			 
 		 };
 	 }
@@ -133,6 +140,7 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 		
 		img.addMouseOverHandler(tip);
 		img.addMouseOutHandler(tip);
+		img.addMouseDownHandler(tip);
 	 }
 	 
 		
@@ -146,5 +154,49 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 				displayComments(commentsPanel, comments);
 			}
 		});
+	}
+	
+	// TODO: not sure how we want to send it over, hash map for now
+	private void createFlagPopup(final String field) {
+		final DialogBox pop = new DialogBox();
+		HTMLPanel panel = new HTMLPanel("");
+		final TextArea ta = new TextArea();
+		Button save = new Button("Save");
+		Button cancel = new Button("Cancel");
+		
+		// click handler for save button
+		save.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				if (ta.getText().length() != 0) {
+					System.out.println(ta.getText());
+					flagReasons.put(field, ta.getValue());
+					pop.hide();
+				}
+			}			
+		});
+		
+		// click handler for cancel button
+		cancel.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				pop.hide();				
+			}
+			
+		});
+		
+		// add style names
+		pop.setStyleName("flag-popup");
+		
+		// add elements to the panel
+		panel.add(new HTML("Reason:"));
+		panel.add(ta);
+		panel.add(save);
+		panel.add(cancel);
+		
+		// add the panel to the popup and show
+		pop.add(panel);
+		pop.center();
+		
 	}
 }

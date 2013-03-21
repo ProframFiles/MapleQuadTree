@@ -1,6 +1,5 @@
 <ui:UiBinder
    xmlns:gwt="urn:import:com.google.gwt.user.client.ui"
-   xmlns:my="urn:ui:com.cpsc310.treespotter.client"
    xmlns:ui="urn:ui:com.google.gwt.uibinder">
    
     <ui:style>
@@ -19,16 +18,51 @@
 			margin: 20px 50px;
 		}
 
+<!-- 		.tab-panel {
+			height: 100%;
+			width: 100%;
+			
+
+		} -->
+		
+		.tab {
+			margin: 10px 50px;
+		}
+
     </ui:style>
 
-  <gwt:HTMLPanel ui:field="mainPanel"> 
-    <gwt:VerticalPanel ui:field="infoMapPanel"></gwt:VerticalPanel>
-    <gwt:FlexTable ui:field="treeInfoTable"/>
-	<gwt:Button ui:field="editButton"> Edit Details </gwt:Button>
-	<gwt:HorizontalPanel ui:field="shareLinks"></gwt:HorizontalPanel>
-	<gwt:VerticalPanel ui:field="commentsPanel"></gwt:VerticalPanel>
-	<gwt:Anchor ui:field="openEditorAnchor" styleName="{style.anchor}">Add Comment</gwt:Anchor>
-	<gwt:VerticalPanel ui:field="commentsEditor" styleName="{style.editor}"></gwt:VerticalPanel>
-  </gwt:HTMLPanel>
+
+	<gwt:HTMLPanel ui:field="infoPanel">
+		<gwt:VerticalPanel ui:field="infoMapPanel"></gwt:VerticalPanel>
+		<gwt:FlexTable ui:field="treeInfoTable" />
+		<gwt:HorizontalPanel ui:field="editButtonsBar"></gwt:HorizontalPanel>
+		<gwt:HorizontalPanel ui:field="shareLinks"></gwt:HorizontalPanel>
+		<gwt:VerticalPanel ui:field="commentsPanel"></gwt:VerticalPanel>
+		<gwt:Anchor ui:field="openEditorAnchor" styleName="{style.anchor}">Add
+			Comment
+		</gwt:Anchor>
+		<gwt:VerticalPanel ui:field="commentsEditor"
+			styleName="{style.editor}"></gwt:VerticalPanel>
+	</gwt:HTMLPanel>
+
+	
+<!--     <gwt:TabPanel ui:field="tabPanel" styleName="{style.tab-panel}">
+        <gwt:Tab text="Details" styleName="{style.tab}">
+            <gwt:HTMLPanel ui:field="infoPanel">
+				<gwt:VerticalPanel ui:field="infoMapPanel"></gwt:VerticalPanel>
+				<gwt:FlexTable ui:field="treeInfoTable" />
+				<gwt:Button ui:field="editButton"> Edit Details </gwt:Button>
+				<gwt:HorizontalPanel ui:field="shareLinks"></gwt:HorizontalPanel>
+				<gwt:VerticalPanel ui:field="commentsPanel"></gwt:VerticalPanel>
+				<gwt:Anchor ui:field="openEditorAnchor" styleName="{style.anchor}">Add
+					Comment</gwt:Anchor>
+				<gwt:VerticalPanel ui:field="commentsEditor"
+					styleName="{style.editor}"></gwt:VerticalPanel>
+			</gwt:HTMLPanel>
+        </gwt:Tab>
+        <gwt:Tab text="Photo Gallery" styleName="{style.tab}">
+            <gwt:HTMLPanel ui:field="photoPanel"></gwt:HTMLPanel>
+        </gwt:Tab>
+    </gwt:TabPanel> -->
 
 </ui:UiBinder>
