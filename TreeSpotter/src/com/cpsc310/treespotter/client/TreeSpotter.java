@@ -105,7 +105,7 @@ public class TreeSpotter implements EntryPoint {
 	// variables for loading map view
 	private final VerticalPanel searchMapPanel = new VerticalPanel();
 	private final String SEARCH_MAP_SIZE = "600px";
-	protected Geocoder geo;
+	protected Geocoder geo = null;
 	private static final int ZOOM_LVL = 15;
 	private TreeSearchMap searchMap;
 	private int listIndex;
@@ -184,6 +184,7 @@ public class TreeSpotter implements EntryPoint {
 		// Load Google Maps API asynchronously
 		Maps.loadMapsApi("", "2", true, new Runnable() {
 			public void run() {
+				System.out.println("Google Maps API loaded");
 				geo = new Geocoder();
 				icon = Icon.newInstance(greenIconURL);
 				offPageIcon = Icon.newInstance("image/icon_blend.png");
@@ -191,6 +192,8 @@ public class TreeSpotter implements EntryPoint {
 				icon.setIconAnchor(Point.newInstance(6, 20));
 				start = LatLng.newInstance(49.26102, -123.249339);
 				searchMap = new TreeSearchMap();
+				
+				History.fireCurrentHistoryState();
 			}
 		});
 		
@@ -216,9 +219,10 @@ public class TreeSpotter implements EntryPoint {
 				// TODO: not working yet, need to check getTreeInfo() 
 				// Parse the history token 
 				try { 
-					if (!historyToken.isEmpty() && historyToken.substring(0, 4).equals("tree")) { 
+					if (!historyToken.isEmpty() && historyToken.substring(0, 4).equalsIgnoreCase("tree")) { 
 						String treeId = historyToken.substring(4); 
 						treeId = treeId.split("&", 2)[0];	// facebook redirects add &post
+						System.out.println("Attempt display treeID: " + treeId);
 						if (displayTree == null || !treeId.equals(displayTree.getID())) 
 							getTreeInfo(treeId, role);
 					} 
@@ -229,7 +233,9 @@ public class TreeSpotter implements EntryPoint {
 			} 
 		});
 		
-		History.fireCurrentHistoryState();
+		if (geo != null) { // Maps API loaded
+			History.fireCurrentHistoryState();
+		}
 	
 	}
 
@@ -543,25 +549,6 @@ public class TreeSpotter implements EntryPoint {
 					}
 
 					public void onSuccess(ISharedTreeData data) {
-						String baseURL = "http://kchen-cs310.appspot.com";
-						
-						NodeList<Element> tags = Document.get().getElementsByTagName("meta");
-						String content;
-						for (int i = 0; i < tags.getLength(); i++) {
-					        MetaElement metaTag = ((MetaElement) tags.getItem(i));
-					        if (metaTag.getName().equals("fb_url")) {
-					        	content = baseURL + "/TreeSpotter.html#tree" + data.getID();
-					        	metaTag.setContent(content);
-					        }
-					        else if (metaTag.getName().equals("fb_img")) {
-					        	content = baseURL + "/image/facebook.png";
-					        	metaTag.setContent(content);
-					        }
-					        else if (metaTag.getName().equals("fb_title")) {
-					        	content = "Vancouver TreeSpotter - " + data.getCommonName();
-					        	metaTag.setContent(content);
-					        }
-					    }
 						displayTreeInfoPage(new ClientTreeData(data));
 					}
 				});
@@ -574,6 +561,10 @@ public class TreeSpotter implements EntryPoint {
 	 *            ClientTreeData to display details of
 	 */
 	protected void displayTreeInfoPage(ClientTreeData t) {		
+		if (t == null || t.dataIsNull()) {
+			Window.alert("Tree not found for display");
+			return;
+		}
 		
 		// get the regular tree info page if not logged in
 		boolean isLoggedIn = loginInfo != null && loginInfo.isLoggedIn();
@@ -589,7 +580,7 @@ public class TreeSpotter implements EntryPoint {
 		displayTree = t;
 		
 		// TODO: enable history token when getTreeData implemented on server
-//		History.newItem("tree" + t.getID());
+		History.newItem("tree" + t.getID());
 		// triggers value changed
 	}
 

@@ -14,6 +14,7 @@ import com.google.gwt.maps.client.geocode.Geocoder;
 import com.google.gwt.maps.client.geocode.LatLngCallback;
 import com.google.gwt.maps.client.geom.LatLng;
 import com.google.gwt.maps.client.overlay.Marker;
+import com.google.gwt.maps.client.overlay.MarkerOptions;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -115,18 +116,12 @@ public abstract class TreeInfoPage extends Composite {
 			infoMapPanel.add(invalidLoc);
 			return;
 		}
-		// just in case city is required in search
-		String loc = data.getLocation() + ", Vancouver, BC";
-		System.out.println("location: " + loc);
-		parent.geo.getLatLng(loc, new LatLngCallback() {
-			public void onFailure() {
-				infoMapPanel.add(invalidLoc);
-			}
 
-			public void onSuccess(LatLng pt) {
-				setTreeInfoMap(pt);
-			}
-		});
+		LatLng  ll =data.getLatLng();
+		//checking for NaN
+		if(ll.getLatitude()==ll.getLatitude() && ll.getLongitude() == ll.getLongitude()){
+			setTreeInfoMap(ll);
+		}
 
 	}
 	
@@ -150,8 +145,7 @@ public abstract class TreeInfoPage extends Composite {
 
 	 protected void setShareLinks(HorizontalPanel shareLinks, ClientTreeData t) {
 		this.shareLinks = shareLinks;
-//		String baseURL = GWT.getHostPageBaseURL();
-		String baseURL = "http://kchen-cs310.appspot.com";
+		String baseURL = GWT.getHostPageBaseURL();
 		String token = "tree" + t.getID();
 		Button fbButton = new Button("Share on Facebook");
 		
@@ -159,8 +153,7 @@ public abstract class TreeInfoPage extends Composite {
 			
 			@Override
 			public void onClick(ClickEvent event) {
-//				String baseURL = GWT.getHostPageBaseURL();
-				String baseURL = "http://kchen-cs310.appspot.com";
+				String baseURL = GWT.getHostPageBaseURL();
 				String url = baseURL + "#tree" + displayTree.getID();
 				String name = "Vancouver Tree Spotter - " + 
 							ParseUtils.capitalize(displayTree.getCommonName(), false);
@@ -176,24 +169,6 @@ public abstract class TreeInfoPage extends Composite {
 
 		HTML facebook = new HTML("<div class=\"fb-like\" data-href=\"" + baseURL + "/TreeSpotter.html#" + token + 
 				"\" data-send=\"false\" data-layout=\"button_count\" data-width=\"80\" data-show-faces=\"false\"></div>");
-		
-		NodeList<Element> tags = Document.get().getElementsByTagName("meta");
-		String content;
-		for (int i = 0; i < tags.getLength(); i++) {
-	        MetaElement metaTag = ((MetaElement) tags.getItem(i));
-	        if (metaTag.getName().equals("fb_url")) {
-	        	content = baseURL + "/TreeSpotter.html#" + token;
-	        	metaTag.setContent(content);
-	        }
-	        else if (metaTag.getName().equals("fb_title")) {
-	        	content = "Vancouver TreeSpotter - " + ParseUtils.capitalize(t.getCommonName(), false);
-	        	metaTag.setContent(content);
-	        }
-	        else if (metaTag.getName().equals("fb_img")) {
-	        	content = baseURL + "/image/facebook.png";
-	        	metaTag.setContent(content);
-	        }
-	    }
 		
 		shareLinks.add(facebook);
 		shareLinks.add(fbButton);

@@ -102,5 +102,8 @@ public class ClientTreeData implements ISharedTreeData {
 		this.onPageMarker = mapMarker;
 	}
 	
+	public boolean dataIsNull() {
+		return (data == null);
+	}
 
 }
