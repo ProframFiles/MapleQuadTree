@@ -47,10 +47,12 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 	@UiField(provided=true)
 	HorizontalPanel shareLinks;
 
-	// HashMap of the flags and their flag status
+	// HashMap of the fields and their flag status
 	// true if flagged as inaccurate
 	LinkedHashMap<String, Boolean> flags = new LinkedHashMap<String, Boolean>();
+	// HashMap of fields and the reason for the flag
 	LinkedHashMap<String, String> flagReasons = new LinkedHashMap<String, String>();
+	// HashMap of flag and their images
 	LinkedHashMap<String, Image> flagImages = new LinkedHashMap<String, Image>();
 	
 	interface MyUiBinder extends UiBinder<Widget, RegularTreeInfoPage> {}
@@ -112,37 +114,16 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				boolean newState = !flags.get(field);
-				flags.put(field, newState);		
-				
-				if (newState) {
-					flagImages.get(field).setStyleName("flagged");
-					createFlagPopup(field);
+				if (flags.get(field)) {
+					// if already flagged, unflag
+					removeFlag(field);					
 				} else {
-					flagImages.get(field).setStyleName("unflagged");
-					flagReasons.remove(field);
+					// otherwise, open popup
+					createFlagPopup(field);
 				}
 			}			 
 		 };
-	 }
-	 
-	 public void addImageTooltips() {
-		 for (String flag: flagImages.keySet()) {
-			 addTooltip(flag, flagImages.get(flag));
-		 }
-	 }
-	 
-	 // note: called after init, need page to be added to TreeSpotter to get the proper coordinates
-	 private void addTooltip(String field, Image img) { 
-		Tooltip tip = new Tooltip(img, "Flag " + field + " as inaccurate.",
-				img.getAbsoluteLeft() + infoMapPanel.getOffsetWidth(), 
-				img.getAbsoluteTop() - 50);
-		
-		img.addMouseOverHandler(tip);
-		img.addMouseOutHandler(tip);
-		img.addMouseDownHandler(tip);
-	 }
-	 
+	 } 
 		
 	private void fetchComments(String treeID) {
 		getTreeSpotter().treeDataService.getTreeComments(treeID, new AsyncCallback<ArrayList<TreeComment>>() {
@@ -169,8 +150,12 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 			@Override
 			public void onClick(ClickEvent event) {
 				if (ta.getText().length() != 0) {
+					// flag the field
 					System.out.println(ta.getText());
-					flagReasons.put(field, ta.getValue());
+					setFlagged(field, ta.getText());
+					pop.hide();
+				} else {
+					// if nothing entered
 					pop.hide();
 				}
 			}			
@@ -199,4 +184,37 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 		pop.center();
 		
 	}
+	
+	// sets flag reason and image
+	private void setFlagged(String field, String reason) {
+		if (!reason.isEmpty()) {
+			flags.put(field, true);
+			flagReasons.put(field, reason);
+			flagImages.get(field).setStyleName("flagged");
+		}
+	}
+	
+	private void removeFlag(String field) {
+		flags.put(field, false);
+		flagReasons.remove(field);
+		flagImages.get(field).setStyleName("unflagged");
+	}
+	
+	 public void addImageTooltips() {
+		 for (String flag: flagImages.keySet()) {
+			 addTooltip(flag, flagImages.get(flag));
+		 }
+	 }
+	 
+	 // note: called after init, need page to be added to TreeSpotter to get the proper coordinates
+	 private void addTooltip(String field, Image img) { 
+		Tooltip tip = new Tooltip(img, "Flag " + field + " as inaccurate.",
+				img.getAbsoluteLeft(), 
+				img.getAbsoluteTop() - 50);
+		
+		img.addMouseOverHandler(tip);
+		img.addMouseOutHandler(tip);
+		img.addMouseDownHandler(tip);
+	 }
+	
 }
