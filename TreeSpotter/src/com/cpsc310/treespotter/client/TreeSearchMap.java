@@ -113,7 +113,7 @@ public class TreeSearchMap{
 			
 			LatLng  ll =tree.getLatLng();
 			//checking for NaN
-			if(ll.getLatitude()==ll.getLatitude() && ll.getLongitude() == ll.getLongitude()){
+			if(ll != null && ll.getLatitude()==ll.getLatitude() && ll.getLongitude() == ll.getLongitude()){
 				if(tree.getMapMarker() == null){
 					MarkerOptions options = MarkerOptions.newInstance();
 					options.setTitle(ParseUtils.capitalize(tree.getCommonName(), false) +
@@ -161,7 +161,7 @@ public class TreeSearchMap{
 			
 			LatLng  ll =tree.getLatLng();
 			//checking for NaN
-			if(ll.getLatitude()==ll.getLatitude() && ll.getLongitude() == ll.getLongitude()){
+			if(ll !=null && ll.getLatitude()==ll.getLatitude() && ll.getLongitude() == ll.getLongitude()){
 				setLatLng(ll);
 				this.setVisible(true);
 			}

@@ -80,7 +80,7 @@ public class ClientTreeData implements ISharedTreeData {
 	}
 
 	public LatLng getLatLng(){
-		if(ll == null){
+		if(ll == null && data.getLatLong() != null){
 			ll = LatLng.newInstance(data.getLatLong().getLatitude(),data.getLatLong().getLongitude());
 		}
 		return ll;

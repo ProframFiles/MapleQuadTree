@@ -95,6 +95,8 @@ public class TreesIndexedByString {
 		String bin = binner.treeToString(tree);
 		// System.out.println(tree.getID()+" " + key);
 		if(key != null && bin != null){
+			key = key.toUpperCase();
+			bin = bin.toUpperCase();
 			SortedSet<TreeData> tree_set = null;
 			Set<String> bin_set = null;
 			tree_set = treeMap.get(key);

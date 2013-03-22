@@ -9,7 +9,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,7 +28,6 @@ import com.cpsc310.treespotter.shared.Util;
 import com.googlecode.objectify.Ref;
 import com.googlecode.objectify.annotation.EntitySubclass;
 import com.googlecode.objectify.annotation.Ignore;
-import com.googlecode.objectify.annotation.Load;
 import com.googlecode.objectify.annotation.Unindex;
 import static com.cpsc310.treespotter.server.OfyService.ofy;
 

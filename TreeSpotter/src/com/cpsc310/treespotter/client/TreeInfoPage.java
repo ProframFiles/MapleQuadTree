@@ -121,7 +121,7 @@ public abstract class TreeInfoPage extends Composite {
 
 		LatLng  ll =data.getLatLng();
 		//checking for NaN
-		if(ll.getLatitude()==ll.getLatitude() && ll.getLongitude() == ll.getLongitude()){
+		if(ll != null && ll.getLatitude()==ll.getLatitude() && ll.getLongitude() == ll.getLongitude()){
 			setTreeInfoMap(ll);
 		}
 
