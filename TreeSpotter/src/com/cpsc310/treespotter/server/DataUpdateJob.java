@@ -26,16 +26,24 @@ import java.util.zip.ZipOutputStream;
 import com.cpsc310.treespotter.shared.FilteredCSVReader;
 import com.cpsc310.treespotter.shared.LatLong;
 import com.cpsc310.treespotter.shared.Util;
+import com.googlecode.objectify.Ref;
 import com.googlecode.objectify.annotation.EntitySubclass;
 import com.googlecode.objectify.annotation.Ignore;
+import com.googlecode.objectify.annotation.Load;
+import com.googlecode.objectify.annotation.Unindex;
+import static com.cpsc310.treespotter.server.OfyService.ofy;
 
 @EntitySubclass
 public class DataUpdateJob extends Job {
 	private static final Logger LOG = Logger.getLogger(DataUpdateJob.class.getName());
+	@Unindex private Ref<PersistentFile> treeDataRef;
 	@Ignore private ArrayList<TreeData> cachedTrees = null;
 	@Ignore ArrayList<SubTask> tasksToStart = new ArrayList<SubTask>();
 	@Ignore private boolean sorted = false;
 	@Ignore private boolean forceTasks = false;
+	@Ignore String treeFile = "http://www.ugrad.cs.ubc.ca/~q0b7/csv_street_trees.zip";
+	@Ignore boolean userTrees = false;
+	@Ignore int userTreeNumber;
 	
 	// this is here for objectify
 	@SuppressWarnings("unused")
@@ -53,6 +61,13 @@ public class DataUpdateJob extends Job {
 		super.setLogLevel(level);
 	}
 	
+	public void setBinaryTreeData(byte[] b){
+		PersistentFile treeData = new PersistentFile(getJobID());
+		treeData.save(new ByteArrayInputStream(b));
+		treeDataRef = Ref.create(treeData);
+		saveJobState(this);
+	}
+	
 	@Override
 	public void setOptions(String option_name, String option_value) {
 		if(option_name!=null){
@@ -64,6 +79,14 @@ public class DataUpdateJob extends Job {
 				LOG.info("\n\tForcing task \""+ option_value + "\"");
 				tasksToStart.add(new SubTask(option_value));
 				forceTasks = true;
+			}
+			else if(option_name.equalsIgnoreCase("tree file")){
+				treeFile = option_value;
+			}
+			else if(option_name.equalsIgnoreCase("user trees")){
+				forceTasks = true;
+				userTrees = true;
+				userTreeNumber = Integer.parseInt(option_value);
 			}
 			else{
 				LOG.warning("Invalid option: \"" + option_name+ "\", ignoring");
@@ -198,7 +221,17 @@ public class DataUpdateJob extends Job {
 		LatLong min_ll = new LatLong(300, 300);
 		while((line_string = reader.readLine()) != null ){
 			String[] split_line = line_string.split(",");
-			TreeData new_tree = TreeFactory.makeTreeData2(Arrays.copyOf(split_line, split_line.length));
+			TreeData new_tree;
+			if(userTrees){
+				String[] array = Arrays.copyOf(split_line, split_line.length);
+				array[0] = Integer.toString(userTreeNumber);
+				new_tree = TreeFactory.makeTreeData2("U", array);
+				userTreeNumber ++;
+			}
+			else{
+				new_tree = TreeFactory.makeTreeData2("V",  Arrays.copyOf(split_line, split_line.length));
+			}
+			
 			String street_name = new_tree.getStdStreet();
 			if(!streets.containsKey(street_name)){
 				if((street_name.startsWith("N ") && streets.containsKey(street_name.substring(2,street_name.length())+" NORTH"))){
@@ -374,13 +407,26 @@ public class DataUpdateJob extends Job {
 	protected ArrayList<String> getFileUrls() {
 		ArrayList<String> ret = new ArrayList<String>();
 		ret.add("http://www.ugrad.cs.ubc.ca/~q0b7/ICIS_AddressBC_csv_all.zip");
-		ret.add("http://www.ugrad.cs.ubc.ca/~q0b7/csv_street_trees.zip");
+		if(!userTrees){
+			ret.add(treeFile);
+		}
+		
 		return ret;
 	}
 
 	@Override
 	public String getJobID() {
 		return this.getClass().toString();
+	}
+	
+	@Override
+	protected ArrayList< byte[]> fetchFileData(ArrayList<String> urls){
+		ArrayList<byte[]> ret = super.fetchFileData(urls);
+		if(ret.size() <2 && treeDataRef != null){
+			ofy().load().ref(treeDataRef);
+			ret.add(treeDataRef.safeGet().load());
+		}
+		return ret;
 	}
 	
 }

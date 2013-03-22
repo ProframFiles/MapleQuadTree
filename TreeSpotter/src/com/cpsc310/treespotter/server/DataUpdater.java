@@ -35,7 +35,12 @@ public class DataUpdater extends HttpServlet {
 	public void doPost(HttpServletRequest request, HttpServletResponse response){
 		init();
 		LOG.info("recieved StreetDataUpdater request, about to fetch job record...");
-		Job job = getJob(JOB_NAME);
+		String job_name = JOB_NAME;
+		String[] job_name_option = request.getParameterValues("job");
+		if(job_name_option != null && job_name_option.length >0 &&job_name_option[0] !=null){
+			job_name = job_name_option[0];
+		}
+		Job job = getJob(job_name);
 		job.setLogLevel(LOG.getLevel());
 		String[] force = request.getParameterValues("force tasks");
 		if(force != null && force.length>0){
@@ -48,6 +53,10 @@ public class DataUpdater extends HttpServlet {
 					job.setOptions("add task", task);
 				}
 			}
+		}
+		String[] file = request.getParameterValues("tree file");
+		if(file != null && file.length >0 &&file[0] !=null){
+			job.setOptions("tree file", file[0]);
 		}
 		LOG.fine("\n\trunning the job.");
 		boolean has_more_work = job.run();

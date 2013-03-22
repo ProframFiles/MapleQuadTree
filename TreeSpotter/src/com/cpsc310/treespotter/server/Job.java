@@ -78,6 +78,13 @@ public abstract class Job {
 	abstract protected ArrayList<String> getFileUrls();
 	abstract public String getJobID();
 	
+	public void setBinaryDataSource(byte[] b){
+		fileData = new PersistentFile(getJobID());
+		fileData.save(new ByteArrayInputStream(b));
+		fileDataRef = Ref.create(fileData);
+		saveJobState(this);
+	}
+	
 	public boolean run()
 	{
 		if(fileDataRef != null){
@@ -95,8 +102,7 @@ public abstract class Job {
 			ArrayList<byte[]> file_blobs = fetchFileData(getFileUrls());
 			b = preProcessDataFiles(file_blobs);
 			LOG.info("Done preprocessing files.\n\tPersisting " + b.length +" bytes to datastore");
-			fileData.save(new ByteArrayInputStream(b));
-			fileDataRef = Ref.create(fileData);
+			setBinaryDataSource(b);
 			got_data = true;
 		}
 		if(forceNewTasks() || got_data){
@@ -162,7 +168,7 @@ public abstract class Job {
 		return (rem < 60000);
 	}
 	
-	private ArrayList< byte[]> fetchFileData(ArrayList<String> urls){
+	protected ArrayList< byte[]> fetchFileData(ArrayList<String> urls){
 		ArrayList<byte[]> file_blobs = new ArrayList<byte[]>();
 		for(String file_url: urls){
 			try {
@@ -181,11 +187,10 @@ public abstract class Job {
 		return file_blobs;
 	}
 	
-	private boolean shouldFetchData()
+	protected boolean shouldFetchData()
 	{
 		//the persisted file is not the one we have saved, or we don't have one saved
 		if (fileData == null){
-			fileData = new PersistentFile(getJobID());
 			LOG.fine("\n\t no existing file data. Must download it.");
 			return true;
 		}

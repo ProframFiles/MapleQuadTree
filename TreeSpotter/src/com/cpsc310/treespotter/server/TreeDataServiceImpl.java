@@ -46,6 +46,9 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			if(options.equalsIgnoreCase("force tasks")){
 				opt = opt.param("force tasks","true");
 			}
+			else if(options.startsWith("job=") && options.length() > 4){
+				opt.param("job", options.substring(4));
+			}
 			else{
 				String[] tasks = options.split(",");
 				for(String task: tasks){

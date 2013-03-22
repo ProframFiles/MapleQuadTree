@@ -45,9 +45,9 @@ public class TreeFactory {
 		return server_data;
 	}
 	
-	static public TreeData makeTreeData2(String[] values){
+	static public TreeData makeTreeData2(String id_prefix, String[] values){
 		//thanks for this handy method, Samantha
-		TreeData tree = new TreeData("V",Integer.parseInt(values[0]) );
+		TreeData tree = new TreeData(id_prefix, Integer.parseInt(values[0]) );
 		tree.setCivicNumber(Integer.parseInt(values[1]));
 		tree.setStdStreet(values[2]);
 		tree.setNeighbourhood(values[3]);
