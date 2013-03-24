@@ -22,6 +22,8 @@ public class OfyService {
 		factory().register(TreeDepot.class);
 		factory().register(Job.class);
 		factory().register(DataUpdateJob.class);
+		factory().register(CSVFile.class);
+		factory().register(CSVDepot.class);
 	}
 
 	public static Objectify ofy() {

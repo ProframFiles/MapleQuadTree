@@ -706,18 +706,29 @@ public class TreeSpotter implements EntryPoint {
 	}
 	
 	
-	private HorizontalPanel addTreesCSV() {
+	/**
+	 * Helper to create the upload CSV part for add-tree form
+	 * @return FormPanel with upload functionality
+	 */
+	
+	private FormPanel addTreesCSV() {
 		HorizontalPanel panel = new HorizontalPanel();
 		final FormPanel form = new FormPanel();
-		final FileUpload fileUpload = new FileUpload();
-		
+
 		form.setAction(GWT.getModuleBaseURL() + "importCSV");
 		form.setMethod(FormPanel.METHOD_POST);
-		form.setWidget(fileUpload);
-	
-		Label selectLabel = new Label("Select a CSV file:");
-		Button uploadButton = new Button("Upload");
+		form.setEncoding(FormPanel.ENCODING_MULTIPART);
+		form.setWidget(panel);
 		
+		// FileUpload widget
+		final FileUpload fileUpload = new FileUpload();
+		fileUpload.setName("upload");
+		
+		// Label
+		Label selectLabel = new Label("Select a CSV file:");
+		
+		// Submit button
+		Button uploadButton = new Button("Upload");
 		uploadButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
@@ -736,7 +747,27 @@ public class TreeSpotter implements EntryPoint {
 			}
 		});
 		
+		// TextBox for user information
+		TextBox userInfo = new TextBox();
+		userInfo.setVisible(false);
+		String user = loginInfo.getNickname();
+		if (user == null) {
+			userInfo.setName("Test"); 
+			userInfo.setText("Test");
+		}
+		else {
+			userInfo.setName(user);
+			userInfo.setText(loginInfo.getEmailAddress());
+		}
 		
+		// Adding all widgets to panel
+		panel.add(userInfo);
+		panel.add(selectLabel);
+		panel.add(fileUpload);
+		panel.add(uploadButton);
+		
+		
+		form.setWidth("100%");
 		form.addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
 			
 			@Override
@@ -744,12 +775,7 @@ public class TreeSpotter implements EntryPoint {
 				Window.alert(event.getResults());				
 			}
 		});
-		
-		panel.add(selectLabel);
-		panel.add(form);
-		panel.add(uploadButton);
-		panel.setWidth("100%");
-		return panel;
+		return form;
 		
 	}
 

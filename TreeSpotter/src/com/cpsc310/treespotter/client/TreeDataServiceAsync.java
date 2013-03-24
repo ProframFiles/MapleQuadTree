@@ -25,6 +25,4 @@ public interface TreeDataServiceAsync {
   
   public void getSearchSuggestions(SearchFieldID field_id, String hint, AsyncCallback<ArrayList<String>> async);
 
-  public void exportCSV(String csv, AsyncCallback<String> asyncCallback);
-
 }

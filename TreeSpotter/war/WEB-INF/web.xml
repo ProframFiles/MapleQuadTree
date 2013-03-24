@@ -3,7 +3,7 @@
 	<!-- Servlets -->
 	<servlet>
 		<servlet-name>importTrees</servlet-name>
-		<servlet-class>com.cpsc310.treespotter.server.importCSVTrees</servlet-class>
+		<servlet-class>com.cpsc310.treespotter.server.ImportCSVTrees</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
