@@ -1,17 +1,26 @@
 package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
+import com.cpsc310.treespotter.shared.ISharedTreeData;
+import com.cpsc310.treespotter.shared.TransmittedTreeData;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.maps.client.geocode.LocationCallback;
+import com.google.gwt.maps.client.geocode.Placemark;
+import com.google.gwt.maps.client.geom.LatLng;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
@@ -115,6 +124,7 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		ClientTreeData tree = getTree();
 		
 		treeInfoTable.removeAllRows();
+		treeDetails.clear();
 		
 		treeInfoTable.setStyleName("tree-info-table");
 		treeInfoTable.setCellPadding(10);
@@ -129,7 +139,7 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		neighbour = (neighbour == null) ? neighbour : neighbour.toUpperCase();
 		createEditRow(TreeSpotter.NEIGHBOUR, neighbour);
 		createEditRow(TreeSpotter.PLANTED, tree.getPlanted());
-		createEditRow(TreeSpotter.HEIGHT, intToHeightRange(tree.getHeightRange()));
+		createEditRow(TreeSpotter.HEIGHT, Integer.toString(tree.getHeightRange()));
 	}
 	
 	private void createCommentsEditor() {
@@ -197,15 +207,15 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 
 			@Override
 			public void onClick(ClickEvent event) {
+				// TODO debug only
 				for (Entry<String, TextBox> row : treeDetails.entrySet()) {
 					System.out.println(row.getKey() + ": " + row.getValue().getValue());
 				}		
-				
-				// TODO: send data over, then show the new data on callback
-				populateTreeInfoTable(treeInfoTable);
-				editButtonsBar.remove(saveButton);
-				editButtonsBar.remove(cancelButton);
-				editButtonsBar.add(editButton);
+				try {
+					sendEditedTree();
+				} catch (InvalidFieldException e) {
+					getTreeSpotter().handleError(e);
+				}
 			}
 		});
 		
@@ -236,8 +246,6 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 	}
 	
 	
-	// TODO: will comment ID be generated server side or client side?
-	// assuming server side for now, so will sort comments by date when returned?
 	private void addComment(String treeID, String comment, String user)
 		throws NotLoggedInException {
 		if (user == null) {
@@ -265,6 +273,120 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 			
 			public void onSuccess(ArrayList<TreeComment> comments) {
 				displayComments(commentsPanel, comments);
+			}
+		});
+	}
+	
+	private void sendEditedTree() throws InvalidFieldException {
+		ClientTreeData t = getTree();
+		TransmittedTreeData editedTree = new TransmittedTreeData(t.getID());	
+		editedTree.setCultivar(t.getCultivar());
+		
+		for (Entry<String, TextBox> row : treeDetails.entrySet()) {
+			// copied and modified from populateAddData
+			String input = row.getValue().getText().trim();
+			String key = row.getKey();
+
+			// this assumes valid location/coords in form
+			// #### Street Name or #, #
+			if (key.equalsIgnoreCase(TreeSpotter.LOCATION)) {
+				if (input.isEmpty()) {
+					throw new InvalidFieldException(key + " cannot be empty");
+				}
+				
+				boolean isAddr = true;
+				String[] loc = input.split("[,]");
+				if (loc.length == 2) {
+					isAddr = false;
+				}
+				// try parsing as address
+				if (isAddr) {
+					Address addr = new Address(input);
+					if (!addr.isValid()) {
+						throw new InvalidFieldException(
+								"Location must be a valid address");
+					}
+					editedTree.setCivicNumber(addr.getNumber());
+					editedTree.setStreet(addr.getStreet());
+				}
+			} else if (key.equalsIgnoreCase(TreeSpotter.GENUS)) {
+				if (input.isEmpty()) {
+					throw new InvalidFieldException(key + " cannot be empty");
+				}
+				editedTree.setGenus(input);
+			} else if (key.equalsIgnoreCase(TreeSpotter.SPECIES)) {
+				if (input.isEmpty()) {
+					throw new InvalidFieldException(key + " cannot be empty");
+				}
+				editedTree.setSpecies(input);
+			} else if (key.equalsIgnoreCase(TreeSpotter.COMMON)) {
+				if (input.isEmpty()) {
+					throw new InvalidFieldException(key + " cannot be empty");
+				}
+				editedTree.setCommonName(input);
+			} else if (key.equalsIgnoreCase(TreeSpotter.NEIGHBOUR)) {
+				if (input.isEmpty()) {
+					editedTree.setNeighbourhood("");
+					continue;
+				}
+				editedTree.setNeighbourhood(input);
+			} else if (key.equalsIgnoreCase(TreeSpotter.HEIGHT)) {
+				if (input.isEmpty()) {
+					editedTree.setHeightRange(-1);
+					continue;
+				}
+					
+				int h;
+				try {
+					h = Integer.parseInt(input);
+				} catch (Exception e) {
+					throw new InvalidFieldException("Height must be integer between 1-10");
+				}
+				if (h < 1 || h > 10) {
+					throw new InvalidFieldException("Height must be integer between 1-10");
+				}
+				editedTree.setHeightRange(h);
+			} else if (key.equalsIgnoreCase(TreeSpotter.DIAMETER)) {
+				if (input.isEmpty()) {
+					editedTree.setDiameter(-1);
+					continue;
+				}
+				
+				try {
+					editedTree.setDiameter((int) Double.parseDouble(input));
+				} catch (Exception e) {
+					throw new InvalidFieldException("Diameter must be a number");
+				}
+			} else if (key.equalsIgnoreCase(TreeSpotter.PLANTED)) {
+				if (input.isEmpty()) {
+					editedTree.setPlanted("");
+					continue;
+				}
+				
+				try {
+					editedTree.setPlanted(ParseUtils.formatDate(input));
+				} catch (Exception e) {
+					throw new InvalidFieldException(
+							"Date Planted must be in the correct format");
+				}
+			}
+		}
+		
+		getTreeSpotter().treeDataService.modifyTree(editedTree, new AsyncCallback<ISharedTreeData>() {
+			public void onFailure(Throwable error) {
+				getTreeSpotter().handleError(error);
+				populateTreeInfoTable(treeInfoTable);
+			}
+			
+			public void onSuccess(ISharedTreeData tree) {
+				Window.alert("Tree successfully modified");
+				// TODO uncomment this to load new modified tree
+				// once server side method is complete
+//				setTree(new ClientTreeData(tree));
+				populateTreeInfoTable(treeInfoTable);
+				editButtonsBar.remove(saveButton);
+				editButtonsBar.remove(cancelButton);
+				editButtonsBar.add(editButton);
 			}
 		});
 	}

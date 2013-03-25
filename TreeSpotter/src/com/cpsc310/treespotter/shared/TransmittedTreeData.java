@@ -33,6 +33,10 @@ public class TransmittedTreeData implements Serializable, ISharedTreeData {
 		
 	}
 	
+	public TransmittedTreeData(String id) {
+		treeID = id;
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.cpsc310.treespotter.shared.ISharedTreeData#getID()
 	 */
