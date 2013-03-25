@@ -17,6 +17,8 @@ public interface TreeDataService extends RemoteService {
   
   public String flagTreeData(String treeID, String fieldName, String reason);
   
+  public ArrayList<String> getTreeFlags(String treeID);
+  
   public ArrayList<TreeComment> addTreeComment(String treeID, TreeComment comment );
   
   public ArrayList<TreeComment> getTreeComments(String treeID);

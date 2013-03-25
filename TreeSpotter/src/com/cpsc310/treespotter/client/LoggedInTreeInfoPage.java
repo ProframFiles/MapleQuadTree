@@ -33,7 +33,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class LoggedInTreeInfoPage extends TreeInfoPage {
 	
-	private ClientTreeData tree;
 	private LinkedHashMap<String, TextBox> treeDetails = new LinkedHashMap<String, TextBox>();
 	
 	@UiField(provided=true)
@@ -75,12 +74,12 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		shareLinks = new HorizontalPanel();
 		commentsEditor = new VerticalPanel();
 		editButtonsBar = new HorizontalPanel();
-		this.tree = tree;
 		
 		setTreeSpotter(parent);
+		setTree(tree);
 		createCommentsEditor();
 		
-		populateTreeInfoTable(treeInfoTable, tree);
+		populateTreeInfoTable(treeInfoTable);
 		setTreeInfoMap(infoMapPanel, tree);
 		setShareLinks(shareLinks, tree);
 		
@@ -113,6 +112,8 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 	}
 	
 	private void createEditForm() {
+		ClientTreeData tree = getTree();
+		
 		treeInfoTable.removeAllRows();
 		
 		treeInfoTable.setStyleName("tree-info-table");
@@ -142,7 +143,7 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 			public void onClick(ClickEvent event) {
 				System.out.println(textarea.getText());		
 				try {
-					addComment(tree.getID(), textarea.getText(), getTreeSpotter().loggedInUser());
+					addComment(getTree().getID(), textarea.getText(), getTreeSpotter().loggedInUser());
 				} catch (Exception e) {
 					getTreeSpotter().handleError(e);
 				}
@@ -183,7 +184,7 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 				editButtonsBar.remove(cancelButton);
 				editButtonsBar.remove(saveButton);
 				editButtonsBar.add(editButton);
-				populateTreeInfoTable(treeInfoTable, tree);
+				populateTreeInfoTable(treeInfoTable);
 			}		
 		});
 		
@@ -201,7 +202,7 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 				}		
 				
 				// TODO: send data over, then show the new data on callback
-				populateTreeInfoTable(treeInfoTable, tree);
+				populateTreeInfoTable(treeInfoTable);
 				editButtonsBar.remove(saveButton);
 				editButtonsBar.remove(cancelButton);
 				editButtonsBar.add(editButton);

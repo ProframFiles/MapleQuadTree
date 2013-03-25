@@ -225,6 +225,12 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		// TODO Auto-generated method stub
 		return "Not Implemented yet";
 	}
+	
+	@Override
+	public ArrayList<String> getTreeFlags(String treeID) {
+		// this added assuming flags are kept separate from the ClientTreeData objects
+		return null;
+	}
 
 	@Override
 	public ArrayList<TreeComment> addTreeComment(String treeID, TreeComment comment) {

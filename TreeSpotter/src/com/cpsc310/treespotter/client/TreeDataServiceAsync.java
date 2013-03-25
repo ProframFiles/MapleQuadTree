@@ -15,6 +15,8 @@ public interface TreeDataServiceAsync {
   
   public void flagTreeData(String treeID, String fieldName, String reason, AsyncCallback<String> async);
   
+  public void getTreeFlags(String treeID, AsyncCallback<ArrayList<String>> async);
+  
   public void getTreeData(String id, String userType, AsyncCallback<ISharedTreeData> async);
   
   public void addTreeComment(String treeID, TreeComment comment,  AsyncCallback<ArrayList<TreeComment>> async);

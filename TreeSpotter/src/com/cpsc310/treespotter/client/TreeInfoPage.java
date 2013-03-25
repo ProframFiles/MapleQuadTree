@@ -3,20 +3,12 @@ package com.cpsc310.treespotter.client;
 import java.util.ArrayList;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.MetaElement;
-import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.maps.client.MapWidget;
-import com.google.gwt.maps.client.geocode.Geocoder;
-import com.google.gwt.maps.client.geocode.LatLngCallback;
 import com.google.gwt.maps.client.geom.LatLng;
 import com.google.gwt.maps.client.overlay.Marker;
-import com.google.gwt.maps.client.overlay.MarkerOptions;
 import com.google.gwt.user.cellview.client.CellList;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -39,7 +31,7 @@ public abstract class TreeInfoPage extends Composite {
 	private TreeSpotter parent;
 	private VerticalPanel infoMapPanel;
 	private HorizontalPanel shareLinks;
-	private ClientTreeData displayTree;
+	private ClientTreeData displayTree = null;
 	
 	protected void setTreeSpotter(TreeSpotter p) {
 		parent = p;
@@ -49,25 +41,35 @@ public abstract class TreeInfoPage extends Composite {
 		return parent;
 	}
 	
-	protected void populateTreeInfoTable(FlexTable treeInfoTable, ClientTreeData t) {
+	protected void setTree(ClientTreeData t) {
 		displayTree = t;
+	}
+	
+	protected ClientTreeData getTree() {
+		return displayTree;
+	}
+	
+	protected void populateTreeInfoTable(FlexTable treeInfoTable) {
 		treeInfoTable.removeAllRows();
+
+		if (displayTree == null) 
+			return;
 		
 		treeInfoTable.setStyleName("tree-info-table");
 		treeInfoTable.setCellPadding(10);
 		treeInfoTable.setSize("400px", "400px");
 
-		createResultDataRow(TreeSpotter.GENUS, ParseUtils.capitalize(t.getGenus(), false));
-		createResultDataRow(TreeSpotter.SPECIES, ParseUtils.capitalize(t.getSpecies(), true));
-		String capName = ParseUtils.capitalize(t.getCommonName(), false);
+		createResultDataRow(TreeSpotter.GENUS, ParseUtils.capitalize(displayTree.getGenus(), false));
+		createResultDataRow(TreeSpotter.SPECIES, ParseUtils.capitalize(displayTree.getSpecies(), true));
+		String capName = ParseUtils.capitalize(displayTree.getCommonName(), false);
 		createResultDataRow(TreeSpotter.COMMON, "<a href='" + TreeSpotter.wikipediaSearchURL
 				+ capName + "'>" + capName + "</a>");
-		createResultDataRow(TreeSpotter.LOCATION, ParseUtils.capitalize(t.getLocation(), false));
-		String neighbour = t.getNeighbourhood();
+		createResultDataRow(TreeSpotter.LOCATION, ParseUtils.capitalize(displayTree.getLocation(), false));
+		String neighbour = displayTree.getNeighbourhood();
 		neighbour = (neighbour == null) ? neighbour : neighbour.toUpperCase();
 		createResultDataRow(TreeSpotter.NEIGHBOUR, neighbour);
-		createResultDataRow(TreeSpotter.PLANTED, t.getPlanted());
-		createResultDataRow(TreeSpotter.HEIGHT, intToHeightRange(t.getHeightRange()));	
+		createResultDataRow(TreeSpotter.PLANTED, displayTree.getPlanted());
+		createResultDataRow(TreeSpotter.HEIGHT, intToHeightRange(displayTree.getHeightRange()));	
 	}
 
 	protected void displayComments(VerticalPanel panel, ArrayList<TreeComment> comments) {

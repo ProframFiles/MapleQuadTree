@@ -1,17 +1,14 @@
 package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.Set;
-
-import javax.swing.JFrame;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
@@ -21,9 +18,7 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -49,12 +44,17 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 
 	// HashMap of the fields and their flag status
 	// true if flagged as inaccurate
-	LinkedHashMap<String, Boolean> flags = new LinkedHashMap<String, Boolean>();
-	// HashMap of fields and the reason for the flag
-	LinkedHashMap<String, String> flagReasons = new LinkedHashMap<String, String>();
+	private LinkedHashMap<String, Boolean> flags = new LinkedHashMap<String, Boolean>();
 	// HashMap of flag and their images
-	LinkedHashMap<String, Image> flagImages = new LinkedHashMap<String, Image>();
+	private LinkedHashMap<String, Image> flagImages = new LinkedHashMap<String, Image>();
+	// list of flagged fields from server
+	private ArrayList<String> markedFlags;
 	
+	// fields for flag pop-up
+	private DialogBox popup = new DialogBox();
+	private TextArea flagText = new TextArea();
+	private String flagField;
+		
 	interface MyUiBinder extends UiBinder<Widget, RegularTreeInfoPage> {}
 	static final MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
 	
@@ -63,20 +63,31 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 		infoMapPanel = new VerticalPanel();
 		commentsPanel = new VerticalPanel();
 		shareLinks = new HorizontalPanel();
-		
 		setTreeSpotter(parent);
-		populateTreeInfoTable(treeInfoTable, tree);
+		setTree(tree);
+
+		parent.treeDataService.getTreeFlags(tree.getID(), new AsyncCallback<ArrayList<String>>() {
+			public void onFailure(Throwable error) {
+				getTreeSpotter().handleError(error);
+			}
+			
+			public void onSuccess(ArrayList<String> marked) {
+				markedFlags = marked;
+				
+				// TODO debug, remove when complete
+				markedFlags = new ArrayList<String>();
+				markedFlags.add(TreeSpotter.COMMON);
+				
+				populateTreeInfoTable(treeInfoTable);
+			}
+			
+		});
+		
 		setTreeInfoMap(infoMapPanel, tree);
 		setShareLinks(shareLinks, tree);
 		
-		ArrayList<TreeComment> list = new ArrayList<TreeComment>();
-		// TODO replace with fetchComments() when server side complete
-		// fetchComments(tree.getID());
-		list.add(new TreeComment(tree.getID(), "Troll", "12 Apr 2013", "This tree is ugly"));
-		list.add(new TreeComment(tree.getID(), "Tree Guy", "12 Mar 2013", "This tree is my favourite."));
-		list.add(new TreeComment(tree.getID(), "Tree Guy #2", "14 Mar 2013", "Me too!"));
-		Collections.sort(list);	// debug testing comments sorting
-		displayComments(commentsPanel, list);
+		fetchComments(tree.getID());
+
 		initWidget(uiBinder.createAndBindUi(this));
 	}
 	
@@ -92,7 +103,6 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 	protected void createResultDataRow(String field, String value) {
 		int rowNum = treeInfoTable.getRowCount();
 		Image img = new Image(HTMLResource.INSTANCE.flag());
-		img.setStyleName("unflagged");
 		Label fld = new Label(field);
 		fld.setStyleName("tree-info-field");
 
@@ -101,7 +111,13 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 		}
 		
 		img.addClickHandler(setFlag(field));
-		flags.put(field, false);
+		if (markedFlags.contains(field)) {
+			img.setStyleName("flagged");
+			flags.put(field, true);
+		} else {
+			img.setStyleName("unflagged");
+			flags.put(field, false);
+		}
 		flagImages.put(field, img);
 		
 		treeInfoTable.setWidget(rowNum, 0, img);
@@ -114,13 +130,7 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				if (flags.get(field)) {
-					// if already flagged, unflag
-					removeFlag(field);					
-				} else {
-					// otherwise, open popup
-					createFlagPopup(field);
-				}
+				createFlagPopup(field);
 			}			 
 		 };
 	 } 
@@ -139,9 +149,11 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 	
 	// TODO: not sure how we want to send it over, hash map for now
 	private void createFlagPopup(final String field) {
-		final DialogBox pop = new DialogBox();
+		popup.clear();
+		flagText.setText("");
+		flagField = field;
+		
 		HTMLPanel panel = new HTMLPanel("");
-		final TextArea ta = new TextArea();
 		Button save = new Button("Save");
 		Button cancel = new Button("Cancel");
 		
@@ -149,14 +161,15 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 		save.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				if (ta.getText().length() != 0) {
+				if (flagText.getText().trim().length() != 0) {
 					// flag the field
-					System.out.println(ta.getText());
-					setFlagged(field, ta.getText());
-					pop.hide();
+					System.out.println(flagText.getText());
+					setFlagged(flagField);
+					addTreeFlag();
+					popup.hide();
 				} else {
 					// if nothing entered
-					pop.hide();
+					Window.alert("Please fill in a reason for why this is inaccurate");
 				}
 			}			
 		});
@@ -165,39 +178,52 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 		cancel.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				pop.hide();				
+				popup.hide();				
 			}
 			
 		});
 		
 		// add style names
-		pop.setStyleName("flag-popup");
+		popup.setStyleName("flag-popup");
 		
 		// add elements to the panel
 		panel.add(new HTML("Reason:"));
-		panel.add(ta);
+		panel.add(flagText);
 		panel.add(save);
 		panel.add(cancel);
 		
 		// add the panel to the popup and show
-		pop.add(panel);
-		pop.center();
+		popup.add(panel);
+		popup.center();
 		
 	}
 	
 	// sets flag reason and image
-	private void setFlagged(String field, String reason) {
-		if (!reason.isEmpty()) {
+	private void setFlagged(String field) {
 			flags.put(field, true);
-			flagReasons.put(field, reason);
 			flagImages.get(field).setStyleName("flagged");
-		}
 	}
-	
-	private void removeFlag(String field) {
+	// shouldn't allow unflagging once field is flag. Only Admin should be able to unflag it.
+/*	private void removeFlag(String field) {
 		flags.put(field, false);
 		flagReasons.remove(field);
 		flagImages.get(field).setStyleName("unflagged");
+	}*/ 
+	
+	private void addTreeFlag() {
+		System.out.println("Flag: tree '" + getTree().getID() + "' inaccurate at " + flagField 
+							+ " because '" + flagText.getText().trim() + "'");
+		getTreeSpotter().treeDataService.flagTreeData(getTree().getID(), flagField, flagText.getText().trim(), 
+				new AsyncCallback<String>() {
+			public void onFailure(Throwable error) {
+				getTreeSpotter().handleError(error);
+			}
+			
+			public void onSuccess(String str){
+				// TODO: what do we need back from the server for this?
+				
+			}
+		});
 	}
 	
 	 public void addImageTooltips() {
