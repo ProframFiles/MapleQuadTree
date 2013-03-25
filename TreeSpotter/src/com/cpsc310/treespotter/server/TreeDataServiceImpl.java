@@ -2,6 +2,7 @@ package com.cpsc310.treespotter.server;
 import static com.cpsc310.treespotter.server.OfyService.ofy;
 import static com.cpsc310.treespotter.server.TreeDepot.treeDepot;
 import static com.cpsc310.treespotter.server.CommentDepot.commentDepot;
+import static com.cpsc310.treespotter.server.CSVDepot.csvDepot;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,6 +17,7 @@ import com.cpsc310.treespotter.client.SearchParam;
 import com.cpsc310.treespotter.client.SearchQueryInterface;
 import com.cpsc310.treespotter.client.TreeComment;
 import com.cpsc310.treespotter.client.TreeDataService;
+import com.cpsc310.treespotter.shared.CSVFile;
 import com.cpsc310.treespotter.shared.ISharedTreeData;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
@@ -284,5 +286,9 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		return ret;
 	}
 
-
+	public ArrayList<CSVFile> getCSVFiles() {
+		System.out.println("Yay received on server");
+		
+		return csvDepot().getAllCSVFiles();
+	}
 }
