@@ -15,6 +15,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.MetaElement;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -58,6 +59,7 @@ import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SuggestBox;
+import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -577,8 +579,17 @@ public class TreeSpotter implements EntryPoint {
 		boolean isLoggedIn = loginInfo != null && loginInfo.isLoggedIn();
 		treePage = isLoggedIn ? new LoggedInTreeInfoPage(this, t) : new RegularTreeInfoPage(this, t); 
 		
+		// create tab panel
+		TabPanel tabs = new TabPanel();
+		tabs.add(treePage, "Details");
+		tabs.add(new HTML("No pictures"), "Gallery");
+		tabs.selectTab(0);
+		tabs.setWidth("100%");
+		tabs.getTabBar().setStyleName("tree-info-tab-bar");
+		// TODO: image gallery class
+		
 		RootPanel.get("content").clear();
-		RootPanel.get("content").add(treePage);
+		RootPanel.get("content").add(tabs);
 		
 		// need the widget to be placed on the page before adding tooltips
 		if (!isLoggedIn) {

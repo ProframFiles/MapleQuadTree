@@ -208,6 +208,9 @@ a.main-search:hover {
 }
 
 /* TREE INFO PAGE */
+.tree-info-tab-bar {
+	margin-bottom: 20px;
+}
 
 .tree-info-map {
 	float: left;
@@ -268,7 +271,7 @@ a.main-search:hover {
 
 /* unselected tab items */
 .gwt-TabBarItem {
-	width: 20px;
+	margin-right: 10px;
 	cursor: pointer;
 	color: blue;
 	text-decoration: underline;
@@ -346,4 +349,21 @@ a.main-search:hover {
 .flag-popup button {
 	margin-top:	5px;
 	margin-right: 20px;
+}
+
+/* CSV TABLE ON ADMIN PAGE */
+.csv-table {
+	margin-top: 20px;
+}
+
+.csv-table div {
+	padding:	20px;
+}
+
+.csv-row {
+	padding: 10px;
+}
+
+.csv-row:hover {
+	background-color: mistyrose;
 }

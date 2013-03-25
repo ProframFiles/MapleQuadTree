@@ -102,6 +102,7 @@ public abstract class TreeInfoPage extends Composite {
 		Marker m = new Marker(pt);
 		map.addOverlay(m);
 		infoMapPanel.add(map);
+		map.checkResizeAndCenter();
 	}
 	
 	/**

@@ -8,8 +8,10 @@ import java.util.ArrayList;
 import com.cpsc310.treespotter.shared.CSVFile;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -19,6 +21,7 @@ import com.google.gwt.user.client.ui.RootPanel;
  *
  */
 public class AdminButtonPage {
+	
 	static public void load(LoginInfo loginInfo, final TreeDataServiceAsync treeDataService) {
 		// put another check, since possible to force button to show
 		if (loginInfo == null || !loginInfo.isAdmin()) {
@@ -60,8 +63,11 @@ public class AdminButtonPage {
 					@Override
 					public void onSuccess(ArrayList<CSVFile> result) {
 						System.out.println("Yay got response from server");
-						for (CSVFile csv : result) {
-							csv.printContents();
+						if (!result.isEmpty()) {
+							for (CSVFile csv : result) {
+								renderCSVTable(csv);
+							}
+							
 						}
 					}
 					
@@ -94,6 +100,65 @@ public class AdminButtonPage {
 					}					
 				});
 			}			
+		};
+	}
+	
+	private static void renderCSVTable(CSVFile csv) {
+		FlexTable table = new FlexTable();
+		for (String tree : csv.getContents()) {
+			int row = table.getRowCount();
+			table.getRowFormatter().setStyleName(row, "csv-row");
+			
+			// add CSV content
+			HTML html = new HTML(tree);
+			table.setWidget(row, 0, html);
+			
+			// add button
+			Button btn = new Button("Approve");
+			btn.addClickHandler(approveTreeHandler(tree, row, table));
+			table.setWidget(row, 1, btn);
+			
+			// cancel button
+			Button cbtn = new Button("Reject");
+			cbtn.addClickHandler(rejectTreeHandler(tree, row, table));
+			table.setWidget(row, 2, cbtn);
+		}
+	
+		table.setStyleName("csv-table");
+		RootPanel.get("content").add(table);
+	}
+
+	/**
+	 * Method to add the approved tree to the database
+	 * @param tree
+	 * @return ClickHandler for the Approve button
+	 */
+	private static ClickHandler approveTreeHandler(final String tree, final int row, final FlexTable table) {
+		return new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				Window.alert("Approved: " + tree);
+				table.removeRow(row);
+			}
+			
+		};
+	}
+	
+	/**
+	 * Method to remove the tree from the pending list
+	 * @param tree
+	 * @return CLickHandler for the Reject button
+	 */
+	private static ClickHandler rejectTreeHandler(final String tree, final int row, final FlexTable table) {
+		return new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				Window.alert("Rejected: " + tree);
+				table.removeRow(row);
+			}
+			
 		};
 	}
 }
