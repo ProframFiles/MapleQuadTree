@@ -2,6 +2,7 @@ package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
 
+import com.cpsc310.treespotter.shared.CSVFile;
 import com.cpsc310.treespotter.shared.ISharedTreeData;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
@@ -29,4 +30,5 @@ public interface TreeDataService extends RemoteService {
   
   public ArrayList<String> getSearchSuggestions(SearchFieldID field_id, String hint);
 
+  public ArrayList<CSVFile> getCSVFiles();
 }

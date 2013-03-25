@@ -18,6 +18,8 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
+import com.cpsc310.treespotter.shared.CSVFile;
+
 
 public class ImportCSVTrees extends HttpServlet {
 	

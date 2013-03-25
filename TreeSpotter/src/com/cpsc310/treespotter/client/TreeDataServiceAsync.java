@@ -2,6 +2,7 @@ package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
 
+import com.cpsc310.treespotter.shared.CSVFile;
 import com.cpsc310.treespotter.shared.ISharedTreeData;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -26,5 +27,7 @@ public interface TreeDataServiceAsync {
   public void searchTreeData(SearchQueryInterface query, AsyncCallback<ArrayList<ISharedTreeData>> async);
   
   public void getSearchSuggestions(SearchFieldID field_id, String hint, AsyncCallback<ArrayList<String>> async);
+
+  public void getCSVFiles(AsyncCallback<ArrayList<CSVFile>> async);
 
 }

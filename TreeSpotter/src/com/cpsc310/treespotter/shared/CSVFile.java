@@ -1,20 +1,22 @@
-package com.cpsc310.treespotter.server;
+package com.cpsc310.treespotter.shared;
 
-import java.util.ArrayList;
+import java.io.Serializable;
 
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Serialize;
 
 @Entity
-public class CSVFile {
+public class CSVFile implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
 	@Id String email;
 	String user;
 	@Serialize String[] contents;
 	
-	CSVFile() {}
+	public CSVFile() {}
 	
-	CSVFile(String email, String user, String[] contents) {
+	public CSVFile(String email, String user, String[] contents) {
 		this.email = email;
 		this.user = user;
 		this.contents = contents;

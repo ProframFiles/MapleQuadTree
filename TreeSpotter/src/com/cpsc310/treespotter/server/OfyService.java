@@ -3,6 +3,7 @@
  */
 package com.cpsc310.treespotter.server;
 
+import com.cpsc310.treespotter.shared.CSVFile;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyFactory;
 import com.googlecode.objectify.ObjectifyService;

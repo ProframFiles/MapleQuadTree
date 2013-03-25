@@ -3,6 +3,9 @@
  */
 package com.cpsc310.treespotter.client;
 
+import java.util.ArrayList;
+
+import com.cpsc310.treespotter.shared.CSVFile;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -32,8 +35,42 @@ public class AdminButtonPage {
 		addButton(panel, treeDataService, "Force update tasks re-run", "force tasks");
 		addButton(panel, treeDataService, "Force task \"indices\"", "indices");
 		addButton(panel, treeDataService, "Force \"indices\" and \"genus\"", "indices,genus");
+		
+		addCSVButton(panel, treeDataService);
+		
 		RootPanel.get("content").clear();
 		RootPanel.get("content").add(panel);	
+	}
+	
+	private static void addCSVButton(final HTMLPanel panel, final TreeDataServiceAsync treeDataService) {
+		Button button = new Button("Get CSV files");
+		button.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				System.out.println("Sending to server");
+				treeDataService.getCSVFiles(new AsyncCallback<ArrayList<CSVFile>>() {
+
+					@Override
+					public void onFailure(Throwable caught) {
+						System.out.println(caught.getStackTrace());
+						
+					}
+
+					@Override
+					public void onSuccess(ArrayList<CSVFile> result) {
+						System.out.println("Yay got response from server");
+						for (CSVFile csv : result) {
+							csv.printContents();
+						}
+					}
+					
+				});
+			}
+			
+		});
+		panel.add(button);
+		
 	}
 	
 	private static void addButton(final HTMLPanel panel, final TreeDataServiceAsync treeDataService, final String label,  final String options){

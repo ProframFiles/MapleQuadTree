@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.cpsc310.treespotter.shared.CSVFile;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Ref;
 import com.googlecode.objectify.VoidWork;
@@ -71,9 +72,8 @@ public class CSVDepot {
 		
 		// Replace old CSV with new one if user has already submitted a file
 		if(csvRef != null) {
-			Ref<CSVFile> old_csv_ref = csvFiles.get(f_email);
-			CSVFile oldCSV = old_csv_ref.get();
-			ofy().delete().entity(oldCSV).now();
+			Ref<CSVFile> oldCSV = ofy().load().ref(csvRef);
+			ofy().delete().entity(oldCSV.get()).now();
 			csvFiles.remove(f_email);
 		}
 		
