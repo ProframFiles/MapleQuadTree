@@ -15,6 +15,7 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
  * @author maple-quadtree
@@ -60,18 +61,17 @@ public class AdminButtonPage {
 						
 					}
 
-					@Override
-					public void onSuccess(ArrayList<CSVFile> result) {
-						System.out.println("Yay got response from server");
-						if (!result.isEmpty()) {
-							for (CSVFile csv : result) {
-								renderCSVTable(csv);
+							@Override
+							public void onSuccess(ArrayList<CSVFile> result) {
+								System.out.println("Yay got response from server");
+								if (!result.isEmpty()) {
+									for (CSVFile csv : result) {
+										renderCSVTable(csv);
+									}
+								}
 							}
-							
-						}
-					}
-					
-				});
+
+						});
 			}
 			
 		});
@@ -104,6 +104,8 @@ public class AdminButtonPage {
 	}
 	
 	private static void renderCSVTable(CSVFile csv) {
+		VerticalPanel panel = new VerticalPanel();
+		
 		FlexTable table = new FlexTable();
 		for (String tree : csv.getContents()) {
 			int row = table.getRowCount();
@@ -112,20 +114,31 @@ public class AdminButtonPage {
 			// add CSV content
 			HTML html = new HTML(tree);
 			table.setWidget(row, 0, html);
-			
-			// add button
-			Button btn = new Button("Approve");
-			btn.addClickHandler(approveTreeHandler(tree, row, table));
-			table.setWidget(row, 1, btn);
-			
-			// cancel button
-			Button cbtn = new Button("Reject");
-			cbtn.addClickHandler(rejectTreeHandler(tree, row, table));
-			table.setWidget(row, 2, cbtn);
 		}
+		
+		// add button
+		Button btn = new Button("Approve");
+		btn.addClickHandler(approveTreeHandler(csv, panel));
+		
+		// cancel button
+		Button cbtn = new Button("Reject");
+		cbtn.addClickHandler(rejectTreeHandler(csv, panel));
+		
+		// buttons panel
+		HTMLPanel buttonPanel = new HTMLPanel("");
+		buttonPanel.add(btn);
+		buttonPanel.add(cbtn);
+		
+		// user info panel
+		HTML userPanel = new HTML("User: " + csv.getUser());
 	
-		table.setStyleName("csv-table");
-		RootPanel.get("content").add(table);
+		panel.setStyleName("csv-table");
+		panel.add(userPanel);
+		panel.add(table);
+		panel.add(buttonPanel);
+		
+		RootPanel.get("content").clear();
+		RootPanel.get("content").add(panel);
 	}
 
 	/**
@@ -133,13 +146,13 @@ public class AdminButtonPage {
 	 * @param tree
 	 * @return ClickHandler for the Approve button
 	 */
-	private static ClickHandler approveTreeHandler(final String tree, final int row, final FlexTable table) {
+	private static ClickHandler approveTreeHandler(CSVFile csv, final VerticalPanel panel) {
 		return new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				Window.alert("Approved: " + tree);
-				table.removeRow(row);
+				Window.alert("Approved.");
+				panel.removeFromParent();
 			}
 			
 		};
@@ -148,15 +161,15 @@ public class AdminButtonPage {
 	/**
 	 * Method to remove the tree from the pending list
 	 * @param tree
-	 * @return CLickHandler for the Reject button
+	 * @return ClickHandler for the Reject button
 	 */
-	private static ClickHandler rejectTreeHandler(final String tree, final int row, final FlexTable table) {
+	private static ClickHandler rejectTreeHandler(CSVFile csv, final VerticalPanel panel) {
 		return new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				Window.alert("Rejected: " + tree);
-				table.removeRow(row);
+				Window.alert("Rejected.");
+				panel.removeFromParent();
 			}
 			
 		};

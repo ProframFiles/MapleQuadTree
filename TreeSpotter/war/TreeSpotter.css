@@ -354,14 +354,12 @@ a.main-search:hover {
 /* CSV TABLE ON ADMIN PAGE */
 .csv-table {
 	margin-top: 20px;
+	border: 2px solid black;
+	padding: 5px;
 }
 
 .csv-table div {
-	padding:	20px;
-}
-
-.csv-row {
-	padding: 10px;
+	padding:	5px;
 }
 
 .csv-row:hover {
