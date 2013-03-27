@@ -31,4 +31,8 @@ public interface TreeDataService extends RemoteService {
   public ArrayList<String> getSearchSuggestions(SearchFieldID field_id, String hint);
 
   public ArrayList<CSVFile> getCSVFiles();
+  
+  public void parseCSV(CSVFile csv);
+  
+  public void deleteCSV(CSVFile csv);
 }

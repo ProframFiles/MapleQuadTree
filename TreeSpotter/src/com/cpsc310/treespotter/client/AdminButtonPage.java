@@ -52,7 +52,7 @@ public class AdminButtonPage {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				System.out.println("Sending to server");
+				System.out.println("Fetching CSV Files");
 				treeDataService.getCSVFiles(new AsyncCallback<ArrayList<CSVFile>>() {
 
 					@Override
@@ -63,10 +63,11 @@ public class AdminButtonPage {
 
 							@Override
 							public void onSuccess(ArrayList<CSVFile> result) {
-								System.out.println("Yay got response from server");
 								if (!result.isEmpty()) {
+									RootPanel.get("content").clear();
 									for (CSVFile csv : result) {
-										renderCSVTable(csv);
+										VerticalPanel panel = renderCSVTable(csv, treeDataService);
+										RootPanel.get("content").add(panel);
 									}
 								}
 							}
@@ -103,7 +104,7 @@ public class AdminButtonPage {
 		};
 	}
 	
-	private static void renderCSVTable(CSVFile csv) {
+	private static VerticalPanel renderCSVTable(CSVFile csv, final TreeDataServiceAsync treeDataService) {
 		VerticalPanel panel = new VerticalPanel();
 		
 		FlexTable table = new FlexTable();
@@ -118,11 +119,11 @@ public class AdminButtonPage {
 		
 		// add button
 		Button btn = new Button("Approve");
-		btn.addClickHandler(approveTreeHandler(csv, panel));
+		btn.addClickHandler(approveTreeHandler(csv, panel, treeDataService));
 		
 		// cancel button
 		Button cbtn = new Button("Reject");
-		cbtn.addClickHandler(rejectTreeHandler(csv, panel));
+		cbtn.addClickHandler(rejectTreeHandler(csv, panel, treeDataService));
 		
 		// buttons panel
 		HTMLPanel buttonPanel = new HTMLPanel("");
@@ -137,22 +138,38 @@ public class AdminButtonPage {
 		panel.add(table);
 		panel.add(buttonPanel);
 		
-		RootPanel.get("content").clear();
-		RootPanel.get("content").add(panel);
+		return panel;
 	}
 
 	/**
 	 * Method to add the approved tree to the database
+	 * @param treeDataService 
 	 * @param tree
 	 * @return ClickHandler for the Approve button
 	 */
-	private static ClickHandler approveTreeHandler(CSVFile csv, final VerticalPanel panel) {
+	private static ClickHandler approveTreeHandler(final CSVFile csv, final VerticalPanel panel, final TreeDataServiceAsync treeDataService) {
 		return new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				Window.alert("Approved.");
-				panel.removeFromParent();
+				
+				System.out.println("Approved: Parsing CSV now");
+				treeDataService.parseCSV(csv, new AsyncCallback<Void>() {
+
+					@Override
+					public void onFailure(Throwable e) {
+						System.out.println(e.getStackTrace());
+						
+					}
+
+					@Override
+					public void onSuccess(Void result) {
+						Window.alert("Approved.");
+						panel.removeFromParent();
+					}
+					
+				});
+				
 			}
 			
 		};
@@ -160,16 +177,33 @@ public class AdminButtonPage {
 	
 	/**
 	 * Method to remove the tree from the pending list
+	 * @param treeDataService 
 	 * @param tree
 	 * @return ClickHandler for the Reject button
 	 */
-	private static ClickHandler rejectTreeHandler(CSVFile csv, final VerticalPanel panel) {
+	private static ClickHandler rejectTreeHandler(final CSVFile csv, final VerticalPanel panel, final TreeDataServiceAsync treeDataService) {
 		return new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				Window.alert("Rejected.");
-				panel.removeFromParent();
+				
+				System.out.println("Rejected: Deleting from server");
+				treeDataService.deleteCSV(csv, new AsyncCallback<Void>() {
+
+					@Override
+					public void onFailure(Throwable e) {
+						System.out.println(e.getStackTrace());
+						
+					}
+
+					@Override
+					public void onSuccess(Void result) {
+						Window.alert("Rejected.");
+						panel.removeFromParent();
+					}
+					
+				});
+
 			}
 			
 		};

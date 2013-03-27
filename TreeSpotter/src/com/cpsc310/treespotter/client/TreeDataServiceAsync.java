@@ -30,4 +30,8 @@ public interface TreeDataServiceAsync {
 
   public void getCSVFiles(AsyncCallback<ArrayList<CSVFile>> async);
 
+  public void parseCSV(CSVFile csv, AsyncCallback<Void> async);
+
+  public void deleteCSV(CSVFile csv, AsyncCallback<Void> async);
+
 }

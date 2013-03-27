@@ -287,8 +287,72 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 
 	public ArrayList<CSVFile> getCSVFiles() {
-		System.out.println("Yay received on server");
-		
 		return csvDepot().getAllCSVFiles();
+	}
+	
+	public void parseCSV(CSVFile csv) {
+		System.out.println("Received parsing request");
+		
+		String[] contents = csv.getContents();
+		int num_trees = contents.length;
+		
+		// Reserving ID numbers
+		LOG.info("\n\tFetching last user id from datastore.");
+		UserTreeUpdateStamp last_stamp = ofy().transact(new Work<UserTreeUpdateStamp>() {
+		    public UserTreeUpdateStamp run() {
+		    	return ofy().load().key(Key.create(UserTreeUpdateStamp.class, LAST_USER_TREE_STAMP_ID)).getValue();
+		    }
+		});
+		
+		// create a new stamp if we didn't find one, die if we found a malformed stamp
+		if(last_stamp == null){
+			LOG.info("\n\tNo user tree adds found. This will be the first.");
+			last_stamp = new UserTreeUpdateStamp(LAST_USER_TREE_STAMP_ID);
+		}
+		else if(!last_stamp.getTreeID().toUpperCase().matches("U\\d+")){
+			throw new RuntimeException("something is wrong with the stored last user id: \"" + last_stamp.getTreeID() +"\"");
+		}
+		else{
+			LOG.info("\n\tFound: last id = \"" + last_stamp.getTreeID() + "\" added " + last_stamp.getTimeStamp() );
+		}
+		
+		//increment the last ID
+		int id_number = Integer.parseInt(last_stamp.getTreeID().substring(1)) + num_trees;
+		
+		//refresh the update stamp 
+		final UserTreeUpdateStamp new_stamp = new UserTreeUpdateStamp(LAST_USER_TREE_STAMP_ID, "U" + id_number);
+		
+		ofy().transact(new VoidWork() {
+			public void vrun() {
+				ofy().save().entity(new_stamp).now();
+			}
+		});
+		
+		StringBuilder sb = new StringBuilder();
+		for (String line : contents) {
+			sb.append(line + "\n");
+		}
+		
+		String csvString = sb.toString();
+		System.out.println(csvString);
+		
+		
+		// Add trees to database -cross fingers-
+		DataUpdateJob job = new DataUpdateJob("Add Trees from User CSV");
+		job.setOptions("user trees", last_stamp.getTreeID().substring(1));
+		job.setBinaryTreeData(csvString.getBytes());
+		
+		TaskOptions opt = withUrl(DataUpdater.TASK_URL);
+		opt = opt.param("job", "Add Trees from User CSV");
+		QueueFactory.getDefaultQueue().add(opt);
+		
+		csvDepot().deleteCSV(csv);
+		
+	}
+	
+	public void deleteCSV(CSVFile csv) {
+		System.out.println("Received delete request");
+		csvDepot().deleteCSV(csv);
+		
 	}
 }

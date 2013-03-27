@@ -106,6 +106,18 @@ public class CSVDepot {
 		return allCSVs;
 	}
 	
+	public void deleteCSV(CSVFile csv) {
+		String email = csv.getEmail();
+		String f_email = formatEmail(email);
+		Ref<CSVFile> csvRef = csvFiles.get(f_email);
+		if (csvRef != null) {
+			ofy().delete().entity(csvRef.get()).now();
+			csvFiles.remove(f_email);
+			saveDepotState(instance);
+		}
+		
+	}
+	
 	private String formatEmail(String email) {
 		String str = email.replace('.', '\0');
 		return str;

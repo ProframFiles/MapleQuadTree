@@ -71,11 +71,9 @@ public class ImportCSVTrees extends HttpServlet {
 		}
 		
 		CSVFile csvFile = new CSVFile(email, user, contents);
-		csvFile.printContents();
 		
 		csvDepot().addCSVFile(csvFile);
 		CSVFile savedCSV = csvDepot().getCSVFile(email);
-		savedCSV.printContents();
 		
 		return "Successfully uploaded";
 	}
