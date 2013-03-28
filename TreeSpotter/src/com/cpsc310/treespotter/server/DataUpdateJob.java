@@ -22,6 +22,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import javax.management.RuntimeErrorException;
+
 import com.cpsc310.treespotter.shared.FilteredCSVReader;
 import com.cpsc310.treespotter.shared.LatLong;
 import com.cpsc310.treespotter.shared.Util;
@@ -40,8 +42,7 @@ public class DataUpdateJob extends Job {
 	@Ignore private boolean sorted = false;
 	@Ignore private boolean forceTasks = false;
 	@Ignore String treeFile = "http://www.ugrad.cs.ubc.ca/~q0b7/csv_street_trees.zip";
-	@Ignore boolean userTrees = false;
-	@Ignore int userTreeNumber;
+	int userTreeNumber = -1;
 	
 	// this is here for objectify
 	@SuppressWarnings("unused")
@@ -83,7 +84,6 @@ public class DataUpdateJob extends Job {
 			}
 			else if(option_name.equalsIgnoreCase("user trees")){
 				forceTasks = true;
-				userTrees = true;
 				userTreeNumber = Integer.parseInt(option_value);
 			}
 			else{
@@ -220,7 +220,7 @@ public class DataUpdateJob extends Job {
 		while((line_string = reader.readLine()) != null ){
 			String[] split_line = line_string.split(",");
 			TreeData new_tree;
-			if(userTrees){
+			if(userTreeNumber >=0){
 				String[] array = Arrays.copyOf(split_line, split_line.length);
 				array[0] = Integer.toString(userTreeNumber);
 				new_tree = TreeFactory.makeTreeData2("U", array);
@@ -405,7 +405,7 @@ public class DataUpdateJob extends Job {
 	protected ArrayList<String> getFileUrls() {
 		ArrayList<String> ret = new ArrayList<String>();
 		ret.add("http://www.ugrad.cs.ubc.ca/~q0b7/ICIS_AddressBC_csv_all.zip");
-		if(!userTrees){
+		if(userTreeNumber<0){
 			ret.add(treeFile);
 		}
 		
@@ -419,6 +419,10 @@ public class DataUpdateJob extends Job {
 	
 	@Override
 	protected ArrayList< byte[]> fetchFileData(ArrayList<String> urls){
+		if(userTreeNumber >= 0 && treeDataRef == null){
+			LOG.severe("whoa, where's my file ref?");
+			throw new RuntimeException("Should have had a user file ref, but it's not there...");
+		}
 		ArrayList<byte[]> ret = super.fetchFileData(urls);
 		if(ret.size() <2 && treeDataRef != null){
 			ofy().load().ref(treeDataRef);

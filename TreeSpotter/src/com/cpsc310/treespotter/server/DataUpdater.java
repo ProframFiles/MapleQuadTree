@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
 import com.googlecode.objectify.Work;
 
 import static com.cpsc310.treespotter.server.OfyService.ofy;
@@ -63,7 +64,7 @@ public class DataUpdater extends HttpServlet {
 		LOG.fine("\n\tDone this run portion.");
 		if(has_more_work){
 			LOG.info("\n\tJob still has more work, re-queueing.");
-			queueThisTask();
+			queueThisTask(job_name);
 		}
 		else{
 			LOG.info("\n\tJob is done, not re-queueing.");
@@ -93,7 +94,9 @@ public class DataUpdater extends HttpServlet {
 		return job;
 	}
 	
-	static private void queueThisTask(){
-		QueueFactory.getDefaultQueue().add(withUrl(TASK_URL));
+	static private void queueThisTask(String job_name){
+	    TaskOptions opt = withUrl(DataUpdater.TASK_URL);
+	    opt = opt.param("job", job_name);
+	    QueueFactory.getDefaultQueue().add(opt);
 	}
 }
