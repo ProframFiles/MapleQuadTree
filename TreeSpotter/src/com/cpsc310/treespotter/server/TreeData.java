@@ -22,8 +22,7 @@ public class TreeData implements Serializable, TreeDataProvider, LatLongProvider
 		if(treeID == null){
 			return 0;
 		}
-		int factor = treeID.substring(0,1).equals("U") ? -1 : 1;
-		return  factor*Integer.parseInt(treeID.substring(1));
+		return  treeID.hashCode();
 	}
 
 	@Override
@@ -101,6 +100,9 @@ public class TreeData implements Serializable, TreeDataProvider, LatLongProvider
 		}
 		else if(user.equals("user") || user.toUpperCase().equals("U")){
 			key = "U" + String.valueOf(id_num);
+		}
+		else if(user.toUpperCase().equals("M")){
+			key = "M" + String.valueOf(id_num);
 		}
 		else {
 			throw new RuntimeException("Invalid tree ID prefix: " + user);

@@ -44,7 +44,6 @@ public class TreeDepot {
 	@Ignore HashMap<String, Set<String>> keywordBins;
 	@Ignore HashMap<String, Set<Ref<PersistentFile>>> keywordRefs;
 	
-	
 	@Ignore private TreesIndexedByString speciesIndex;
 	Ref<TreesIndexedByString> speciesIndexRef;
 	

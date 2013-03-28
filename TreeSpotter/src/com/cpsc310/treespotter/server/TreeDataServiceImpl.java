@@ -44,7 +44,18 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	
 	@Override
 	public void importFromSite(String options) {
-		TaskOptions opt = withUrl(DataUpdater.TASK_URL);
+	    DataUpdateJob job = new DataUpdateJob("Add Trees from User CSV");
+	    job.setOptions("user trees", "123");
+	    job.setBinaryTreeData("xfb".getBytes());
+	       
+	    TaskOptions opt = withUrl(DataUpdater.TASK_URL);
+	    opt = opt.param("job", "Add Trees from User CSV");
+	    QueueFactory.getDefaultQueue().add(opt);
+		
+		
+		
+		
+		//TaskOptions opt = withUrl(DataUpdater.TASK_URL);
 		if(options != null && options.length()>0){
 			LOG.info("setting option \"" +options+ "\"");
 			if(options.equalsIgnoreCase("force tasks")){
@@ -62,7 +73,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			}
 				
 		}
-		QueueFactory.getDefaultQueue().add(opt);
+		//QueueFactory.getDefaultQueue().add(opt);
 	}
 
 	@Override
@@ -96,7 +107,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			//make the new tree, server style
 			TreeData new_tree;
 			if(info != null){
-				new_tree = TreeFactory.makeTreeData(info, id_number);
+				new_tree = TreeFactory.makeTreeData(info, id_number, "U");
 			}
 			else{
 				throw new RuntimeException("Can't create an empty tree (null tree data)");
@@ -220,8 +231,47 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 
 	@Override
 	public ISharedTreeData modifyTree(ISharedTreeData info) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		LOG.info("\n\trecieved call to modify an existing tree.");
+		ISharedTreeData return_tree = null;
+		try { 
+			//make the new tree, server style
+			TreeData new_tree;
+			if(info != null){
+				String prefix = "";
+				if(info.getID().startsWith("U")){
+					prefix = "U";
+					LOG.info("\n\tUser tree: modifying in place.");
+				}
+				else{
+					prefix = "M";
+					LOG.info("\n\tVancouver tree: modifying a copy of original.");
+				}
+				int id_number = Integer.parseInt(info.getID().substring(1));
+				new_tree = TreeFactory.makeTreeData(info, id_number, prefix);
+				treeDepot().putTree(new_tree);
+				return_tree = TreeFactory.makeUserTreeData(new_tree);
+			}
+			else{
+				throw new RuntimeException("Can't create an empty tree (null tree data)");
+			}
+			//persist the new tree
+			treeDepot().putTree(new_tree);
+			return_tree = TreeFactory.makeUserTreeData(new_tree);
+			
+		}
+		catch (Exception e){
+			LOG.severe("Unexpected exception during tree modification:\n\t\"" + e.getMessage() + "\"\n\tStack trace follows.");
+			StringBuilder sb = new StringBuilder();
+			for(StackTraceElement ste: e.getStackTrace()){
+				sb.append("\n" + ste.toString());
+				if(ste.getMethodName() == "modifyTree"){
+					break;
+				}
+			}
+			LOG.severe("StackTrace from this method:\n" + sb.toString() + "\n");
+		}
+		return return_tree;
 	}
 
 	@Override

@@ -28,8 +28,8 @@ public class TreeFactory {
 		return user_data;
 	}
 
-	static public TreeData makeTreeData(ISharedTreeData tree_data, int id_number) {
-		TreeData server_data = new TreeData("U", id_number);
+	static public TreeData makeTreeData(ISharedTreeData tree_data, int id_number, String prefix) {
+		TreeData server_data = new TreeData(prefix, id_number);
 		server_data.setCivicNumber(tree_data.getCivicNumber());
 		server_data.setNeighbourhood(tree_data.getNeighbourhood());
 		server_data.setStreet(tree_data.getStreet());

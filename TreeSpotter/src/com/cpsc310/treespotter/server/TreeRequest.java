@@ -64,6 +64,15 @@ public class TreeRequest {
 			}
 		}
 		LOG.info("retrieved " + ret.size() + " trees from the depot");
+		ArrayList<String> mod_trees = new ArrayList<String>();
+		for(TreeData tree: ret){
+			if(tree.getID().startsWith("M")){
+				mod_trees.add("V"+tree.getID().substring(1));
+			}
+		}
+		if(!mod_trees.isEmpty()){
+			filters.add(new TreeIDExcluder(mod_trees));
+		}
 		Set<TreeData> filtered = ret;
 		if(filters.size()>1){
 			LOG.info("now filtering with " + filters.size() + " filters");
@@ -188,6 +197,33 @@ public class TreeRequest {
 			if(tree != null){
 				match = tsp.treeToString(tree).contains(matchString);
 				
+			}
+			if(match){
+				//LOG.info("match for " + matchString + " in " + tsp.treeToString(tree));
+			}
+			else{
+				//LOG.info("found match for " + matchString + " in " + tsp.treeToString(tree));
+			}
+			return match;
+		}
+		
+	}
+	private class TreeIDExcluder implements TreeFilter{
+
+		ArrayList<String> matchStrings; 
+		TreeIDExcluder(ArrayList<String> ids){
+			this.matchStrings = ids;
+		}
+		
+		@Override
+		public boolean isMatch(TreeData tree) {
+			boolean match = true;
+			if(tree != null){
+				for(String id: matchStrings){
+					if(tree.equals(id)){
+						match = false;
+					}
+				}
 			}
 			if(match){
 				//LOG.info("match for " + matchString + " in " + tsp.treeToString(tree));

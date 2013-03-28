@@ -87,7 +87,11 @@ public class TreeToStringFactory {
 	static String chunkedID(String id){
 		final int chunk_size = 1000;
 		int int_portion = Integer.parseInt(id.substring(1));
-		return id.substring(0, 1)+String.format("%0$3d",int_portion/chunk_size);
+		String prefix = id.substring(0, 1);
+		if(prefix.equals("M")){
+			prefix = "V";
+		}
+		return prefix+String.format("%0$3d",int_portion/chunk_size);
 	}
 	static TreeStringProvider getBinner(){
 		return new TreeGridStore();
