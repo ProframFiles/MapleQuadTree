@@ -62,7 +62,17 @@ public class DataUpdateJob extends Job {
 	
 	public void setBinaryTreeData(byte[] b){
 		PersistentFile treeData = new PersistentFile(getJobID());
-		treeData.save(new ByteArrayInputStream(b));
+		ZipEntry tree_csv = new ZipEntry("user_trees_start_"+Integer.toString(userTreeNumber)+".csv");
+		ByteArrayOutputStream zipped_bytes = new ByteArrayOutputStream();
+		ZipOutputStream zip_out = new ZipOutputStream(zipped_bytes);
+		try {
+			zip_out.putNextEntry(tree_csv);
+			Util.streamTostream(new ByteArrayInputStream(b), zip_out, 1024);
+			zip_out.closeEntry();
+		} catch (IOException e) {
+			throw new RuntimeException("Error adding user binary data", e);
+		}
+		treeData.save(new ByteArrayInputStream(zipped_bytes.toByteArray()));
 		treeDataRef = Ref.create(treeData);
 		saveJobState(this);
 	}
