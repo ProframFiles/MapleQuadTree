@@ -29,6 +29,7 @@ import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
+import com.googlecode.objectify.annotation.Serialize;
 
 
 /**
@@ -43,6 +44,8 @@ public class TreeDepot {
 	@Id private String id;
 	@Ignore HashMap<String, Set<String>> keywordBins;
 	@Ignore HashMap<String, Set<Ref<PersistentFile>>> keywordRefs;
+	
+	@Serialize HashMap<String, HashMap<String,String>> treeFlags;
 	
 	@Ignore private TreesIndexedByString speciesIndex;
 	Ref<TreesIndexedByString> speciesIndexRef;
@@ -303,6 +306,28 @@ public class TreeDepot {
 			}
 		}
 		saveTrees();
+	}
+	public void flagTree(String treeID, String fieldName, String reason ){
+		if(treeFlags == null){
+			treeFlags = new HashMap<String, HashMap<String, String>>();
+		}
+		HashMap<String, String> flags = treeFlags.get(treeID);
+		if(flags == null){
+			flags = new HashMap<String, String>();
+		}
+		flags.put(fieldName, reason);
+		treeFlags.put(treeID, flags);
+		saveTrees(this);
+	}
+	public ArrayList<String> getFlags(String treeID){
+		ArrayList<String> ret = new ArrayList<String>();
+		if(treeFlags != null){
+			HashMap<String, String> flags = treeFlags.get(treeID);
+			if(flags != null){
+				ret.addAll(flags.keySet());
+			}
+		}
+		return ret;
 	}
 	public void putTreesByGenus(Collection<TreeData> trees){
 		genusIndex.addTrees(trees);
