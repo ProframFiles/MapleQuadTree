@@ -2,6 +2,16 @@
 
 	<!-- Servlets -->
 	<servlet>
+		<servlet-name>uploadImage</servlet-name>
+		<servlet-class>com.cpsc310.treespotter.server.UploadImage</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>uploadImage</servlet-name>
+		<url-pattern>/treespotter/uploadImage</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
 		<servlet-name>importTrees</servlet-name>
 		<servlet-class>com.cpsc310.treespotter.server.ImportCSVTrees</servlet-class>
 	</servlet>

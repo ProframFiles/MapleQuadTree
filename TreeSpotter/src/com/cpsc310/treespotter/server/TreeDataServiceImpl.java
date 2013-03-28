@@ -19,6 +19,8 @@ import com.cpsc310.treespotter.client.TreeComment;
 import com.cpsc310.treespotter.client.TreeDataService;
 import com.cpsc310.treespotter.shared.CSVFile;
 import com.cpsc310.treespotter.shared.ISharedTreeData;
+import com.google.appengine.api.blobstore.BlobstoreService;
+import com.google.appengine.api.blobstore.BlobstoreServiceFactory;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -354,5 +356,12 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		System.out.println("Received delete request");
 		csvDepot().deleteCSV(csv);
 		
+	}
+	
+	public String getBlobstoreUploadUrl() {
+		//BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
+		//return blobstoreService.createUploadUrl("/uploadImage");
+		System.out.println("Yay");
+		return "";
 	}
 }

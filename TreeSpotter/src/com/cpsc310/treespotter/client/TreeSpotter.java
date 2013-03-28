@@ -134,6 +134,9 @@ public class TreeSpotter implements EntryPoint {
 	// tab panel container for search results
 	private TabPanel searchResultsPanel = null;
 	private final int SEARCH_PAGE_SIZE = 25;
+	
+	// for uploading images
+	private final String[] validImageExtns = {".gif", ".jpg", ".jpeg", ".png"};
 
 	// is there a way to get a list of neighbourhoods from the dataset?
 	// from the file names or do a batch query on everything (ugh)
@@ -582,7 +585,8 @@ public class TreeSpotter implements EntryPoint {
 		// create tab panel
 		TabPanel tabs = new TabPanel();
 		tabs.add(treePage, "Details");
-		tabs.add(new HTML("No pictures"), "Gallery");
+		createGalleryPage(tabs, t);
+		//tabs.add(createGalleryPage(t), "Gallery");
 		tabs.selectTab(0);
 		tabs.setWidth("100%");
 		tabs.getTabBar().setStyleName("tree-info-tab-bar");
@@ -600,6 +604,94 @@ public class TreeSpotter implements EntryPoint {
 		// TODO: enable history token when getTreeData implemented on server
 		History.newItem("tree" + t.getID());
 		// triggers value changed
+	}
+	
+	private void createGalleryPage(TabPanel tabs, ClientTreeData t) {
+		
+		HorizontalPanel panel = new HorizontalPanel();
+		final FormPanel form = new FormPanel();
+		
+		form.setAction(GWT.getModuleBaseURL() + "uploadImage");
+		form.setMethod(FormPanel.METHOD_POST);
+		form.setEncoding(FormPanel.ENCODING_MULTIPART);
+		form.setWidget(panel);
+		
+		Label selectLabel = new Label("Upload an image");
+		
+		final FileUpload fileUpload = new FileUpload();
+		fileUpload.setName("image");
+		
+		final Button uploadButton = new Button();
+		uploadButton.setText("Loading...");
+		uploadButton.setEnabled(false);
+		
+		final TextBox treeInfo = new TextBox();
+		treeInfo.setVisible(false);
+		treeInfo.setName(t.getID());
+		
+		panel.add(treeInfo);
+		panel.add(selectLabel);
+		panel.add(fileUpload);
+		panel.add(uploadButton);
+		
+		form.addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
+			@Override
+			public void onSubmitComplete(SubmitCompleteEvent event) {
+				Window.alert("Upload Complete");
+				form.reset();
+				startNewBlobstoreSession(form, treeInfo, uploadButton, fileUpload);
+			}
+		});
+		
+		tabs.add(panel, "Gallery");
+		
+		startNewBlobstoreSession(form, treeInfo, uploadButton, fileUpload);
+	}
+	
+	private void startNewBlobstoreSession(final FormPanel form, final TextBox treeInfo, 
+			final Button uploadButton, final FileUpload fileUpload) {
+		treeDataService.getBlobstoreUploadUrl(new AsyncCallback<String>() {
+			@Override
+			public void onFailure(Throwable caught) {
+				System.out.println(caught.getStackTrace());
+			}
+
+			@Override
+			public void onSuccess(String result) {
+				treeInfo.setText(result);
+				uploadButton.setText("Upload");
+				uploadButton.setEnabled(true);
+				
+				uploadButton.addClickHandler(new ClickHandler() {
+					@Override
+					public void onClick(ClickEvent event) {
+						String fileName = fileUpload.getFilename();				
+						if (fileName.length() == 0) {
+							Window.alert("No file specified");
+							return;
+						}
+						String extn = fileName.substring(fileName.lastIndexOf('.'), fileName.length());
+						if (!isImageExtn(extn)) {
+							Window.alert("Not an image");
+							return;
+						}
+						else {
+							form.submit();
+						}
+					}
+				});
+			}
+		});
+	}
+	
+	private boolean isImageExtn(String ext) {
+		
+		for (String extn : validImageExtns) {
+			if (ext.equals(extn)) 
+				return true;
+		}
+		
+		return false;
 	}
 
 	/**

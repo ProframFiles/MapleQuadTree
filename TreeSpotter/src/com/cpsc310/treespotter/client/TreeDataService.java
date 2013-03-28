@@ -35,4 +35,6 @@ public interface TreeDataService extends RemoteService {
   public void parseCSV(CSVFile csv);
   
   public void deleteCSV(CSVFile csv);
+  
+  public String getBlobstoreUploadUrl();
 }

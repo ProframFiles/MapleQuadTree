@@ -34,4 +34,6 @@ public interface TreeDataServiceAsync {
 
   public void deleteCSV(CSVFile csv, AsyncCallback<Void> async);
 
+  public void getBlobstoreUploadUrl(AsyncCallback<String> async);
+
 }
