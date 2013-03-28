@@ -4,19 +4,18 @@ package com.cpsc310.treespotter.server;
 import static com.cpsc310.treespotter.server.CSVDepot.csvDepot;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.InputStream;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
+import org.apache.commons.fileupload.FileItemIterator;
+import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload.util.Streams;
 
 import com.cpsc310.treespotter.shared.CSVFile;
 
@@ -29,26 +28,28 @@ public class ImportCSVTrees extends HttpServlet {
 		
 		StringBuilder sb = new StringBuilder();
 		
-		FileItemFactory factory = new DiskFileItemFactory();
-		ServletFileUpload upload = new ServletFileUpload(factory);
-
-		// Parse request
+		ServletFileUpload upload = new ServletFileUpload();
 		try {
-			List<FileItem> items = upload.parseRequest(req);
-			for (FileItem item : items) {
+			FileItemIterator iterator = upload.getItemIterator(req);
+			while (iterator.hasNext()) {
+				FileItemStream item = iterator.next();
+				String name = item.getFieldName();
+				InputStream stream = item.openStream();
+				
 				if(item.isFormField()) {
-					sb.append(item.getFieldName() + "\n");
-					sb.append(item.getString() + "\n");
+					sb.append(name + "\n");
+					sb.append(Streams.asString(stream) + "\n");
+					
 				}
 				else {
-					sb.append(item.getString());
+					sb.append(Streams.asString(stream));
 				}
 			}
-			
 		} catch (FileUploadException e) {
 			e.printStackTrace();
 		}
-
+		
+		
 		// create and persist file
 		String message = createNewFile(sb.toString());
 		res.setContentType("text/html");
@@ -73,7 +74,6 @@ public class ImportCSVTrees extends HttpServlet {
 		CSVFile csvFile = new CSVFile(email, user, contents);
 		
 		csvDepot().addCSVFile(csvFile);
-		CSVFile savedCSV = csvDepot().getCSVFile(email);
 		
 		return "Successfully uploaded";
 	}
