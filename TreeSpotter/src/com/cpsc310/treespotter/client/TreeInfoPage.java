@@ -172,10 +172,6 @@ public abstract class TreeInfoPage extends Composite {
 			}
 		});
 
-		HTML facebook = new HTML("<div class=\"fb-like\" data-href=\"" + baseURL + "/TreeSpotter.html#" + token + 
-				"\" data-send=\"false\" data-layout=\"button_count\" data-width=\"80\" data-show-faces=\"false\"></div>");
-		
-		shareLinks.add(facebook);
 		shareLinks.add(fbButton);
 		
 	}

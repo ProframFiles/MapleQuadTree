@@ -15,6 +15,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.MetaElement;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.ScriptElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
@@ -203,6 +204,7 @@ public class TreeSpotter implements EntryPoint {
 		});
 		
 		initFacebookAPI();
+		initTwitterScript();
 		initHomePage();
 		initSearchOracles();
 		initButtons();
@@ -260,6 +262,9 @@ public class TreeSpotter implements EntryPoint {
 
 	private native String initFacebookAPI()
 	/*-{
+		if ($wnd.FB == null) {
+			return;
+		} 
 		$wnd.FB.init({
 			'appId': "438492076225696", 
 			'status': true, 
@@ -267,9 +272,23 @@ public class TreeSpotter implements EntryPoint {
 			'xfbml': true});
 	}-*/;
 	
+	private void initTwitterScript() {
+		Document doc = Document.get();
+		ScriptElement script = doc.createScriptElement();
+		script.setSrc("http://platform.twitter.com/widgets.js");
+		script.setType("text/javascript");
+		script.setLang("javascript");
+		doc.getBody().appendChild(script);
+	}
+	
 	protected static native String initSocialMedia() 
 	/*-{
-		$wnd.FB.XFBML.parse();
+		if ($wnd.FB != null) {
+			$wnd.FB.XFBML.parse();
+		} 
+		if ($wnd.twttr != null) {
+			$wnd.twttr.widgets.load();
+		}
 	}-*/;
 	
 	/*
@@ -1129,8 +1148,12 @@ public class TreeSpotter implements EntryPoint {
 	private void loadHomePage() {
 		HTMLPanel htmlPanel = new HTMLPanel(HTMLResource.INSTANCE.getHomeHtml()
 				.getText());
+		
+		htmlPanel.getElementById("facebook").setInnerHTML("<div class=\"fb-like\" data-href=\"" + GWT.getHostPageBaseURL() + 
+				"\" data-send=\"false\" data-layout=\"button_count\" data-width=\"80\" data-show-faces=\"false\"></div>");
 		RootPanel.get("content").clear();
 		RootPanel.get("content").add(htmlPanel);
+		initSocialMedia();
 	}
 
 	private void loadAdminPage() {

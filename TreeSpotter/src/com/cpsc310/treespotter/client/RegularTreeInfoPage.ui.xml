@@ -4,9 +4,9 @@
 
   <gwt:HTMLPanel>
     <gwt:VerticalPanel ui:field="infoMapPanel"></gwt:VerticalPanel>
+    <gwt:HorizontalPanel ui:field="shareLinks"></gwt:HorizontalPanel>
     <gwt:FlexTable ui:field="treeInfoTable" />
     <gwt:VerticalPanel ui:field="commentsPanel"></gwt:VerticalPanel>
-    <gwt:HorizontalPanel ui:field="shareLinks"></gwt:HorizontalPanel>
   </gwt:HTMLPanel>
 
 </ui:UiBinder>
