@@ -31,6 +31,18 @@ public class Util {
 		return byte_stream.toByteArray();
 	}
 	
+	public static int streamTostream(InputStream is, OutputStream out, int read_buffer_size) throws IOException{
+		byte[] buffer = new byte[read_buffer_size];
+	    int len;
+	    int total_written = 0;
+	    while ((len = is.read(buffer)) > -1 ) {
+	        out.write(buffer, 0, len);
+	        total_written += len;
+	    }
+	    out.flush();
+		return total_written;
+	}
+	
 	public static byte[] ReaderToByteArray(Reader is, int read_buffer_size) throws IOException{
 		ByteArrayOutputStream byte_stream = new ByteArrayOutputStream();
 		ReaderToOutputStream(is, byte_stream, read_buffer_size);
