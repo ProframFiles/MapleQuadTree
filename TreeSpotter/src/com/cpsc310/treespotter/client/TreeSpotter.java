@@ -205,6 +205,7 @@ public class TreeSpotter implements EntryPoint {
 		
 		initFacebookAPI();
 		initTwitterScript();
+		initGooglePlusScript();
 		initHomePage();
 		initSearchOracles();
 		initButtons();
@@ -281,6 +282,15 @@ public class TreeSpotter implements EntryPoint {
 		doc.getBody().appendChild(script);
 	}
 	
+	private void initGooglePlusScript() {
+		Document doc = Document.get();
+		ScriptElement script = doc.createScriptElement();
+		script.setSrc("https://apis.google.com/js/plusone.js");
+		script.setType("text/javascript");
+		script.setLang("javascript");
+		doc.getBody().appendChild(script);
+	}
+	
 	protected static native String initSocialMedia() 
 	/*-{
 		if ($wnd.FB != null) {
@@ -288,6 +298,9 @@ public class TreeSpotter implements EntryPoint {
 		} 
 		if ($wnd.twttr != null) {
 			$wnd.twttr.widgets.load();
+		}
+		if ($wnd.gapi != null) {
+			$wnd.gapi.plus.go();
 		}
 	}-*/;
 	
@@ -1156,6 +1169,14 @@ public class TreeSpotter implements EntryPoint {
 				"\" data-send=\"false\" data-layout=\"button_count\" data-width=\"80\" data-show-faces=\"false\"></div>");
 		RootPanel.get("content").clear();
 		RootPanel.get("content").add(htmlPanel);
+		
+		HTMLPanel googlePanel = new HTMLPanel(HTMLResource.INSTANCE.getHomeHtml().getText());
+		
+		googlePanel.getElementById("google").setInnerHTML(
+				"<div class=\"g-plus\" data-action=\"share\" data-annotation=\"bubble\" data-href=\"" +
+				GWT.getHostPageBaseURL() + "\"></div>");
+		RootPanel.get("content").add(googlePanel);
+		
 		initSocialMedia();
 		
 	}
