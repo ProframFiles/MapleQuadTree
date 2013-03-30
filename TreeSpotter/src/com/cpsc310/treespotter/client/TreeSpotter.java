@@ -628,43 +628,42 @@ public class TreeSpotter implements EntryPoint {
 	private void createGalleryPage(TabPanel tabs, ClientTreeData t) {
 		
 		HorizontalPanel panel = new HorizontalPanel();
+		
 		final FormPanel form = new FormPanel();
-		
-		form.setAction(GWT.getModuleBaseURL() + "uploadImage");
-		form.setMethod(FormPanel.METHOD_POST);
 		form.setEncoding(FormPanel.ENCODING_MULTIPART);
+		form.setMethod(FormPanel.METHOD_POST);
 		form.setWidget(panel);
-		
-		Label selectLabel = new Label("Upload an image");
 		
 		final FileUpload fileUpload = new FileUpload();
 		fileUpload.setName("image");
 		
 		final Button uploadButton = new Button();
-		uploadButton.setText("Loading...");
-		uploadButton.setEnabled(false);
-		
-		final TextBox treeInfo = new TextBox();
-		treeInfo.setVisible(false);
-		treeInfo.setName(t.getID());
-		
-		panel.add(treeInfo);
-		panel.add(selectLabel);
-		panel.add(fileUpload);
-		panel.add(uploadButton);
-		
-		form.addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
+		uploadButton.setText("Upload");
+			
+		uploadButton.addClickHandler(new ClickHandler() {
+
 			@Override
-			public void onSubmitComplete(SubmitCompleteEvent event) {
-				Window.alert("Upload Complete");
-				form.reset();
-				startNewBlobstoreSession(form, treeInfo, uploadButton, fileUpload);
+			public void onClick(ClickEvent event) {
+				treeDataService.getBlobstoreUploadUrl(new AsyncCallback<String>() {
+
+					@Override
+					public void onFailure(Throwable caught) {
+						System.out.println(caught.getStackTrace());
+					}
+
+					@Override
+					public void onSuccess(String result) {
+						form.setAction(result);
+						form.submit();
+					}
+				});	
 			}
 		});
 		
-		tabs.add(panel, "Gallery");
+		panel.add(fileUpload);
+		panel.add(uploadButton);
 		
-		startNewBlobstoreSession(form, treeInfo, uploadButton, fileUpload);
+		tabs.add(panel, "Gallery");
 	}
 	
 	private void startNewBlobstoreSession(final FormPanel form, final TextBox treeInfo, 
@@ -678,6 +677,7 @@ public class TreeSpotter implements EntryPoint {
 			@Override
 			public void onSuccess(String result) {
 				treeInfo.setText(result);
+				form.setAction(result);
 				uploadButton.setText("Upload");
 				uploadButton.setEnabled(true);
 				
@@ -1154,6 +1154,7 @@ public class TreeSpotter implements EntryPoint {
 		RootPanel.get("content").clear();
 		RootPanel.get("content").add(htmlPanel);
 		initSocialMedia();
+		
 	}
 
 	private void loadAdminPage() {

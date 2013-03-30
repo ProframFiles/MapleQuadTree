@@ -409,9 +409,11 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 	
 	public String getBlobstoreUploadUrl() {
-		//BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
-		//return blobstoreService.createUploadUrl("/uploadImage");
-		System.out.println("Yay");
-		return "";
+		System.out.println("Preparing for image upload");
+		BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
+		String uploadUrl = blobstoreService.createUploadUrl("/upload");
+		System.out.println("Upload URL: " + uploadUrl);
+		return uploadUrl;
+		//return "";
 	}
 }

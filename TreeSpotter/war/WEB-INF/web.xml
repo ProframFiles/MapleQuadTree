@@ -8,7 +8,7 @@
 
 	<servlet-mapping>
 		<servlet-name>uploadImage</servlet-name>
-		<url-pattern>/treespotter/uploadImage</url-pattern>
+		<url-pattern>/upload</url-pattern>
 	</servlet-mapping>
 	
 	<servlet>
