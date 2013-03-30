@@ -73,11 +73,6 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 			
 			public void onSuccess(ArrayList<String> marked) {
 				markedFlags = marked;
-				
-				// TODO debug, remove when complete
-				markedFlags = new ArrayList<String>();
-				markedFlags.add(TreeSpotter.COMMON);
-				
 				populateTreeInfoTable(treeInfoTable);
 			}
 			
