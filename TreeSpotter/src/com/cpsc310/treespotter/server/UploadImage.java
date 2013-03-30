@@ -1,7 +1,8 @@
 package com.cpsc310.treespotter.server;
 
+import static com.cpsc310.treespotter.server.ImageLinkDepot.imageLinkDepot;
+
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -38,7 +39,11 @@ public class UploadImage extends HttpServlet {
 			ImagesService imagesService = ImagesServiceFactory.getImagesService();
 			ServingUrlOptions urlOpts =  ServingUrlOptions.Builder.withBlobKey(blobKey);
 			String imageUrl = imagesService.getServingUrl(urlOpts);
-			System.out.println(imageUrl);
+			System.out.println(imageUrl);	
+		
+			// TODO: Fix bugs in uploading...
+			// TODO: Add FileIterator to grab treeId
+			// imageLinkDepot().addImageLink(treeId, imageUrl);
 			
 			res.sendRedirect("/upload?imageUrl="+imageUrl);
 			

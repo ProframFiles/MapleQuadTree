@@ -3,6 +3,7 @@ import static com.cpsc310.treespotter.server.OfyService.ofy;
 import static com.cpsc310.treespotter.server.TreeDepot.treeDepot;
 import static com.cpsc310.treespotter.server.CommentDepot.commentDepot;
 import static com.cpsc310.treespotter.server.CSVDepot.csvDepot;
+import static com.cpsc310.treespotter.server.ImageLinkDepot.imageLinkDepot;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -414,6 +415,10 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		String uploadUrl = blobstoreService.createUploadUrl("/upload");
 		System.out.println("Upload URL: " + uploadUrl);
 		return uploadUrl;
-		//return "";
+	}
+	
+	public ArrayList<String> getTreeImages(String treeID) {
+		System.out.println("Fetching Tree Images for " + treeID);
+		return imageLinkDepot().getImageList(treeID).getImageLinks();
 	}
 }

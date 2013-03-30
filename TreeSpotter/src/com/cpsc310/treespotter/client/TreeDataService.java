@@ -37,4 +37,6 @@ public interface TreeDataService extends RemoteService {
   public void deleteCSV(CSVFile csv);
   
   public String getBlobstoreUploadUrl();
+  
+  public ArrayList<String> getTreeImages(String treeID);
 }

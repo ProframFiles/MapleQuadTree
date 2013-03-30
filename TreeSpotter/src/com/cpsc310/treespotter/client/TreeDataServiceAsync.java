@@ -36,4 +36,6 @@ public interface TreeDataServiceAsync {
 
   public void getBlobstoreUploadUrl(AsyncCallback<String> async);
 
+  public void getTreeImages(String treeID, AsyncCallback<ArrayList<String>> callback);
+
 }

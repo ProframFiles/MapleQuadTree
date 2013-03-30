@@ -604,7 +604,7 @@ public class TreeSpotter implements EntryPoint {
 		// create tab panel
 		TabPanel tabs = new TabPanel();
 		tabs.add(treePage, "Details");
-		createGalleryPage(tabs, t);
+		addGallery(tabs, t);
 		//tabs.add(createGalleryPage(t), "Gallery");
 		tabs.selectTab(0);
 		tabs.setWidth("100%");
@@ -625,7 +625,23 @@ public class TreeSpotter implements EntryPoint {
 		// triggers value changed
 	}
 	
-	private void createGalleryPage(TabPanel tabs, ClientTreeData t) {
+	private void addGallery(TabPanel tabs, ClientTreeData t) {
+		VerticalPanel panel = new VerticalPanel();
+		panel.add(addGalleryUpload(t));
+		panel.add(addGalleryImages(t));
+		tabs.add(panel, "Gallery");
+	}
+	
+	
+	private Widget addGalleryImages(ClientTreeData t) {
+		// TODO: implement
+		String treeID = t.getID();
+		// ArrayList<String> imageLinks = treeDataService.getTreeImages(treeID, new AsyncCallback ...);
+		return null;
+	}
+	
+	
+	private FormPanel addGalleryUpload(ClientTreeData t) {
 		
 		HorizontalPanel panel = new HorizontalPanel();
 		
@@ -633,6 +649,18 @@ public class TreeSpotter implements EntryPoint {
 		form.setEncoding(FormPanel.ENCODING_MULTIPART);
 		form.setMethod(FormPanel.METHOD_POST);
 		form.setWidget(panel);
+		form.addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
+			
+			@Override
+			public void onSubmitComplete(SubmitCompleteEvent event) {
+				Window.alert("Upload Complete");
+				form.reset();
+				// TODO: Add gallery image refreshing
+			}
+		});
+		
+		
+		final Label selectLabel = new Label("Upload an image");
 		
 		final FileUpload fileUpload = new FileUpload();
 		fileUpload.setName("image");
@@ -644,72 +672,47 @@ public class TreeSpotter implements EntryPoint {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				treeDataService.getBlobstoreUploadUrl(new AsyncCallback<String>() {
-
-					@Override
-					public void onFailure(Throwable caught) {
-						System.out.println(caught.getStackTrace());
-					}
-
-					@Override
-					public void onSuccess(String result) {
-						form.setAction(result);
-						form.submit();
-					}
-				});	
+				String fileName = fileUpload.getFilename();				
+				if (fileName.length() == 0) {
+					Window.alert("No file specified");
+					return;
+				}
+				String extn = fileName.substring(fileName.lastIndexOf('.'), fileName.length());
+				if (!isImageExtn(extn)) {
+					Window.alert("Not an image");
+					return;
+				}
+				else {
+					treeDataService.getBlobstoreUploadUrl(new AsyncCallback<String>() {
+	
+						@Override
+						public void onFailure(Throwable caught) {
+							System.out.println(caught.getStackTrace());
+						}
+	
+						@Override
+						public void onSuccess(String result) {
+							form.setAction(result);
+							form.submit();
+							form.reset();
+						}
+					});	
+				}
 			}
 		});
 		
+		panel.add(selectLabel);
 		panel.add(fileUpload);
 		panel.add(uploadButton);
 		
-		tabs.add(panel, "Gallery");
-	}
-	
-	private void startNewBlobstoreSession(final FormPanel form, final TextBox treeInfo, 
-			final Button uploadButton, final FileUpload fileUpload) {
-		treeDataService.getBlobstoreUploadUrl(new AsyncCallback<String>() {
-			@Override
-			public void onFailure(Throwable caught) {
-				System.out.println(caught.getStackTrace());
-			}
-
-			@Override
-			public void onSuccess(String result) {
-				treeInfo.setText(result);
-				form.setAction(result);
-				uploadButton.setText("Upload");
-				uploadButton.setEnabled(true);
-				
-				uploadButton.addClickHandler(new ClickHandler() {
-					@Override
-					public void onClick(ClickEvent event) {
-						String fileName = fileUpload.getFilename();				
-						if (fileName.length() == 0) {
-							Window.alert("No file specified");
-							return;
-						}
-						String extn = fileName.substring(fileName.lastIndexOf('.'), fileName.length());
-						if (!isImageExtn(extn)) {
-							Window.alert("Not an image");
-							return;
-						}
-						else {
-							form.submit();
-						}
-					}
-				});
-			}
-		});
+		return form;
 	}
 	
 	private boolean isImageExtn(String ext) {
-		
 		for (String extn : validImageExtns) {
 			if (ext.equals(extn)) 
 				return true;
 		}
-		
 		return false;
 	}
 
