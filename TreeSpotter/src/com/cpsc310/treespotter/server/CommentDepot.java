@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 
@@ -32,6 +33,7 @@ import com.googlecode.objectify.annotation.Unindex;
 @Entity
 @Cache
 public class CommentDepot {
+	private static final Logger LOG = Logger.getLogger("Tree");
 	static CommentDepot instance;
 	@Id String id;
 	@Unindex Map<String, Ref<TreeCommentList>> commentRefs;
@@ -132,6 +134,10 @@ public class CommentDepot {
 
 	
 	ArrayList<TreeComment> getComments(String treeID){
+		if(commentRefs==null){
+			commentRefs = new HashMap<String, Ref<TreeCommentList>>();
+			LOG.warning("Comment depot was not properly persited last time, hopefully everything is ok...");
+		}
 		Ref<TreeCommentList> comment_ref = commentRefs.get(treeID);
 		
 		if(comment_ref != null){
