@@ -1167,15 +1167,11 @@ public class TreeSpotter implements EntryPoint {
 		
 		htmlPanel.getElementById("facebook").setInnerHTML("<div class=\"fb-like\" data-href=\"" + GWT.getHostPageBaseURL() + 
 				"\" data-send=\"false\" data-layout=\"button_count\" data-width=\"80\" data-show-faces=\"false\"></div>");
-		RootPanel.get("content").clear();
-		RootPanel.get("content").add(htmlPanel);
-		
-		HTMLPanel googlePanel = new HTMLPanel(HTMLResource.INSTANCE.getHomeHtml().getText());
-		
-		googlePanel.getElementById("google").setInnerHTML(
+		htmlPanel.getElementById("google").setInnerHTML(
 				"<div class=\"g-plus\" data-action=\"share\" data-annotation=\"bubble\" data-href=\"" +
 				GWT.getHostPageBaseURL() + "\"></div>");
-		RootPanel.get("content").add(googlePanel);
+		RootPanel.get("content").clear();
+		RootPanel.get("content").add(htmlPanel);
 		
 		initSocialMedia();
 		
