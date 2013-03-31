@@ -649,8 +649,24 @@ public class TreeSpotter implements EntryPoint {
 	private Widget addGalleryImages(ClientTreeData t) {
 		// TODO: implement
 		String treeID = t.getID();
-		// ArrayList<String> imageLinks = treeDataService.getTreeImages(treeID, new AsyncCallback ...);
-		return null;
+		treeDataService.getTreeImages(treeID, new AsyncCallback<ArrayList<String>>() {
+
+			@Override
+			public void onFailure(Throwable caught) {
+				caught.printStackTrace();
+				
+			}
+
+			@Override
+			public void onSuccess(ArrayList<String> result) {
+				for (String link : result) {
+					System.out.println(link);
+				}
+			}
+
+			
+		});
+		return new HorizontalPanel();
 	}
 	
 	
@@ -714,6 +730,12 @@ public class TreeSpotter implements EntryPoint {
 			}
 		});
 		
+		TextBox treeInfo = new TextBox();
+		treeInfo.setName("treeID");
+		treeInfo.setText(t.getID());
+		treeInfo.setVisible(false);
+		
+		panel.add(treeInfo);
 		panel.add(selectLabel);
 		panel.add(fileUpload);
 		panel.add(uploadButton);

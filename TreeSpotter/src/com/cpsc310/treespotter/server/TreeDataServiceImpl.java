@@ -45,18 +45,8 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	
 	@Override
 	public void importFromSite(String options) {
-	    DataUpdateJob job = new DataUpdateJob("Add Trees from User CSV");
-	    job.setOptions("user trees", "123");
-	    job.setBinaryTreeData("xfb".getBytes());
-	       
-	    TaskOptions opt = withUrl(DataUpdater.TASK_URL);
-	    opt = opt.param("job", "Add Trees from User CSV");
-	    QueueFactory.getDefaultQueue().add(opt);
-		
-		
-		
-		
-		//TaskOptions opt = withUrl(DataUpdater.TASK_URL);
+	
+		TaskOptions opt = withUrl(DataUpdater.TASK_URL);
 		if(options != null && options.length()>0){
 			LOG.info("setting option \"" +options+ "\"");
 			if(options.equalsIgnoreCase("force tasks")){
@@ -74,7 +64,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 			}
 				
 		}
-		//QueueFactory.getDefaultQueue().add(opt);
+		QueueFactory.getDefaultQueue().add(opt);
 	}
 
 	@Override
