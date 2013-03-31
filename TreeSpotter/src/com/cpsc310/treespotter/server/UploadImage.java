@@ -3,12 +3,19 @@ package com.cpsc310.treespotter.server;
 import static com.cpsc310.treespotter.server.ImageLinkDepot.imageLinkDepot;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.fileupload.FileItemIterator;
+import org.apache.commons.fileupload.FileItemStream;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload.util.Streams;
 
 import com.google.appengine.api.blobstore.BlobKey;
 import com.google.appengine.api.blobstore.BlobstoreService;
@@ -40,10 +47,28 @@ public class UploadImage extends HttpServlet {
 			ServingUrlOptions urlOpts =  ServingUrlOptions.Builder.withBlobKey(blobKey);
 			String imageUrl = imagesService.getServingUrl(urlOpts);
 			System.out.println(imageUrl);	
+			
+			String treeID = "";
+			
+			ServletFileUpload upload = new ServletFileUpload();
+			try {
+				FileItemIterator iterator = upload.getItemIterator(req);
+				while (iterator.hasNext()) {
+					FileItemStream item = iterator.next();
+					String name = item.getFieldName();
+					InputStream stream = item.openStream();
+					
+					if(item.isFormField()) {
+						System.out.println("Form field: " + name);
+						treeID = Streams.asString(stream);
+					}
+				}
+			} catch (FileUploadException e) {
+				e.printStackTrace();
+			}
 		
-			// TODO: Fix bugs in uploading...
-			// TODO: Add FileIterator to grab treeId
-			// imageLinkDepot().addImageLink(treeId, imageUrl);
+			if (!treeID.equals(""))
+				imageLinkDepot().addImageLink(treeID, imageUrl);
 			
 			res.sendRedirect("/upload?imageUrl="+imageUrl);
 			
