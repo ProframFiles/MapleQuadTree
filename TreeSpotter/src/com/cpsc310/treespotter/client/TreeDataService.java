@@ -1,6 +1,9 @@
 package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import com.cpsc310.treespotter.shared.CSVFile;
 import com.cpsc310.treespotter.shared.ISharedTreeData;
@@ -39,4 +42,8 @@ public interface TreeDataService extends RemoteService {
   public String getBlobstoreUploadUrl();
   
   public ArrayList<String> getTreeImages(String treeID);
+
+  public ArrayList<String> getFlaggedTreeIDs();
+
+  public SortedMap<String, String> getTreeFlagData(String treeID);
 }

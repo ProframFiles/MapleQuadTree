@@ -7,7 +7,9 @@ import static com.cpsc310.treespotter.server.ImageLinkDepot.imageLinkDepot;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -276,7 +278,21 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		// this added assuming flags are kept separate from the ClientTreeData objects
 		return treeDepot().getFlags(treeID);
 	}
-
+	
+	@Override
+	public TreeMap<String, String> getTreeFlagData(String treeID) {
+		// this added assuming flags are kept separate from the ClientTreeData objects
+		TreeMap<String, String> ret = new TreeMap<String, String>();
+		ret.put("Genus", "Person1: This is wrong because of blah blah blah\nPerson2: this is wrong because I said so");
+		return ret;
+	}
+	
+	@Override
+	public ArrayList<String> getFlaggedTreeIDs() {
+		ArrayList<String> ret = new ArrayList<String>();
+		ret.add("V1");
+		return ret;
+	}
 	@Override
 	public ArrayList<TreeComment> addTreeComment(String treeID, TreeComment comment) {
 		return commentDepot().putComment(treeID, comment);

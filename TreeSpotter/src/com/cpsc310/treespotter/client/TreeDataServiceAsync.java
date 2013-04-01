@@ -1,6 +1,8 @@
 package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import com.cpsc310.treespotter.shared.CSVFile;
 import com.cpsc310.treespotter.shared.ISharedTreeData;
@@ -38,4 +40,7 @@ public interface TreeDataServiceAsync {
 
   public void getTreeImages(String treeID, AsyncCallback<ArrayList<String>> callback);
 
+  public void getFlaggedTreeIDs(AsyncCallback<ArrayList<String>> callback);
+  
+  public void getTreeFlagData(String treeID, AsyncCallback<SortedMap<String, String>> callback);
 }
