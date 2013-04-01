@@ -14,6 +14,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -329,6 +331,26 @@ public class TreeDepot {
 		}
 		return ret;
 	}
+	
+	public TreeMap<String, String> getFlagData(String treeID){
+		TreeMap<String, String> ret = new TreeMap<String, String>();
+		if(treeFlags != null){
+			HashMap<String, String> flags = treeFlags.get(treeID);
+			if(flags != null){
+				ret.putAll(flags);
+			}
+		}
+		return ret;
+	}
+	
+	public ArrayList<String> getFlaggedIDs(){
+		ArrayList<String> ret = new ArrayList<String>();
+		if(treeFlags != null){
+			ret.addAll(treeFlags.keySet());
+		}
+		return ret;
+	}
+	
 	public void putTreesByGenus(Collection<TreeData> trees){
 		genusIndex.addTrees(trees);
 		AddAllBinsToKeyWords(genusIndex.getBinEntries());

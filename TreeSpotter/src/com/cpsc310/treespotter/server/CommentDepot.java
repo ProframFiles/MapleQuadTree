@@ -96,14 +96,15 @@ public class CommentDepot {
 		return hex;
 	}
 	public synchronized TreeCommentList getCommentList(final String treeID){
+		final String lookupID = getMungedID(treeID);
 		TreeCommentList ret = ofy().transact(new Work<TreeCommentList>() {
 		    public TreeCommentList run() {
-		    	Ref<TreeCommentList> comment_ref = commentRefs.get(treeID);
+		    	Ref<TreeCommentList> comment_ref = commentRefs.get(lookupID);
 		    	TreeCommentList ret;
 		    	if(comment_ref == null){
-		    		ret = new TreeCommentList(treeID);
+		    		ret = new TreeCommentList(lookupID);
 		    		ofy().save().entity(ret);
-		    		commentRefs.put(treeID, Ref.create(ret));
+		    		commentRefs.put(lookupID, Ref.create(ret));
 		    		saveDepotState(instance);
 		    	}
 		    	else{
@@ -118,7 +119,8 @@ public class CommentDepot {
 	public ArrayList<TreeComment> putComment(final String treeID, final TreeComment comment){
 		Date date = new Date();
 		comment.setDate(date.toString());
-		final TreeCommentList comment_list = getCommentList(treeID);
+		String lookupID = getMungedID(treeID);
+		final TreeCommentList comment_list = getCommentList(lookupID);
 		ArrayList<TreeComment> ret = ofy().transact(new Work<ArrayList<TreeComment>>() {
 		    public ArrayList<TreeComment> run() {
 		    	comment_list.addComment(comment);
@@ -132,13 +134,26 @@ public class CommentDepot {
 		
 	}
 
+	/**
+	 * @param treeID
+	 * @return
+	 */
+	private String getMungedID(final String treeID) {
+		String lookupID = treeID;
+		if(lookupID !=null && treeID.startsWith("M")){
+			lookupID = "V" + treeID.substring(1);
+		}
+		return lookupID;
+	}
+
 	
 	ArrayList<TreeComment> getComments(String treeID){
 		if(commentRefs==null){
 			commentRefs = new HashMap<String, Ref<TreeCommentList>>();
 			LOG.warning("Comment depot was not properly persited last time, hopefully everything is ok...");
 		}
-		Ref<TreeCommentList> comment_ref = commentRefs.get(treeID);
+		String lookupID = getMungedID(treeID);
+		Ref<TreeCommentList> comment_ref = commentRefs.get(lookupID);
 		
 		if(comment_ref != null){
 			ofy().load().ref(comment_ref);
