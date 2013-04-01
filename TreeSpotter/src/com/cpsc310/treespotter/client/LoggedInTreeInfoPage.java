@@ -380,9 +380,7 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 			
 			public void onSuccess(ISharedTreeData tree) {
 				Window.alert("Tree successfully modified");
-				// TODO uncomment this to load new modified tree
-				// once server side method is complete
-//				setTree(new ClientTreeData(tree));
+				setTree(new ClientTreeData(tree));
 				populateTreeInfoTable(treeInfoTable);
 				editButtonsBar.remove(saveButton);
 				editButtonsBar.remove(cancelButton);
