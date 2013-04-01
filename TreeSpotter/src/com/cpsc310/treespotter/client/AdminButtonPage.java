@@ -43,7 +43,7 @@ public class AdminButtonPage {
 		
 		System.out.println("Info: isAdmin? " +loginInfo.isAdmin()); 
 		
-		buttonPanel = new HTMLPanel("<img src=\"image/banana-on-computer.gif\" />\n<h1> Admin Page </h1>");
+		buttonPanel = new HTMLPanel("<center><h1><img src=\"image/banana-on-computer.gif\" /> Admin Page <img src=\"image/banana-on-computer.gif\" /></h1></center>");
 		contentPanel = new HTMLPanel("");
 		addButton(treeDataService, "Try Update", "");
 		addButton(treeDataService, "Force update tasks re-run", "force tasks");
