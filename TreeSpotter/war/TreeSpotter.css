@@ -365,3 +365,23 @@ a.main-search:hover {
 .csv-row:hover {
 	background-color: mistyrose;
 }
+
+/* IMAGE GALLERY */
+.tree-image {
+	display: inline-block;
+	border: thin gray solid;
+	padding: 10px;
+	margin: 10px;
+}
+
+.tree-image:hover {
+	opacity: 0.5;
+	cursor: pointer;
+}
+
+.image-dialog {
+	padding: 5px;
+	border:	thin black solid;
+	background-color: white;
+	border-radius: 3px;
+}

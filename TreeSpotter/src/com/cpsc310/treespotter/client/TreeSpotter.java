@@ -50,11 +50,13 @@ import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -207,7 +209,7 @@ public class TreeSpotter implements EntryPoint {
 		initTwitterScript();
 		initGooglePlusScript();
 		initHomePage();
-		initSearchOracles();
+		//initSearchOracles();
 		initButtons();
 		initLoginLogout();
 		initAdminButton();
@@ -617,8 +619,8 @@ public class TreeSpotter implements EntryPoint {
 		// create tab panel
 		TabPanel tabs = new TabPanel();
 		tabs.add(treePage, "Details");
-		addGallery(tabs, t);
-		//tabs.add(createGalleryPage(t), "Gallery");
+		//addGallery(tabs, t);
+		tabs.add(new ImageGallery(t, treeDataService), "Gallery");
 		tabs.selectTab(0);
 		tabs.setWidth("100%");
 		tabs.getTabBar().setStyleName("tree-info-tab-bar");
@@ -638,118 +640,121 @@ public class TreeSpotter implements EntryPoint {
 		// triggers value changed
 	}
 	
-	private void addGallery(TabPanel tabs, ClientTreeData t) {
-		VerticalPanel panel = new VerticalPanel();
-		panel.add(addGalleryUpload(t));
-		panel.add(addGalleryImages(t));
-		tabs.add(panel, "Gallery");
-	}
-	
-	
-	private Widget addGalleryImages(ClientTreeData t) {
-		// TODO: implement
-		String treeID = t.getID();
-		treeDataService.getTreeImages(treeID, new AsyncCallback<ArrayList<String>>() {
-
-			@Override
-			public void onFailure(Throwable caught) {
-				caught.printStackTrace();
-				
-			}
-
-			@Override
-			public void onSuccess(ArrayList<String> result) {
-				for (String link : result) {
-					System.out.println(link);
-				}
-			}
-
-			
-		});
-		return new HorizontalPanel();
-	}
-	
-	
-	private FormPanel addGalleryUpload(ClientTreeData t) {
-		
-		HorizontalPanel panel = new HorizontalPanel();
-		
-		final FormPanel form = new FormPanel();
-		form.setEncoding(FormPanel.ENCODING_MULTIPART);
-		form.setMethod(FormPanel.METHOD_POST);
-		form.setWidget(panel);
-		form.addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
-			
-			@Override
-			public void onSubmitComplete(SubmitCompleteEvent event) {
-				Window.alert("Upload Complete");
-				form.reset();
-				// TODO: Add gallery image refreshing
-			}
-		});
-		
-		
-		final Label selectLabel = new Label("Upload an image");
-		
-		final FileUpload fileUpload = new FileUpload();
-		fileUpload.setName("image");
-		
-		final Button uploadButton = new Button();
-		uploadButton.setText("Upload");
-			
-		uploadButton.addClickHandler(new ClickHandler() {
-
-			@Override
-			public void onClick(ClickEvent event) {
-				String fileName = fileUpload.getFilename();				
-				if (fileName.length() == 0) {
-					Window.alert("No file specified");
-					return;
-				}
-				String extn = fileName.substring(fileName.lastIndexOf('.'), fileName.length());
-				if (!isImageExtn(extn)) {
-					Window.alert("Not an image");
-					return;
-				}
-				else {
-					treeDataService.getBlobstoreUploadUrl(new AsyncCallback<String>() {
-	
-						@Override
-						public void onFailure(Throwable caught) {
-							System.out.println(caught.getStackTrace());
-						}
-	
-						@Override
-						public void onSuccess(String result) {
-							form.setAction(result);
-							form.submit();
-							form.reset();
-						}
-					});	
-				}
-			}
-		});
-		
-		TextBox treeInfo = new TextBox();
-		treeInfo.setName("treeID");
-		treeInfo.setText(t.getID());
-		treeInfo.setVisible(false);
-		
-		panel.add(treeInfo);
-		panel.add(selectLabel);
-		panel.add(fileUpload);
-		panel.add(uploadButton);
-		
-		return form;
-	}
-	
-	private boolean isImageExtn(String ext) {
-		for (String extn : validImageExtns) {
-			if (ext.equals(extn)) 
-				return true;
-		}
-		return false;
-	}
+//	private void addGallery(TabPanel tabs, ClientTreeData t) {
+//		VerticalPanel panel = new VerticalPanel();
+//		panel.add(addGalleryUpload(t));
+//		panel.add(addGalleryImages(t));
+//		tabs.add(panel, "Gallery");
+//	}
+//	
+//	
+//	private Widget addGalleryImages(ClientTreeData t) {
+//		// TODO: implement
+//		String treeID = t.getID();
+//		final FlowPanel panel = new FlowPanel();
+//		treeDataService.getTreeImages(treeID, new AsyncCallback<ArrayList<String>>() {
+//
+//			@Override
+//			public void onFailure(Throwable caught) {
+//				caught.printStackTrace();
+//				
+//			}
+//
+//			@Override
+//			public void onSuccess(ArrayList<String> result) {
+//				for (String link : result) {
+//					System.out.println(link);
+//					Image img = new Image();
+//					img.setUrl(link);
+//					img.setStyleName("tree-image");
+//					panel.add(img);
+//				}
+//			}
+//		});
+//		return panel;
+//	}
+//	
+//	
+//	private FormPanel addGalleryUpload(ClientTreeData t) {
+//		
+//		HorizontalPanel panel = new HorizontalPanel();
+//		
+//		final FormPanel form = new FormPanel();
+//		form.setEncoding(FormPanel.ENCODING_MULTIPART);
+//		form.setMethod(FormPanel.METHOD_POST);
+//		form.setWidget(panel);
+//		form.addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
+//			
+//			@Override
+//			public void onSubmitComplete(SubmitCompleteEvent event) {
+//				Window.alert("Upload Complete");
+//				form.reset();
+//				// TODO: Add gallery image refreshing
+//			}
+//		});
+//		
+//		
+//		final Label selectLabel = new Label("Upload an image");
+//		
+//		final FileUpload fileUpload = new FileUpload();
+//		fileUpload.setName("image");
+//		
+//		final Button uploadButton = new Button();
+//		uploadButton.setText("Upload");
+//			
+//		uploadButton.addClickHandler(new ClickHandler() {
+//
+//			@Override
+//			public void onClick(ClickEvent event) {
+//				String fileName = fileUpload.getFilename();				
+//				if (fileName.length() == 0) {
+//					Window.alert("No file specified");
+//					return;
+//				}
+//				String extn = fileName.substring(fileName.lastIndexOf('.'), fileName.length());
+//				if (!isImageExtn(extn)) {
+//					Window.alert("Not an image");
+//					return;
+//				}
+//				else {
+//					treeDataService.getBlobstoreUploadUrl(new AsyncCallback<String>() {
+//	
+//						@Override
+//						public void onFailure(Throwable caught) {
+//							System.out.println(caught.getStackTrace());
+//						}
+//	
+//						@Override
+//						public void onSuccess(String result) {
+//							form.setAction(result);
+//							form.submit();
+//							form.reset();
+//						}
+//					});	
+//				}
+//			}
+//		});
+//		
+//		TextBox treeInfo = new TextBox();
+//		treeInfo.setName("treeID");
+//		treeInfo.setText(t.getID());
+//		treeInfo.setVisible(false);
+//		
+//		panel.add(treeInfo);
+//		panel.add(selectLabel);
+//		panel.add(fileUpload);
+//		panel.add(uploadButton);
+//		
+//		return form;
+//	}
+//	
+//	private boolean isImageExtn(String ext) {
+//		for (String extn : validImageExtns) {
+//			if (ext.equals(extn)) 
+//				return true;
+//		}
+//		return false;
+//	}
 
 	/**
 	 * Open a popup for a form to add a tree to the database

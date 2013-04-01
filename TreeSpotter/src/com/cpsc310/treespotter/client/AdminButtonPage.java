@@ -4,13 +4,19 @@
 package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
+import java.util.Map.Entry;
+import java.util.SortedMap;
 
 import com.cpsc310.treespotter.shared.CSVFile;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -23,6 +29,9 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  */
 public class AdminButtonPage {
 	
+	private static HTMLPanel buttonPanel;
+	private static HTMLPanel contentPanel;
+	
 	static public void load(LoginInfo loginInfo, final TreeDataServiceAsync treeDataService) {
 		// put another check, since possible to force button to show
 		if (loginInfo == null || !loginInfo.isAdmin()) {
@@ -34,19 +43,87 @@ public class AdminButtonPage {
 		
 		System.out.println("Info: isAdmin? " +loginInfo.isAdmin()); 
 		
-		final HTMLPanel panel = new HTMLPanel("<img src=\"image/banana-on-computer.gif\" />\n<h1> Admin Page </h1>");
-		addButton(panel, treeDataService, "Try Update", "");
-		addButton(panel, treeDataService, "Force update tasks re-run", "force tasks");
-		addButton(panel, treeDataService, "Force task \"indices\"", "indices");
-		addButton(panel, treeDataService, "Force \"indices\" and \"genus\"", "indices,genus");
+		buttonPanel = new HTMLPanel("<img src=\"image/banana-on-computer.gif\" />\n<h1> Admin Page </h1>");
+		contentPanel = new HTMLPanel("");
+		addButton(treeDataService, "Try Update", "");
+		addButton(treeDataService, "Force update tasks re-run", "force tasks");
+		addButton(treeDataService, "Force task \"indices\"", "indices");
+		addButton(treeDataService, "Force \"indices\" and \"genus\"", "indices,genus");
 		
-		addCSVButton(panel, treeDataService);
+		addCSVButton(treeDataService);
+		addFlaggedButton(treeDataService);
 		
 		RootPanel.get("content").clear();
-		RootPanel.get("content").add(panel);	
+		RootPanel.get("content").add(buttonPanel);	
+		RootPanel.get("content").add(contentPanel);	
 	}
 	
-	private static void addCSVButton(final HTMLPanel panel, final TreeDataServiceAsync treeDataService) {
+	private static void addFlaggedButton(final TreeDataServiceAsync treeDataService) {
+
+		Button btn = new Button("See Flagged Trees");
+
+		btn.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				treeDataService
+						.getFlaggedTreeIDs(new AsyncCallback<ArrayList<String>>() {
+
+							@Override
+							public void onFailure(Throwable caught) {
+								System.out.println(caught.getStackTrace());
+							}
+
+							@Override
+							public void onSuccess(ArrayList<String> results) {
+								
+								if (results.isEmpty()) {
+									contentPanel.clear();
+									contentPanel.add(new HTML("No trees have been flagged."));
+								}
+								
+								for (String tree : results) {
+									createFlaggedTreeItem(tree, treeDataService);
+								}
+							}
+						});
+			}
+		});
+		
+		buttonPanel.add(btn);
+	}
+	
+	private static void createFlaggedTreeItem(String treeID, final TreeDataServiceAsync treeDataService) {
+		HTML header = new HTML(treeID);
+		final HTML content = new HTML("");
+		
+		treeDataService.getTreeFlagData(treeID, new AsyncCallback<SortedMap<String, String>>() {
+
+			@Override
+			public void onFailure(Throwable caught) {
+				System.out.println(caught.getStackTrace());
+			}
+
+			@Override
+			public void onSuccess(SortedMap<String, String> result) {
+				String flagsContent = "";
+				for ( Entry<String, String> flag: result.entrySet()) {
+					flagsContent = flag.getKey() + ": " + flag.getValue() + "<br>";
+				}
+				System.out.println(flagsContent);
+				content.setHTML(flagsContent);
+			}
+		});	
+	
+		DisclosurePanel d = new DisclosurePanel();
+		d.setHeader(header);
+		d.setContent(content);
+		
+		contentPanel.clear();
+		contentPanel.add(d);
+	}
+
+	private static void addCSVButton(final TreeDataServiceAsync treeDataService) {
 		Button button = new Button("Get CSV files");
 		button.addClickHandler(new ClickHandler() {
 
@@ -63,11 +140,13 @@ public class AdminButtonPage {
 
 							@Override
 							public void onSuccess(ArrayList<CSVFile> result) {
-								if (!result.isEmpty()) {
-									RootPanel.get("content").clear();
+								contentPanel.clear();
+								if (result.isEmpty()) {
+									contentPanel.add(new HTML("No CSV files pending."));
+								} else {
 									for (CSVFile csv : result) {
 										VerticalPanel panel = renderCSVTable(csv, treeDataService);
-										RootPanel.get("content").add(panel);
+										contentPanel.add(panel);
 									}
 								}
 							}
@@ -76,28 +155,29 @@ public class AdminButtonPage {
 			}
 			
 		});
-		panel.add(button);
+		buttonPanel.add(button);
 		
 	}
 	
-	private static void addButton(final HTMLPanel panel, final TreeDataServiceAsync treeDataService, final String label,  final String options){
+	private static void addButton(final TreeDataServiceAsync treeDataService, final String label,  final String options){
 		Button button = new Button(label);
-		button.addClickHandler(makeHandler(panel, treeDataService,options));
-		panel.add(button);
+		button.addClickHandler(makeHandler(treeDataService,options));
+		buttonPanel.add(button);
 	}
 			
-	private static ClickHandler makeHandler(final HTMLPanel panel, final TreeDataServiceAsync treeDataService, final String options){
+	private static ClickHandler makeHandler(final TreeDataServiceAsync treeDataService, final String options){
 		return new ClickHandler() {
 			public void onClick(ClickEvent event) {
+				contentPanel.clear();
 				treeDataService.importFromSite(options, new AsyncCallback<Void>() {
 					@Override
 					public void onFailure(Throwable caught) {
-						panel.add(new HTML("Something went wrong! <br>" + caught.getMessage()));						
+						contentPanel.add(new HTML("Something went wrong! <br>" + caught.getMessage()));						
 					}
 
 					@Override
 					public void onSuccess(Void result) {
-						panel.add(new HTML("Import task queued"));						
+						contentPanel.add(new HTML("Import task queued"));						
 					}					
 				});
 			}			
