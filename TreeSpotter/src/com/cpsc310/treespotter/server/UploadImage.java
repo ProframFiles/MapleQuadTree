@@ -60,7 +60,7 @@ public class UploadImage extends HttpServlet {
 					
 					if(item.isFormField()) {
 						System.out.println("Form field: " + name);
-						treeID = Streams.asString(stream);
+						treeID = name;
 					}
 				}
 			} catch (FileUploadException e) {

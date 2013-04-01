@@ -63,7 +63,8 @@ public class ImageLinkDepot {
 	
 	
 	public void addImageLink(final String treeId, final String link) {
-		final TreeImageList imageList = getImageList(treeId);
+		String treeID = originalTreeID(treeId);
+		final TreeImageList imageList = getImageList(treeID);
 		ofy().transact(new Work<TreeImageList>() {
 			
 			@Override
@@ -82,10 +83,11 @@ public class ImageLinkDepot {
 
 			@Override
 			public TreeImageList run() {
-				Ref<TreeImageList> imageRef = treeImageLinks.get(treeId);
+				String treeID = originalTreeID(treeId);
+				Ref<TreeImageList> imageRef = treeImageLinks.get(treeID);
 				TreeImageList treeImages;
 				if (imageRef == null) {
-					treeImages = new TreeImageList(treeId);
+					treeImages = new TreeImageList(treeID);
 					ofy().save().entity(treeImages);
 					treeImageLinks.put(treeId, Ref.create(treeImages));
 					saveDepotState(instance);
@@ -100,5 +102,15 @@ public class ImageLinkDepot {
 		return treeImages;
 	}
 	
+	
+	private String originalTreeID(final String treeID) {
+		String user = treeID.substring(0, 1);
+		if (user.toUpperCase().equals("M")) {
+			String num = treeID.substring(1);
+			return "V" + num;
+		}
+		
+		return treeID;
+	}
 	
 }

@@ -44,7 +44,7 @@ public class ImageGallery extends Composite {
 		uploadPanel = new HorizontalPanel();
 		galleryPanel = new FlowPanel();
 		
-		addGalleryUpload();
+		addGalleryUpload(tree);
 		addGalleryImages();
 		
 		initWidget(mainPanel);	
@@ -112,7 +112,7 @@ public class ImageGallery extends Composite {
 		return img;
 	}
 
-	private void addGalleryUpload() {
+	private void addGalleryUpload(ClientTreeData t) {
 		final FormPanel form = new FormPanel();
 		form.setEncoding(FormPanel.ENCODING_MULTIPART);
 		form.setMethod(FormPanel.METHOD_POST);
@@ -134,6 +134,8 @@ public class ImageGallery extends Composite {
 		
 		final Button uploadButton = new Button();
 		uploadButton.setText("Upload");
+		
+
 			
 		uploadButton.addClickHandler(new ClickHandler() {
 
@@ -167,13 +169,11 @@ public class ImageGallery extends Composite {
 				}
 			}
 		});
-//		
-//		TextBox treeInfo = new TextBox();
-//		treeInfo.setName("treeID");
-//		treeInfo.setText(t.getID());
-//		treeInfo.setVisible(false);
+		final TextBox treeInfo = new TextBox();
+		treeInfo.setName(t.getID());
+		treeInfo.setVisible(false);
 		
-//		panel.add(treeInfo);
+		uploadPanel.add(treeInfo);
 		uploadPanel.add(new HTML("Select an image to upload: "));
 		uploadPanel.add(fileUpload);
 		uploadPanel.add(uploadButton);

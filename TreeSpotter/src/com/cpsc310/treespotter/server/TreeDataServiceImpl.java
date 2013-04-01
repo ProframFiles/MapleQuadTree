@@ -419,6 +419,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	
 	public ArrayList<String> getTreeImages(String treeID) {
 		System.out.println("Fetching Tree Images for " + treeID);
-		return imageLinkDepot().getImageList(treeID).getImageLinks();
+		ArrayList<String> links = imageLinkDepot().getImageList(treeID).getImageLinks();
+		return links;
 	}
 }
