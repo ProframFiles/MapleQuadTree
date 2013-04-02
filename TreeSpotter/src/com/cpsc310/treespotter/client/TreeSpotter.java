@@ -12,9 +12,6 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.MetaElement;
-import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.ScriptElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -30,19 +27,13 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.maps.client.InfoWindowContent;
-import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.Maps;
-import com.google.gwt.maps.client.event.MarkerClickHandler;
 import com.google.gwt.maps.client.geocode.Geocoder;
-import com.google.gwt.maps.client.geocode.LatLngCallback;
 import com.google.gwt.maps.client.geom.LatLng;
 import com.google.gwt.maps.client.geom.LatLngBounds;
 import com.google.gwt.maps.client.geom.Point;
 import com.google.gwt.maps.client.overlay.Icon;
 import com.google.gwt.maps.client.overlay.Marker;
-import com.google.gwt.maps.client.overlay.MarkerOptions;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -50,25 +41,22 @@ import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.StackLayoutPanel;
 import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -624,7 +612,6 @@ public class TreeSpotter implements EntryPoint {
 		tabs.selectTab(0);
 		tabs.setWidth("100%");
 		tabs.getTabBar().setStyleName("tree-info-tab-bar");
-		// TODO: image gallery class
 		
 		RootPanel.get("content").clear();
 		RootPanel.get("content").add(tabs);
@@ -649,7 +636,7 @@ public class TreeSpotter implements EntryPoint {
 		StackLayoutPanel stack = new StackLayoutPanel(Unit.PX);
 		stack.setSize("350px", "580px");
 		stack.add(addTreeForm(addPanel), "Add Tree", 40);
-		stack.add(addTreesCSV(), "Add Multiple Trees", 40);
+		stack.add(addTreesCSV(addPanel), "Add Multiple Trees", 40);
 		
 		addPanel.add(stack);
 		addPanel.setStyleName("add-popup");
@@ -768,7 +755,7 @@ public class TreeSpotter implements EntryPoint {
 	 * @return FormPanel with upload functionality
 	 */
 	
-	private FormPanel addTreesCSV() {
+	private FormPanel addTreesCSV(final PopupPanel addPanel) {
 		VerticalPanel panel = new VerticalPanel();
 		final FormPanel form = new FormPanel();
 
@@ -817,14 +804,27 @@ public class TreeSpotter implements EntryPoint {
 			userInfo.setText(loginInfo.getEmailAddress());
 		}
 		
+		/* add cancel button to close popup */
+		Anchor cancel = new Anchor("Cancel");
+		cancel.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
+				addPanel.hide();
+			}
+		});
+		
+		HTMLPanel btnsPanel = new HTMLPanel("");
+		btnsPanel.add(uploadButton);
+		btnsPanel.add(cancel);
+		btnsPanel.setStyleName("add-button-bar");
+		
 		// Adding all widgets to panel
 		panel.add(userInfo);
 		panel.add(selectLabel);
 		panel.add(fileUpload);
-		panel.add(uploadButton);
+		panel.add(btnsPanel);
 		panel.setSpacing(10);
 		
-		
+		panel.setWidth("100%");
 		form.setWidth("100%");
 		form.addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
 			
@@ -837,10 +837,6 @@ public class TreeSpotter implements EntryPoint {
 		
 	}
 
-	private void addComment() {
-		// TODO: implement
-	}
-	
 	/**
 	 * Helper function for initHomePage() Creates a panel with a text box for an
 	 * advanced search field

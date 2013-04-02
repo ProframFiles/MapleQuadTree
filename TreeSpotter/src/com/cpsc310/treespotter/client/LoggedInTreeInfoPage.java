@@ -153,10 +153,9 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		postCommentBtn.addClickHandler(new ClickHandler() {
 
 			@Override
-			public void onClick(ClickEvent event) {
-				System.out.println(textarea.getText());		
+			public void onClick(ClickEvent event) {	
 				try {
-					addComment(getTree().getID(), textarea.getText(), getTreeSpotter().loggedInUser());
+					addComment(getTree().getID(), textarea.getHTML(), getTreeSpotter().loggedInUser());
 					textarea.setHTML("");
 				} catch (Exception e) {
 					getTreeSpotter().handleError(e);

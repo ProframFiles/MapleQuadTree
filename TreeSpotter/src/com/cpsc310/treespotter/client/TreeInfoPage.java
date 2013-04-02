@@ -60,10 +60,7 @@ public abstract class TreeInfoPage extends Composite {
 
 		createResultDataRow(TreeSpotter.GENUS, ParseUtils.capitalize(displayTree.getGenus(), false));
 		createResultDataRow(TreeSpotter.SPECIES, ParseUtils.capitalize(displayTree.getSpecies(), true));
-		//String capName = ParseUtils.capitalize(displayTree.getCommonName(), false);
 		createWikiLink(TreeSpotter.COMMON, ParseUtils.capitalize(displayTree.getCommonName(), false));
-//		createResultDataRow(TreeSpotter.COMMON, "<a href='" + TreeSpotter.wikipediaSearchURL
-//				+ capName + "'>" + capName + "</a>");
 		createResultDataRow(TreeSpotter.LOCATION, ParseUtils.capitalize(displayTree.getLocation(), false));
 		String neighbour = displayTree.getNeighbourhood();
 		neighbour = (neighbour == null) ? neighbour : ParseUtils.capitalize(neighbour, false);

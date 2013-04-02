@@ -33,7 +33,7 @@ public class CommentCell extends AbstractCell<TreeComment> {
     		  "<span style='font-size: 13px; margin-left: 100px; color:skyblue;'> {1} </span>" +
     		  "<p style='display:block; padding: 10px;'> {2} </p>" +
     		  "</div>")
-      SafeHtml commentCell(String name, String date, String text);
+      SafeHtml commentCell(String name, String date, SafeHtml text);
     }
 
     /**
@@ -47,9 +47,8 @@ public class CommentCell extends AbstractCell<TreeComment> {
 	        return;
 	      }
 	      
-	     SafeHtml rendered = templates.commentCell(comment.getUser(), comment.getDate(), comment.getCommentText());
-	      sb.append(rendered);
-		
+	     SafeHtml rendered = templates.commentCell(comment.getUser(), comment.getDate(), SafeHtmlUtils.fromTrustedString(comment.getCommentText()));
+	     sb.append(rendered);	
 	}
 
 }
