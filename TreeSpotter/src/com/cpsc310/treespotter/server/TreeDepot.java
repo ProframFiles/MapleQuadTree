@@ -296,6 +296,10 @@ public class TreeDepot {
 	}
 	
 	public void putTree(TreeData tree){
+		if(nameIndex == null){
+			loadNameIndex();
+		}
+		nameIndex.addTree(tree);
 		for(TreesIndexedByString index: stringIndices){
 			String key = index.getKeyForTree(tree);
 			if(key != null){

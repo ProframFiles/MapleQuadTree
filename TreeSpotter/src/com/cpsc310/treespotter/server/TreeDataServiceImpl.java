@@ -281,11 +281,13 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	
 	@Override
 	public ArrayList<String> getTreeFlags(String treeID) {
+		LOG.info("Recieved request for Tree flag list for: \"" +treeID +"\"");
 		return treeDepot().getFlags(treeID);
 	}
 	
 	@Override
 	public TreeMap<String, String> getTreeFlagData(String treeID) {
+		LOG.info("Recieved request for Tree flag data for: \"" +treeID +"\"");
 		return treeDepot().getFlagData(treeID);
 	}
 	

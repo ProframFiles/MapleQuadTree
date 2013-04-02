@@ -205,7 +205,7 @@ public class TreeRequest {
 		public boolean isMatch(TreeData tree) {
 			boolean match = false;
 			if(tree != null){
-				match = tsp.treeToString(tree).contains(matchString);
+				match = tsp.treeToString(tree).toUpperCase().contains(matchString);
 				
 			}
 			if(match){
