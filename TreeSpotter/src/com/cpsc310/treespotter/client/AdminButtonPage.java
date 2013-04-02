@@ -66,6 +66,7 @@ public class AdminButtonPage {
 
 			@Override
 			public void onClick(ClickEvent event) {
+				contentPanel.clear();
 				treeDataService
 						.getFlaggedTreeIDs(new AsyncCallback<ArrayList<String>>() {
 
@@ -83,7 +84,8 @@ public class AdminButtonPage {
 								}
 								
 								for (String tree : results) {
-									createFlaggedTreeItem(tree, treeDataService);
+									System.out.println("Flagged Tree: " + tree);
+									contentPanel.add(createFlaggedTreeItem(tree, treeDataService));
 								}
 							}
 						});
@@ -93,9 +95,9 @@ public class AdminButtonPage {
 		buttonPanel.add(btn);
 	}
 	
-	private static void createFlaggedTreeItem(String treeID, final TreeDataServiceAsync treeDataService) {
+	private static DisclosurePanel createFlaggedTreeItem(final String treeID, final TreeDataServiceAsync treeDataService) {
 		HTML header = new HTML(treeID);
-		final HTML content = new HTML("");
+		final HTMLPanel content = new HTMLPanel("");
 		
 		treeDataService.getTreeFlagData(treeID, new AsyncCallback<SortedMap<String, String>>() {
 
@@ -106,21 +108,43 @@ public class AdminButtonPage {
 
 			@Override
 			public void onSuccess(SortedMap<String, String> result) {
-				String flagsContent = "";
-				for ( Entry<String, String> flag: result.entrySet()) {
-					flagsContent = flag.getKey() + ": " + flag.getValue() + "<br>";
+				for (String flag: result.keySet()) {
+					System.out.println(flag);
+					content.add(new HTML(flag + ": " + result.get(flag) + " <br>"));
 				}
-				System.out.println(flagsContent);
-				content.setHTML(flagsContent);
 			}
 		});	
 	
-		DisclosurePanel d = new DisclosurePanel();
+		final DisclosurePanel d = new DisclosurePanel();
+		
+		// add button to clear flags
+		Button clearFlagsBtn = new Button("Clear Flags");
+		clearFlagsBtn.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				treeDataService.clearTreeFlags(treeID, new AsyncCallback<Void>() {
+
+					@Override
+					public void onFailure(Throwable caught) {
+						System.out.println(caught.getStackTrace());		
+					}
+
+					@Override
+					public void onSuccess(Void result) {
+						Window.alert("The flags for " + treeID + " have been cleared.");
+						contentPanel.remove(d);
+					}			
+				});
+			}
+		});
+		
+		
+		content.add(clearFlagsBtn);
 		d.setHeader(header);
 		d.setContent(content);
-		
-		contentPanel.clear();
-		contentPanel.add(d);
+
+		return d;
 	}
 
 	private static void addCSVButton(final TreeDataServiceAsync treeDataService) {

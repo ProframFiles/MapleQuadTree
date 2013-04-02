@@ -56,7 +56,6 @@ public abstract class TreeInfoPage extends Composite {
 			return;
 		
 		treeInfoTable.setStyleName("tree-info-table");
-		treeInfoTable.setCellPadding(10);
 		treeInfoTable.setSize("400px", "400px");
 
 		createResultDataRow(TreeSpotter.GENUS, ParseUtils.capitalize(displayTree.getGenus(), false));

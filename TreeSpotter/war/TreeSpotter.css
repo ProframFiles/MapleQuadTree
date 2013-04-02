@@ -21,7 +21,7 @@ button {
 }
 
 button:hover {
-	color:	white;
+	color:	whitesmoke;
 }
 
 /* BAR AT THE TOP OF THE PAGE */
@@ -224,10 +224,7 @@ a.main-search:hover {
 .tree-info-map {
 	float: left;
 	margin-left: 5%;
-}
-
-.tree-info-table {
-	padding: 20px;
+	margin-right: 40px;
 }
 
 .tree-info-field {
@@ -367,8 +364,8 @@ div.gwt-StackLayoutPanelHeader {
 
 .flag-popup textarea {
 	display: block;
-	width: 250px;
-	height: 70px;
+	width: 350px;
+	height: 150px;
 }
 
 .flag-popup button {

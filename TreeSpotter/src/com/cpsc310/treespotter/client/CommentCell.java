@@ -8,6 +8,7 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.ui.HTML;
 
 @SuppressWarnings("unused")
 public class CommentCell extends AbstractCell<TreeComment> {
@@ -30,7 +31,7 @@ public class CommentCell extends AbstractCell<TreeComment> {
     		  "<div class ='comment'>" +
     		  "<span style='font-size: 13px; color:skyblue;'> {0} </span>" +
     		  "<span style='font-size: 13px; margin-left: 100px; color:skyblue;'> {1} </span>" +
-    		  "<span style='display:block; padding: 10px;'> {2} </span>" +
+    		  "<p style='display:block; padding: 10px;'> {2} </p>" +
     		  "</div>")
       SafeHtml commentCell(String name, String date, String text);
     }
@@ -46,7 +47,7 @@ public class CommentCell extends AbstractCell<TreeComment> {
 	        return;
 	      }
 	      
-	      SafeHtml rendered = templates.commentCell(comment.getUser(), comment.getDate(), comment.getCommentText());
+	     SafeHtml rendered = templates.commentCell(comment.getUser(), comment.getDate(), comment.getCommentText());
 	      sb.append(rendered);
 		
 	}

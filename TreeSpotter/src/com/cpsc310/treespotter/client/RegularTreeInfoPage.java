@@ -182,7 +182,7 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 		popup.setStyleName("flag-popup");
 		
 		// add elements to the panel
-		panel.add(new HTML("Reason:"));
+		panel.add(new HTML("You've flagged the " + field + " as inaccurate. <br> Please give a reason:"));
 		panel.add(flagText);
 		panel.add(save);
 		panel.add(cancel);

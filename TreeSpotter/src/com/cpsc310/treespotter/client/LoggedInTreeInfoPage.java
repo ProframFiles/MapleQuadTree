@@ -154,6 +154,7 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 				System.out.println(textarea.getText());		
 				try {
 					addComment(getTree().getID(), textarea.getText(), getTreeSpotter().loggedInUser());
+					textarea.setHTML("");
 				} catch (Exception e) {
 					getTreeSpotter().handleError(e);
 				}
