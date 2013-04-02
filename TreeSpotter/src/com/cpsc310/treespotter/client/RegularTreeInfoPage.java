@@ -76,6 +76,7 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 				markedFlags = marked;
 				System.out.println(marked);
 				populateTreeInfoTable(treeInfoTable);
+				addImageTooltips();
 			}
 			
 		});

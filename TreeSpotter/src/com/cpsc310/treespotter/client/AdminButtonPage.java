@@ -28,6 +28,7 @@ public class AdminButtonPage {
 	
 	private static HTMLPanel buttonPanel;
 	private static HTMLPanel contentPanel;
+	private final static String ADMIN_CONSOLE_LINK = "https://appengine.google.com/dashboard?&app_id=s~quadtreetest";
 	
 	static public void load(LoginInfo loginInfo, final TreeDataServiceAsync treeDataService) {
 		// put another check, since possible to force button to show
@@ -42,6 +43,9 @@ public class AdminButtonPage {
 		
 		buttonPanel = new HTMLPanel("<center><h1><img src=\"image/banana-on-computer.gif\" /> Admin Page <img src=\"image/banana-on-computer.gif\" /></h1></center>");
 		contentPanel = new HTMLPanel("");
+
+		buttonPanel.add(new HTML("<a href=\"" + ADMIN_CONSOLE_LINK + "\"target=\"__blank\"> Admin Console </a>"));
+		
 		addButton(treeDataService, "Try Update", "");
 		addButton(treeDataService, "Force update tasks re-run", "force tasks");
 		addButton(treeDataService, "Force task \"indices\"", "indices");
@@ -49,7 +53,7 @@ public class AdminButtonPage {
 		
 		addCSVButton(treeDataService);
 		addFlaggedButton(treeDataService);
-		
+	
 		RootPanel.get("content").clear();
 		RootPanel.get("content").add(buttonPanel);	
 		RootPanel.get("content").add(contentPanel);	

@@ -616,10 +616,6 @@ public class TreeSpotter implements EntryPoint {
 		RootPanel.get("content").clear();
 		RootPanel.get("content").add(tabs);
 		
-		// need the widget to be placed on the page before adding tooltips
-		if (!isLoggedIn) {
-			((RegularTreeInfoPage) treePage).addImageTooltips();
-		}
 		displayTree = t;
 		
 		// TODO: enable history token when getTreeData implemented on server

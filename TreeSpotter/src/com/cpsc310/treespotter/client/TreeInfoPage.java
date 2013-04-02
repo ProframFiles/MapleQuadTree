@@ -150,10 +150,8 @@ public abstract class TreeInfoPage extends Composite {
 
 	 protected void setShareLinks(HorizontalPanel shareLinks, ClientTreeData t) {
 		this.shareLinks = shareLinks;
-		//(aleksy) not used warnings...
-		//String baseURL = GWT.getHostPageBaseURL();
-		//String token = "tree" + t.getID();
-		Button fbButton = new Button("Share on Facebook");
+		Button fbButton = new Button("");
+		fbButton.setHTML("<img src=\"image/f_logo.png\" width=\"16px\" align=\"top\"/> Share on Facebook");
 		
 		fbButton.addClickHandler(new ClickHandler() {
 			
