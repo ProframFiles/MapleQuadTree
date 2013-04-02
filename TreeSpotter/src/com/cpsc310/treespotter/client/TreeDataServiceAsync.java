@@ -43,4 +43,6 @@ public interface TreeDataServiceAsync {
   public void getFlaggedTreeIDs(AsyncCallback<ArrayList<String>> callback);
   
   public void getTreeFlagData(String treeID, AsyncCallback<SortedMap<String, String>> callback);
+  
+  public void clearTreeFlags(String treeID, AsyncCallback<Void> callback);
 }

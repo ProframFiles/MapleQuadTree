@@ -46,4 +46,6 @@ public interface TreeDataService extends RemoteService {
   public ArrayList<String> getFlaggedTreeIDs();
 
   public SortedMap<String, String> getTreeFlagData(String treeID);
+
+  public void clearTreeFlags(String TreeID);
 }

@@ -290,6 +290,11 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 	
 	@Override
+	public void clearTreeFlags(String TreeID){
+		
+	}
+	
+	@Override
 	public ArrayList<String> getFlaggedTreeIDs() {
 		return treeDepot().getFlaggedIDs();
 	}
