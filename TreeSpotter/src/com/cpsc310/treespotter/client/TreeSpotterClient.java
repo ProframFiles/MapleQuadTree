@@ -6,6 +6,7 @@ import java.util.Map;
 
 
 import com.cpsc310.treespotter.shared.ISharedTreeData;
+import com.cpsc310.treespotter.shared.LatLong;
 import com.cpsc310.treespotter.shared.TransmittedTreeData;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -15,6 +16,7 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.maps.client.geocode.Geocoder;
+import com.google.gwt.maps.client.geocode.LatLngCallback;
 import com.google.gwt.maps.client.geocode.LocationCallback;
 import com.google.gwt.maps.client.geocode.Placemark;
 import com.google.gwt.maps.client.geom.LatLng;
@@ -71,7 +73,7 @@ public class TreeSpotterClient {
 					isAddr = false;
 				}
 				// try parsing as address
-				if (isAddr) {
+				if (isAddr && parseLoc) {
 					geoAddr = new Address(input);
 					if (!geoAddr.isValid()) {
 						throw new InvalidFieldException(
@@ -79,6 +81,20 @@ public class TreeSpotterClient {
 					}
 					addTree.setCivicNumber(geoAddr.getNumber());
 					addTree.setStreet(geoAddr.getStreet());
+					parent.geo.getLatLng(input + ", Vancouver, BC", new LatLngCallback() {
+						public void onFailure() {
+						}
+						
+						public void onSuccess(LatLng pt) {
+							addTree.setLatLong(new LatLong(pt.getLatitude(), pt.getLongitude()));
+							try {
+								populateAddData(addTree, addFormMap);
+							} catch (Exception e) {
+								parent.handleError(e);
+							}
+						}
+					});
+					return;
 				}
 				// try parsing as coordinates
 				else if (parseLoc) {
@@ -107,6 +123,8 @@ public class TreeSpotterClient {
 									geoAddr = new Address(p.get(0).getAddress());
 									addTree.setCivicNumber(geoAddr.getNumber());
 									addTree.setStreet(geoAddr.getStreet());
+									LatLng pt = p.get(0).getPoint();
+									addTree.setLatLong(new LatLong(pt.getLatitude(), pt.getLongitude()));
 									try {
 										populateAddData(addTree, addFormMap);
 									} catch (Exception e) {

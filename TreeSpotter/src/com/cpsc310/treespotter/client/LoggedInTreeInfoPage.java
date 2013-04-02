@@ -9,11 +9,13 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import com.cpsc310.treespotter.shared.ISharedTreeData;
+import com.cpsc310.treespotter.shared.LatLong;
 import com.cpsc310.treespotter.shared.TransmittedTreeData;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.maps.client.geocode.LatLngCallback;
 import com.google.gwt.maps.client.geocode.LocationCallback;
 import com.google.gwt.maps.client.geocode.Placemark;
 import com.google.gwt.maps.client.geom.LatLng;
@@ -43,6 +45,7 @@ import com.google.gwt.user.client.ui.Widget;
 public class LoggedInTreeInfoPage extends TreeInfoPage {
 	
 	private LinkedHashMap<String, TextBox> treeDetails = new LinkedHashMap<String, TextBox>();
+	TransmittedTreeData editedTree;
 	
 	@UiField(provided=true)
 	FlexTable treeInfoTable; 
@@ -213,7 +216,7 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 					System.out.println(row.getKey() + ": " + row.getValue().getValue());
 				}		
 				try {
-					sendEditedTree();
+					sendEditedTree(null);
 				} catch (InvalidFieldException e) {
 					getTreeSpotter().handleError(e);
 				}
@@ -278,10 +281,17 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 		});
 	}
 	
-	private void sendEditedTree() throws InvalidFieldException {
+	private void sendEditedTree(TransmittedTreeData td) throws InvalidFieldException {
 		ClientTreeData t = getTree();
-		TransmittedTreeData editedTree = new TransmittedTreeData(t.getID());	
-		editedTree.setCultivar(t.getCultivar());
+		boolean parseLoc = true;
+		if (td == null) {
+			editedTree = new TransmittedTreeData(t.getID());
+			editedTree.setCultivar(t.getCultivar());
+			editedTree.setLatLong(t.getLatLong());
+		} else {
+			editedTree = td;
+			parseLoc = false;
+		}
 		
 		for (Entry<String, TextBox> row : treeDetails.entrySet()) {
 			// copied and modified from populateAddData
@@ -290,7 +300,7 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 
 			// this assumes valid location/coords in form
 			// #### Street Name or #, #
-			if (key.equalsIgnoreCase(TreeSpotter.LOCATION)) {
+			if (key.equalsIgnoreCase(TreeSpotter.LOCATION) && parseLoc) {
 				if (input.isEmpty()) {
 					throw new InvalidFieldException(key + " cannot be empty");
 				}
@@ -309,6 +319,19 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 					}
 					editedTree.setCivicNumber(addr.getNumber());
 					editedTree.setStreet(addr.getStreet());
+					getTreeSpotter().geo.getLatLng(input + ", Vancouver, BC", new LatLngCallback() {
+						public void onFailure(){}
+						
+						public void onSuccess(LatLng pt) {
+							editedTree.setLatLong(new LatLong(pt.getLatitude(), pt.getLongitude()));
+							try {
+								sendEditedTree(editedTree);
+							} catch (Exception e) {
+								getTreeSpotter().handleError(e);
+							}
+						}
+					});
+					return;
 				}
 			} else if (key.equalsIgnoreCase(TreeSpotter.GENUS)) {
 				if (input.isEmpty()) {
@@ -383,6 +406,8 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 				Window.alert("Tree successfully modified");
 				setTree(new ClientTreeData(tree));
 				populateTreeInfoTable(treeInfoTable);
+				setTreeInfoMap(infoMapPanel, new ClientTreeData(tree));
+				setShareLinks(shareLinks, new ClientTreeData(tree));
 				editButtonsBar.remove(saveButton);
 				editButtonsBar.remove(cancelButton);
 				editButtonsBar.add(editButton);
