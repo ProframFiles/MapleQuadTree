@@ -327,7 +327,7 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 				editedTree.setCommonName(input);
 			} else if (key.equalsIgnoreCase(TreeSpotter.NEIGHBOUR)) {
 				if (input.isEmpty()) {
-					editedTree.setNeighbourhood("");
+					editedTree.setNeighbourhood("Not available");
 					continue;
 				}
 				editedTree.setNeighbourhood(input);
@@ -360,7 +360,7 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 				}
 			} else if (key.equalsIgnoreCase(TreeSpotter.PLANTED)) {
 				if (input.isEmpty()) {
-					editedTree.setPlanted("");
+					editedTree.setPlanted(null);
 					continue;
 				}
 				

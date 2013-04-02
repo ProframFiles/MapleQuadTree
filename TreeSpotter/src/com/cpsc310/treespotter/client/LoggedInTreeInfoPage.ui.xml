@@ -4,9 +4,10 @@
    
     <ui:style>
 		.anchor {
-			margin: 20px 50px;
-			font-size: 13.5px;
+			margin: 30px 50px;
+			font-size: 18px;
 			color: darkblue;
+			display: block;
 		}
 
 		.anchor:hover {

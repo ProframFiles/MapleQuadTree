@@ -65,7 +65,7 @@ public abstract class TreeInfoPage extends Composite {
 				+ capName + "'>" + capName + "</a>");
 		createResultDataRow(TreeSpotter.LOCATION, ParseUtils.capitalize(displayTree.getLocation(), false));
 		String neighbour = displayTree.getNeighbourhood();
-		neighbour = (neighbour == null) ? neighbour : neighbour.toUpperCase();
+		neighbour = (neighbour == null) ? neighbour : ParseUtils.capitalize(neighbour, false);
 		createResultDataRow(TreeSpotter.NEIGHBOUR, neighbour);
 		createResultDataRow(TreeSpotter.PLANTED, displayTree.getPlanted());
 		createResultDataRow(TreeSpotter.HEIGHT, intToHeightRange(displayTree.getHeightRange()));	
