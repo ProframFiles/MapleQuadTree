@@ -47,6 +47,7 @@ public abstract class Job {
 	@Ignore private double meanSubTaskTime;
 	@Ignore private int numSubTasksCompleted = 0;
 	@Ignore long initialMillis = ApiProxy.getCurrentEnvironment().getRemainingMillis();
+	@Ignore boolean gotData = false;
 	public Job(){
 		
 	}
@@ -75,18 +76,20 @@ public abstract class Job {
 	}
 	
 	abstract protected int processSubTask(InputStream is, SubTask st);
-	abstract protected ArrayList<String> getFileUrls();
+	abstract public ArrayList<String> getFileUrls();
 	abstract public String getJobID();
 	
 	public void setBinaryDataSource(byte[] b){
 		fileData = new PersistentFile(getJobID());
 		fileData.save(new ByteArrayInputStream(b));
 		fileDataRef = Ref.create(fileData);
+		gotData = true;
 		saveJobState(this);
 	}
 	
 	public boolean run()
 	{
+		
 		if(fileDataRef != null){
 			ofy().load().ref(fileDataRef);
 			fileData = fileDataRef.safeGet();
@@ -97,18 +100,17 @@ public abstract class Job {
 			LOG.fine("\n\tdid not find existing file data.");
 		}
 		byte[] b = null;
-		boolean got_data = false;
 		if(shouldFetchData()){
 			ArrayList<byte[]> file_blobs = fetchFileData(getFileUrls());
 			b = preProcessDataFiles(file_blobs);
 			LOG.info("Done preprocessing files.\n\tPersisting " + b.length +" bytes to datastore");
 			setBinaryDataSource(b);
-			got_data = true;
 		}
-		if(forceNewTasks() || got_data){
+		if(forceNewTasks() || gotData){
 			LOG.fine("\n\tCreating subtasks");
 			subTasks = createSubTasks();
 			LOG.fine("\n\tPersisting job state");
+			gotData = false;
 			saveJobState(this);
 			b = null;
 			return true;
@@ -156,7 +158,7 @@ public abstract class Job {
 		return false;
 	}
 
-	abstract protected byte[] preProcessDataFiles(ArrayList<byte[]> b) ;
+	abstract public byte[] preProcessDataFiles(ArrayList<byte[]> b) ;
 
 	private boolean needToStop(){
 		long rem = ApiProxy.getCurrentEnvironment().getRemainingMillis();
@@ -168,7 +170,7 @@ public abstract class Job {
 		return (rem < 60000);
 	}
 	
-	protected ArrayList< byte[]> fetchFileData(ArrayList<String> urls){
+	public ArrayList< byte[]> fetchFileData(ArrayList<String> urls){
 		ArrayList<byte[]> file_blobs = new ArrayList<byte[]>();
 		for(String file_url: urls){
 			try {

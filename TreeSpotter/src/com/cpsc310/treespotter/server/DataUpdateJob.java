@@ -106,7 +106,7 @@ public class DataUpdateJob extends Job {
 		return forceTasks ;
 	}
 	@Override
-	protected byte[] preProcessDataFiles(ArrayList<byte[]> byte_arrays) {
+	public byte[] preProcessDataFiles(ArrayList<byte[]> byte_arrays) {
 		
 		byte[] out_array = null;
 		try {
@@ -412,7 +412,7 @@ public class DataUpdateJob extends Job {
 	}
 
 	@Override
-	protected ArrayList<String> getFileUrls() {
+	public ArrayList<String> getFileUrls() {
 		ArrayList<String> ret = new ArrayList<String>();
 		ret.add("http://www.ugrad.cs.ubc.ca/~q0b7/ICIS_AddressBC_csv_all.zip");
 		if(userTreeNumber<0){
@@ -428,7 +428,7 @@ public class DataUpdateJob extends Job {
 	}
 	
 	@Override
-	protected ArrayList< byte[]> fetchFileData(ArrayList<String> urls){
+	public ArrayList< byte[]> fetchFileData(ArrayList<String> urls){
 		if(userTreeNumber >= 0 && treeDataRef == null){
 			LOG.severe("whoa, where's my file ref?");
 			throw new RuntimeException("Should have had a user file ref, but it's not there...");

@@ -1,24 +1,25 @@
 package com.cpsc310.treespotter.tests;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 
 
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig;
 import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
-import com.cpsc310.treespotter.server.DataFetcher;
-import com.cpsc310.treespotter.server.Job;
 import com.cpsc310.treespotter.server.DataUpdateJob;
 import com.cpsc310.treespotter.server.DataUpdater;
 import com.cpsc310.treespotter.server.TreeData;
 import com.cpsc310.treespotter.server.TreeDataServiceImpl;
 import com.cpsc310.treespotter.server.TreeDepot;
 import com.cpsc310.treespotter.shared.ISharedTreeData;
+import com.cpsc310.treespotter.shared.Util;
 import com.cpsc310.treespotter.client.AdvancedSearch;
 import com.cpsc310.treespotter.client.KeywordSearch;
 import com.cpsc310.treespotter.client.SearchFieldID;
 import com.cpsc310.treespotter.client.SearchQuery;
 
-import static com.googlecode.objectify.ObjectifyService.ofy;
 import static org.junit.Assert.*;
 
 import org.junit.After;
@@ -35,6 +36,36 @@ public class ServerTests {
 	public void setUp() throws Exception {
 		helper.setSimulateProdLatencies(false);
 		helper.setUp();
+		
+		DataUpdater updater = new DataUpdater();
+		updater.init();
+		DataUpdateJob	job = new DataUpdateJob("street data update job");
+		//job.setLogLevel(Level.FINE);
+		//job.setOptions("tree file", "http://www.ugrad.cs.ubc.ca/~q0b7/streettrees_small.zip");
+		//ArrayList<byte[]> blobs = job.fetchFileData(job.getFileUrls());
+		//byte[] processed = job.preProcessDataFiles(blobs);
+		System.out.println("Setting external Job data to avoid downloads during testing");
+		FileInputStream inStream;
+		byte[] processed = null;
+		try {
+			inStream = new FileInputStream("./parsetest.zip");
+			processed = Util.streamToByteArray(inStream);
+			inStream.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			fail();
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail();
+		}
+		job.setBinaryDataSource(processed);
+		
+		boolean has_more_work = job.run();
+		while (has_more_work){
+			has_more_work = job.run();
+		}
+		System.out.println("Done PreLoading");
+		
 		dataService = new TreeDataServiceImpl();
 	}
 
@@ -43,210 +74,125 @@ public class ServerTests {
 		helper.tearDown();
 	}
 
+	private void testSingleSearch(SearchFieldID field, String term, int numExpected){
+		SearchQuery query = new AdvancedSearch();
+		query.addSearchParam(SearchFieldID.KEYWORD, "");
+		query.setNumResults(100000);
+		ArrayList<ISharedTreeData> results = dataService.searchTreeData(query);
+		assertEquals(numExpected, results.size());
+	}
+	
 	@Test
-	public void testStreetUpdateJob() {
-		DataUpdater updater = new DataUpdater();
-		updater.init();
-		DataUpdateJob	job = new DataUpdateJob("street data update job");
-		job.setOptions("tree file", "http://www.ugrad.cs.ubc.ca/~q0b7/streettrees_small.zip");
-		boolean has_more_work = job.run();
-		while (has_more_work){
-			has_more_work = job.run();
-		}
-		
+	public void generalParseTest() {
 		TreeDepot.reset();
+		ArrayList<String> results;
 		
-		SearchQuery loc_query = new AdvancedSearch();
-		loc_query.addSearchParam(SearchFieldID.SPECIES, "Betulus");
-		ArrayList<ISharedTreeData> results = dataService.searchTreeData(loc_query);
-		System.out.println(results.size());
-		//assertEquals(results.size(), 100);
+		results = dataService.getSearchSuggestions(SearchFieldID.KEYWORD, "");
+		assertEquals(534,results.size());
+		results = dataService.getSearchSuggestions(SearchFieldID.NEIGHBOUR, "");
+		assertEquals(1,results.size());
+		results = dataService.getSearchSuggestions(SearchFieldID.ADDRESS, "");
+		assertEquals(62,results.size());
+		results = dataService.getSearchSuggestions(SearchFieldID.COMMON, "");
+		assertEquals(265,results.size());
+		results = dataService.getSearchSuggestions(SearchFieldID.GENUS, "");
+		assertEquals(62,results.size());
+		results = dataService.getSearchSuggestions(SearchFieldID.SPECIES, "");
+		assertEquals(145,results.size());
+		testSingleSearch(SearchFieldID.KEYWORD, "", 6839);
 		
-		loc_query.setNumResults(4700);
-		results = dataService.searchTreeData(loc_query);
-		System.out.println(results.size());
-		//assertEquals(results.size(), 4700);
+		//720,1708,W 40TH AV,SHAUGHNESSY,24,MARGUERITE ST,5600,ODD,N,1,3.00,,10,N,Y,QUEEN ELIZABETH,ACER,CAMPESTRE,QUEEN ELIZABETH MAPLE
 		
-		//loc_query.setNumResults(10000);
-		//results = dataService.searchTreeData(loc_query);
-		//assertEquals(results.size(), 4705);
+		ISharedTreeData tree = dataService.getTreeData("V720", "");
+		assertTrue(tree.getCivicNumber() == 1708);
+		assertTrue(tree.getCommonName().equalsIgnoreCase("QUEEN ELIZABETH MAPLE"));
+		assertTrue(tree.getGenus().equalsIgnoreCase("ACER"));
+		assertTrue(tree.getSpecies().equalsIgnoreCase("CAMPESTRE"));
+		assertTrue(tree.getStreet().equalsIgnoreCase("W 40TH AV"));
+		assertTrue(tree.getNeighbourhood().equalsIgnoreCase("SHAUGHNESSY"));
+	
+		//110163,4897,SELKIRK ST,SHAUGHNESSY,23,W 33RD AV,1200,ODD,N,2,11.75,,12,N,Y,ATROPURPUREUM,PRUNUS,CERASIFERA,PISSARD PLUM
 		
-		loc_query = new AdvancedSearch();
-		loc_query.addSearchParam(SearchFieldID.ADDRESS, "the cres");
+		tree = dataService.getTreeData("V110163", "");
+		assertTrue(tree.getCivicNumber() == 4897);
+		assertTrue(tree.getCommonName().equalsIgnoreCase("PISSARD PLUM"));
+		assertTrue(tree.getGenus().equalsIgnoreCase("PRUNUS"));
+		assertTrue(tree.getSpecies().equalsIgnoreCase("CERASIFERA"));
+		assertTrue(tree.getStreet().equalsIgnoreCase("SELKIRK ST"));
+		assertTrue(tree.getNeighbourhood().equalsIgnoreCase("SHAUGHNESSY"));
+	}
+
+	@Test
+	public void testFlagging() {
+		String id = "V4374";
+		dataService.flagTreeData(id,"Genus", "why not");
+		ArrayList<String> flagged = dataService.getFlaggedTreeIDs();
+		assertEquals(flagged.size(),1);
+		dataService.clearTreeFlags(flagged.get(0));
+		flagged = dataService.getFlaggedTreeIDs();
+		assertEquals(flagged.size(),0);
+	}
+	
+	@Test
+	public void testKeywordSearch() {
+		ArrayList<String> suggestions;
 		
-		//loc_query.addSearchParam(SearchFieldID.SPECIES, "betulus");
-		
-		results = dataService.searchTreeData(loc_query);
-		System.out.println(results.size());
-		//assertEquals(results.size(),53);
-		
-		ArrayList<String> suggestions = dataService.getSearchSuggestions(SearchFieldID.SPECIES, "be");
-		System.out.println(results.size());
-		//assertEquals(3, suggestions.size());
-		
-		suggestions = dataService.getSearchSuggestions(SearchFieldID.SPECIES, "b");
-		System.out.println(results.size());
-		//assertEquals(37, suggestions.size());
-		
-		suggestions = dataService.getSearchSuggestions(SearchFieldID.SPECIES, "");
-		System.out.println(results.size());
-		//assertEquals(264, suggestions.size());
+		testSingleSearch(SearchFieldID.KEYWORD, "", 6839);
+		suggestions = dataService.getSearchSuggestions(SearchFieldID.KEYWORD, "");
 		
 		for(String s: suggestions){
-			System.out.println(s);
-		}
-		
-		 testAddressSearch();	
+			SearchQuery query = new AdvancedSearch();
+			query.addSearchParam(SearchFieldID.KEYWORD, s);
+			query.setNumResults(100000);
+			ArrayList<ISharedTreeData> results = dataService.searchTreeData(query);
+			assertTrue(!results.isEmpty());
+		}	
 	}
 	
-	
-	public void testKeywordSearch() {
-		ArrayList<ISharedTreeData> results;
-		results = doKeywordSearch("MARY");
-		
-		assertEquals(1,results.size() );
-		assertTrue(results.get(0).getCommonName().equalsIgnoreCase("MARY") );
-		results.clear();
-		
-		results = doKeywordSearch("mary");
-		assertEquals(1,results.size() );
-		assertTrue(results.get(0).getCommonName().equalsIgnoreCase("MARY") );
-		
-		results = doKeywordSearch("AFAKESPECIES");
-		assertEquals(5,results.size() );
-		assertTrue(results.get(0).getSpecies().equalsIgnoreCase("AFAKESPECIES") );
-		
-		results = doKeywordSearch("afakespecies");
-		assertEquals(5,results.size() );
-		assertTrue(results.get(0).getSpecies().equalsIgnoreCase("AFAKESPECIES") );
-		
-		results = doKeywordSearch("CRESCENT");
-		assertEquals(4,results.size() );
-		assertTrue(results.get(0).getStreet().equalsIgnoreCase("THE CRESCENT") );
-		
-		results = doKeywordSearch("crescent");
-		assertEquals(4,results.size() );
-		assertTrue(results.get(0).getStreet().equalsIgnoreCase("THE CRESCENT") );
-		
-	}
-	
-	public void testLocationSearch() {
-		AdvancedSearch loc_query;
-		
-		loc_query = new AdvancedSearch();
-		loc_query.addSearchParam(SearchFieldID.LOCATION, "49.2626,-123.1878,200");
-		ArrayList<ISharedTreeData> results = dataService.searchTreeData(loc_query);
-		assertEquals(1,results.size() );
-		assertTrue(results.get(0).getCommonName().equalsIgnoreCase("HIGHBURY TREE") );
-		
-		
-		results.clear();
-		loc_query = new AdvancedSearch();
-		loc_query.addSearchParam(SearchFieldID.LOCATION, "240 the crescent");
-		results = dataService.searchTreeData(loc_query);
-		assertEquals(0,results.size() );
-		//assertTrue(results.get(0).getStreet().equalsIgnoreCase("THE CRESCENT") );
-		
-		results.clear();
-		loc_query = new AdvancedSearch();
-		loc_query.addSearchParam(SearchFieldID.LOCATION, "2600-2700 Highbury st");
-		results = dataService.searchTreeData(loc_query);
-		assertEquals(1,results.size() );
-		assertTrue(results.get(0).getCommonName().equalsIgnoreCase("HIGHBURY TREE") );
-		
-		results.clear();
-		loc_query = new AdvancedSearch();
-		loc_query.addSearchParam(SearchFieldID.LOCATION, "2600 Highbury st");
-		results = dataService.searchTreeData(loc_query);
-		assertEquals(1,results.size() );
-		assertTrue(results.get(0).getCommonName().equalsIgnoreCase("HIGHBURY TREE") );
-	}
-	
+	@Test
 	public void testAddressSearch() {
 	
 		AdvancedSearch query = new AdvancedSearch();
-		query.addSearchParam(SearchFieldID.ADDRESS, "240 the crescent");
+		query.addSearchParam(SearchFieldID.ADDRESS, "0-10000 the crescent");
 		ArrayList<ISharedTreeData> results = dataService.searchTreeData(query);
 		assertEquals(53,results.size() );
 		assertTrue(results.get(0).getStreet().equalsIgnoreCase("The Crescent") );
 		
 		results.clear();
 		query = new AdvancedSearch();
-		query.addSearchParam(SearchFieldID.ADDRESS, "230-250 the crescent");
+		query.addSearchParam(SearchFieldID.ADDRESS, "0-10000 the cre");
 		results = dataService.searchTreeData(query);
 		assertEquals(53,results.size() );
 		
 		results.clear();
 		query = new AdvancedSearch();
+		query.addSearchParam(SearchFieldID.ADDRESS, "230-250 the crescent");
+		results = dataService.searchTreeData(query);
+		assertEquals(0,results.size() );
+		
+		results.clear();
+		query = new AdvancedSearch();
+		query.addSearchParam(SearchFieldID.ADDRESS, "1000-2000 the crescent");
+		results = dataService.searchTreeData(query);
+		assertEquals(42,results.size() );
+		assertTrue(results.get(0).getStreet().equalsIgnoreCase("The Crescent") );
+		
+		results.clear();
+		query = new AdvancedSearch();
+		query.addSearchParam(SearchFieldID.ADDRESS, "1000-4000 the crescent");
+		results = dataService.searchTreeData(query);
+		assertEquals(53,results.size() );
+		assertTrue(results.get(0).getStreet().equalsIgnoreCase("The Crescent") );
+		
+		results.clear();
+		query = new AdvancedSearch();
 		query.addSearchParam(SearchFieldID.ADDRESS, "2600-2700 highbury st");
 		results = dataService.searchTreeData(query);
-		assertEquals(100,results.size() );
-	}
-	
-	public void testHeightSearch() {
-		
-		AdvancedSearch query = new AdvancedSearch();
-		query.addSearchParam(SearchFieldID.HEIGHT, "1-5");
-		ArrayList<ISharedTreeData> results = dataService.searchTreeData(query);
-		assertEquals(5,results.size() );
-		assertEquals(results.get(0).getHeightRange(), 3);
-		
-		query = new AdvancedSearch();
-		query.addSearchParam(SearchFieldID.HEIGHT, "3-3");
-		results = dataService.searchTreeData(query);
-		assertEquals(5,results.size() );
-		assertEquals(results.get(0).getHeightRange(), 3);
-		
-		query = new AdvancedSearch();
-		query.addSearchParam(SearchFieldID.HEIGHT, "6-7");
-		results = dataService.searchTreeData(query);
 		assertEquals(0,results.size() );
-		
-		query = new AdvancedSearch();
-		query.addSearchParam(SearchFieldID.HEIGHT, "7-6");
-		results = dataService.searchTreeData(query);
-		assertEquals(0,results.size());
 	}
+
 	
-	public void importDataWithoutDyingTest() {
-		//LocationProcessor lp = new LocationProcessor();
-		//lp.doPost(null, null);
-		
-		try{
-			DataFetcher df = new DataFetcher();
-			df.doGet(null, null);
-		}
-		catch(Exception e)
-		{
-			fail(e.getMessage());
-		}
-	}
-	
-	public void testDiameterSearch() {
-	
-		AdvancedSearch query = new AdvancedSearch();
-		query.addSearchParam(SearchFieldID.DIAMETER, "1-5");
-		ArrayList<ISharedTreeData> results = dataService.searchTreeData(query);
-		assertEquals(5,results.size() );
-		assertEquals(results.get(0).getHeightRange(), 3);
-		
-		query = new AdvancedSearch();
-		query.addSearchParam(SearchFieldID.DIAMETER, "3-3");
-		results = dataService.searchTreeData(query);
-		assertEquals(5,results.size() );
-		assertEquals(results.get(0).getHeightRange(), 3);
-		
-		query = new AdvancedSearch();
-		query.addSearchParam(SearchFieldID.DIAMETER, "6-7");
-		results = dataService.searchTreeData(query);
-		assertEquals(0,results.size() );
-		
-		query = new AdvancedSearch();
-		query.addSearchParam(SearchFieldID.DIAMETER, "7-6");
-		results = dataService.searchTreeData(query);
-		assertEquals(0,results.size());
-	}
-	
+	@SuppressWarnings("unused")
 	static private TreeData makeTestTree(String id){
 		TreeData tree = new TreeData(id);
 		tree.setSpecies("AFAKESPECIES");
@@ -261,6 +207,7 @@ public class ServerTests {
 		return tree;
 	}
 	
+	@SuppressWarnings("unused")
 	private ArrayList<ISharedTreeData> doKeywordSearch(String keyword){
 		KeywordSearch q_lower = new KeywordSearch();
 		q_lower.addSearchParam(SearchFieldID.KEYWORD, keyword);
