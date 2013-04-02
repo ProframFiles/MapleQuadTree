@@ -21,7 +21,7 @@ button {
 }
 
 button:hover {
-	color:	whitesmoke;
+	color:	blue;
 }
 
 /* BAR AT THE TOP OF THE PAGE */
@@ -406,4 +406,19 @@ div.gwt-StackLayoutPanelHeader {
 	border:	thin black solid;
 	background-color: white;
 	border-radius: 3px;
+}
+
+.flag-tree-item {
+	border: thin black solid;
+	display: inline-block;
+	margin: 20px;
+	min-width: 300px;
+	vertical-align: top;
+	min-height: 100px;
+	padding: 20px;
+	line-height: 25px;
+}
+
+.flag-tree-item button {
+	float: right;
 }

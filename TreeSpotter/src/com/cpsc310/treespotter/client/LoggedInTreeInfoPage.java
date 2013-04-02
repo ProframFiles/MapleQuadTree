@@ -389,5 +389,24 @@ public class LoggedInTreeInfoPage extends TreeInfoPage {
 			}
 		});
 	}
+
+
+	@Override
+	protected void createWikiLink(String field, String value) {
+		int rowNum = treeInfoTable.getRowCount();
+		Label fld = new Label(field);
+
+		if (value == null) {
+			value = "Not available";
+		}
+		
+		Anchor link = new Anchor(value);
+		link.setHref(wikipediaSearchURL + value);
+		link.setTarget("__blank");
+		
+		fld.setStyleName("tree-info-field");
+		treeInfoTable.setWidget(rowNum, 0, fld);
+		treeInfoTable.setWidget(rowNum, 1, link);
+	}
 	
 }

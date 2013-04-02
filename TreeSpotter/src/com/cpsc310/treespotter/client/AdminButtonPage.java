@@ -15,6 +15,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -95,9 +96,13 @@ public class AdminButtonPage {
 		buttonPanel.add(btn);
 	}
 	
-	private static DisclosurePanel createFlaggedTreeItem(final String treeID, final TreeDataServiceAsync treeDataService) {
-		HTML header = new HTML(treeID);
+	private static HTMLPanel createFlaggedTreeItem(final String treeID, final TreeDataServiceAsync treeDataService) {
 		final HTMLPanel content = new HTMLPanel("");
+		
+		Anchor link = new Anchor(treeID);
+		link.setHref(Window.Location.getPath() + Window.Location.getQueryString() + "#tree" + treeID);
+		link.setTarget("__blank");
+		content.add(link);
 		
 		treeDataService.getTreeFlagData(treeID, new AsyncCallback<SortedMap<String, String>>() {
 
@@ -115,8 +120,6 @@ public class AdminButtonPage {
 			}
 		});	
 	
-		final DisclosurePanel d = new DisclosurePanel();
-		
 		// add button to clear flags
 		Button clearFlagsBtn = new Button("Clear Flags");
 		clearFlagsBtn.addClickHandler(new ClickHandler() {
@@ -133,7 +136,8 @@ public class AdminButtonPage {
 					@Override
 					public void onSuccess(Void result) {
 						Window.alert("The flags for " + treeID + " have been cleared.");
-						contentPanel.remove(d);
+						contentPanel.remove(content);
+						printFlags(treeDataService);
 					}			
 				});
 			}
@@ -141,10 +145,8 @@ public class AdminButtonPage {
 		
 		
 		content.add(clearFlagsBtn);
-		d.setHeader(header);
-		d.setContent(content);
-
-		return d;
+		content.setStyleName("flag-tree-item");
+		return content;
 	}
 
 	private static void addCSVButton(final TreeDataServiceAsync treeDataService) {
@@ -311,5 +313,23 @@ public class AdminButtonPage {
 			}
 			
 		};
+	}
+	
+	// for debugging
+	// TODO: remember to remove
+	private static void printFlags(final TreeDataServiceAsync treeDataService) {
+		treeDataService
+		.getFlaggedTreeIDs(new AsyncCallback<ArrayList<String>>() {
+
+			@Override
+			public void onFailure(Throwable caught) {
+				System.out.println(caught.getStackTrace());
+			}
+
+			@Override
+			public void onSuccess(ArrayList<String> results) {
+				System.out.println(results);
+			}
+		});
 	}
 }

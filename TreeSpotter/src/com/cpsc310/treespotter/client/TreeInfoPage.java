@@ -60,9 +60,10 @@ public abstract class TreeInfoPage extends Composite {
 
 		createResultDataRow(TreeSpotter.GENUS, ParseUtils.capitalize(displayTree.getGenus(), false));
 		createResultDataRow(TreeSpotter.SPECIES, ParseUtils.capitalize(displayTree.getSpecies(), true));
-		String capName = ParseUtils.capitalize(displayTree.getCommonName(), false);
-		createResultDataRow(TreeSpotter.COMMON, "<a href='" + TreeSpotter.wikipediaSearchURL
-				+ capName + "'>" + capName + "</a>");
+		//String capName = ParseUtils.capitalize(displayTree.getCommonName(), false);
+		createWikiLink(TreeSpotter.COMMON, ParseUtils.capitalize(displayTree.getCommonName(), false));
+//		createResultDataRow(TreeSpotter.COMMON, "<a href='" + TreeSpotter.wikipediaSearchURL
+//				+ capName + "'>" + capName + "</a>");
 		createResultDataRow(TreeSpotter.LOCATION, ParseUtils.capitalize(displayTree.getLocation(), false));
 		String neighbour = displayTree.getNeighbourhood();
 		neighbour = (neighbour == null) ? neighbour : ParseUtils.capitalize(neighbour, false);
@@ -70,6 +71,10 @@ public abstract class TreeInfoPage extends Composite {
 		createResultDataRow(TreeSpotter.PLANTED, displayTree.getPlanted());
 		createResultDataRow(TreeSpotter.HEIGHT, intToHeightRange(displayTree.getHeightRange()));	
 	}
+
+	protected abstract void createResultDataRow(String field, String value);
+	
+	protected abstract void createWikiLink(String common, String commonName);
 
 	protected void displayComments(VerticalPanel panel, ArrayList<TreeComment> comments) {
 		panel.clear();
@@ -80,7 +85,7 @@ public abstract class TreeInfoPage extends Composite {
 		panel.add(cellList);
 	}
 	
-	protected abstract void createResultDataRow(String field, String value);
+	
 
 
 	/**

@@ -10,6 +10,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -119,6 +120,35 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 		treeInfoTable.setWidget(rowNum, 0, img);
 		treeInfoTable.setWidget(rowNum, 1, fld);
 		treeInfoTable.setWidget(rowNum, 2, new HTML(value));
+	}
+	
+	protected void createWikiLink(String field, String value) {
+		int rowNum = treeInfoTable.getRowCount();
+		Image img = new Image(HTMLResource.INSTANCE.flag());
+		Label fld = new Label(field);
+		
+		if (value == null) {
+			value = "Not available";
+		}
+
+		img.addClickHandler(setFlag(field));
+		if (markedFlags.contains(field)) {
+			img.setStyleName("flagged");
+			flags.put(field, true);
+		} else {
+			img.setStyleName("unflagged");
+			flags.put(field, false);
+		}
+		flagImages.put(field, img);
+		
+		Anchor link = new Anchor(value);
+		link.setHref(wikipediaSearchURL + value);
+		link.setTarget("__blank");
+		
+		fld.setStyleName("tree-info-field");
+		treeInfoTable.setWidget(rowNum, 0, img);
+		treeInfoTable.setWidget(rowNum, 1, fld);
+		treeInfoTable.setWidget(rowNum, 2, link);
 	}
 
 	 private ClickHandler setFlag(final String field) {
