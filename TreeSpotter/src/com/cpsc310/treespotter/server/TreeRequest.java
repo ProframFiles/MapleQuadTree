@@ -13,6 +13,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.cpsc310.treespotter.shared.DistanceToPointProvider;
 import com.cpsc310.treespotter.shared.LatLong;
 import com.googlecode.objectify.Ref;
 
@@ -74,7 +75,7 @@ public class TreeRequest {
 			filters.add(new TreeIDExcluder(mod_trees));
 		}
 		Set<TreeData> filtered = ret;
-		if(filters.size()>1){
+		if(filters.size()>1 || isSpatialSearch){
 			LOG.info("now filtering with " + filters.size() + " filters");
 			filtered = new HashSet<TreeData>();
 			for(TreeData tree: ret){
@@ -124,6 +125,15 @@ public class TreeRequest {
 		isSpatialSearch = true;
 		LOG.info("filtered request to " + requestBins.size() + " bins");
 		return this;
+	}
+	
+	public TreeRequest onlyTreesAroundPoint(LatLong center, double radius_meters){
+		double long_degrees = Math.toDegrees(Math.cos(center.getLatitudeRadians())*radius_meters*(Math.PI/DistanceToPointProvider.R_EARTH));
+		double lat_degrees = Math.toDegrees(radius_meters*(Math.PI/DistanceToPointProvider.R_EARTH));
+		LatLong southWest = new LatLong(center.getLatitude()-lat_degrees, center.getLongitude()-long_degrees);
+		LatLong northEast = new LatLong(center.getLatitude()+lat_degrees, center.getLongitude()+long_degrees);
+		filters.add(new TreeRadiusFilter(center, radius_meters));
+		return onlyTreesWithinRect(southWest, northEast);
 	}
 	
 	public TreeRequest onlyTreesWithStreet(String street){
@@ -258,6 +268,18 @@ public class TreeRequest {
 				//LOG.info("found match for " + matchString + " in " + tsp.treeToString(tree));
 			}
 			return match;
+		}
+	}
+	private class TreeRadiusFilter implements TreeFilter{
+		DistanceToPointProvider distanceMaker;
+		double radiusMetersSq;
+		TreeRadiusFilter(LatLong center, double radius_meters){
+			distanceMaker = new DistanceToPointProvider(center);
+			radiusMetersSq = radius_meters*radius_meters;
+		}
+		@Override
+		public boolean isMatch(TreeData tree) {
+			return radiusMetersSq >= distanceMaker.getDistanceSq(tree);
 		}
 		
 	}

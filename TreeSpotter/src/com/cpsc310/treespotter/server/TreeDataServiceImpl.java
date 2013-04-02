@@ -22,6 +22,7 @@ import com.cpsc310.treespotter.client.TreeComment;
 import com.cpsc310.treespotter.client.TreeDataService;
 import com.cpsc310.treespotter.shared.CSVFile;
 import com.cpsc310.treespotter.shared.ISharedTreeData;
+import com.cpsc310.treespotter.shared.LatLongRange;
 import com.google.appengine.api.blobstore.BlobstoreService;
 import com.google.appengine.api.blobstore.BlobstoreServiceFactory;
 import com.google.appengine.api.taskqueue.QueueFactory;
@@ -158,6 +159,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		}
 		
 		try {
+			
 			TreeRequest req = treeDepot().newRequest();
 			req.setResultsRange(0, query.getNumResults());
 			for(SearchParam sp: query){
@@ -167,6 +169,10 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 				}
 				else if(sp.fieldID == SearchFieldID.KEYWORD){
 					req.onlyTreesWithKeyword(sp.value.toUpperCase());
+				}
+				else if(sp.fieldID == SearchFieldID.LOCATION){
+					LatLongRange llr = new LatLongRange(sp.value);
+					req.onlyTreesAroundPoint(llr, llr.getRange());
 				}
 				else if(sp.fieldID == SearchFieldID.ADDRESS){
 					StreetBlock address_block = new StreetBlock(sp.value);

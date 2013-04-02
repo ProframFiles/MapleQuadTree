@@ -29,21 +29,21 @@ public class TreeGridStore implements TreeStringProvider{
 		}
 		lat_min -= lat_spacing;
 		double lat_max = LAT_MAX - lat_spacing;
-		while(lat_max > southWest.getLatitude()){
-			lat_min -= lat_spacing;
+		while(lat_max > northEast.getLatitude()){
+			lat_max -= lat_spacing;
 		}
-		lat_min += lat_spacing;
-		double lon_spacing = LAT_RANGE/GRID_SIZE;
-		double lon_min = LAT_MIN + lat_spacing;
-		while(lat_min < southWest.getLatitude()){
-			lat_min += lat_spacing;
+		lat_max += lat_spacing;
+		double lon_spacing = LON_RANGE/GRID_SIZE;
+		double lon_min = LON_MIN + lon_spacing;
+		while(lon_min < southWest.getLongitude()){
+			lon_min += lon_spacing;
 		}
-		lat_min -= lat_spacing;
-		double lon_max = LAT_MAX - lat_spacing;
-		while(lat_max > southWest.getLatitude()){
-			lat_min -= lat_spacing;
+		lon_min -= lon_spacing;
+		double lon_max = LON_MAX - lon_spacing;
+		while(lon_max > northEast.getLongitude()){
+			lon_max -= lon_spacing;
 		}
-		lat_min += lat_spacing;
+		lon_max += lon_spacing;
 		
 		for(double lat = lat_min + lat_spacing/2 ; lat < lat_max; lat+= lat_spacing){
 			for(double lon = lon_min + lon_spacing/2 ; lon < lon_max; lon+= lon_spacing){

@@ -6,7 +6,7 @@ import java.io.Serializable;
  * @author maple-quadtree
  *
  */
-public class LatLong implements Serializable{
+public class LatLong implements Serializable, LatLongProvider{
 	private static final long serialVersionUID = 1L;
 	LatLong(){
 		latitude = 0.0;
@@ -70,7 +70,11 @@ public class LatLong implements Serializable{
 	}
 	
 	
-	private double latitude;
-	private double longitude;
+	protected double latitude;
+	protected double longitude;
+	@Override
+	public LatLong getLatLong() {
+		return this;
+	}
 	
 }
