@@ -291,7 +291,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	
 	@Override
 	public void clearTreeFlags(String TreeID){
-		
+		treeDepot().UnFlagTree(TreeID);
 	}
 	
 	@Override

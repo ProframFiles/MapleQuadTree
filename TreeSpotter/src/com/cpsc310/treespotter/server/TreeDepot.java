@@ -321,6 +321,17 @@ public class TreeDepot {
 		treeFlags.put(treeID, flags);
 		saveTrees(this);
 	}
+	
+	public void UnFlagTree(String treeID){
+		if(treeFlags == null){
+			treeFlags = new HashMap<String, HashMap<String, String>>();
+		}
+		HashMap<String, String> flags = treeFlags.get(treeID);
+		if(flags != null){
+			treeFlags.remove(treeID);
+		}
+		saveTrees(this);
+	}
 	public ArrayList<String> getFlags(String treeID){
 		ArrayList<String> ret = new ArrayList<String>();
 		if(treeFlags != null){
