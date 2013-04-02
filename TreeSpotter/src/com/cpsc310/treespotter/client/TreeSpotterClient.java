@@ -23,6 +23,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 
@@ -237,6 +238,9 @@ public class TreeSpotterClient {
 		formPanel.setAction(GWT.getModuleBaseURL() + "export");
 		formPanel.setMethod(FormPanel.METHOD_POST);
 		formPanel.setWidget(textBox);
+		
+		formPanel.setVisible(false);
+		RootPanel.get("content").add(formPanel);
 		
 		formPanel.submit();
 	}
