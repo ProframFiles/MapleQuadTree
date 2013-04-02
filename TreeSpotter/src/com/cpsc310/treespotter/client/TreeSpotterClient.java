@@ -170,6 +170,7 @@ public class TreeSpotterClient {
 			public void onSuccess(ISharedTreeData result) {
 				if (result != null) {
 					Window.alert(HTMLResource.ADD_TREE_SUCCESS);
+					parent.initSearchOracles();
 				} else {
 					Window.alert(HTMLResource.ADD_TREE_FAIL); 
 				}

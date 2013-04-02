@@ -15,6 +15,15 @@ a:hover {
 	text-decoration: underline;
 }
 
+button {
+	border: thin gray solid;
+	padding: 5px 10px;
+}
+
+button:hover {
+	color:	white;
+}
+
 /* BAR AT THE TOP OF THE PAGE */
 
 #top {
@@ -248,7 +257,6 @@ a.main-search:hover {
 	background-color: white;
 	border: thin solid black;
 	border-radius: 3px;
-	padding: 20px;
 	font-size: 15px;
 }
 
@@ -260,6 +268,23 @@ a.main-search:hover {
 
 .add-popup input:focus {
 	background-color: #F0FAF5;
+}
+
+div.gwt-StackLayoutPanelHeader {
+	background-color: #b3cce6;
+	font-size: 20px;
+	padding-top: 10px;
+	text-align: center;
+	border-top: thin gray solid;
+}
+
+.add-button-bar button {
+	margin-right: 50px;
+}
+
+.add-button-bar {
+	margin: auto;
+	width: 200px;
 }
 
 /* SEARCH RESULTS */

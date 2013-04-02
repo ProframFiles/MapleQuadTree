@@ -36,7 +36,7 @@ public class ImageGallery extends Composite {
 	private FlowPanel galleryPanel;
 	
 	
-	public ImageGallery(ClientTreeData tree, final TreeDataServiceAsync treeDataService) {
+	public ImageGallery(ClientTreeData tree, boolean isLoggedIn, final TreeDataServiceAsync treeDataService) {
 		this.tree = tree;
 		this.treeDataService = treeDataService;
 		
@@ -44,7 +44,9 @@ public class ImageGallery extends Composite {
 		uploadPanel = new HorizontalPanel();
 		galleryPanel = new FlowPanel();
 		
-		addGalleryUpload(tree);
+		// only allow image uploads if user is logged in
+		if (isLoggedIn)
+			addGalleryUpload(tree);
 		addGalleryImages();
 		
 		initWidget(mainPanel);	
@@ -124,8 +126,6 @@ public class ImageGallery extends Composite {
 				Window.alert("Upload Complete");
 				form.reset();
 				addGalleryImages();
-				
-				// TODO: Add gallery image refreshing
 			}
 		});
 		
