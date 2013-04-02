@@ -67,7 +67,6 @@ public class TreeData implements Serializable, TreeDataProvider, LatLongProvider
 	private String species;
 	private String commonName;
 	private LatLong latLong;
-	private String keywords;
 	
 	
 	public TreeData(String string, int id_number) {

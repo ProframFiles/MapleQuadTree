@@ -676,7 +676,7 @@ public class TreeSpotter implements EntryPoint {
 						// optional field, so don't add it as invalid if its
 						// empty
 						String a = input.trim();
-						if (a == "") {
+						if (a.length() == 0) {
 							// do nothing for optional fields
 						} else if (name.equalsIgnoreCase(HEIGHT)
 								|| name.equalsIgnoreCase(DIAMETER)) {
@@ -693,7 +693,7 @@ public class TreeSpotter implements EntryPoint {
 						}
 					} else {
 						// check for non-empty input
-						if (input.trim() == "") {
+						if (input.trim().length() == 0) {
 							invalidFields.add(name);
 						}
 					}

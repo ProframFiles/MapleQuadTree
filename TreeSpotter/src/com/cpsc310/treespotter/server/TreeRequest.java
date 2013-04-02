@@ -230,7 +230,7 @@ public class TreeRequest {
 			boolean match = true;
 			if(tree != null){
 				for(String id: matchStrings){
-					if(tree.equals(id)){
+					if(tree.getID().equals(id)){
 						match = false;
 					}
 				}

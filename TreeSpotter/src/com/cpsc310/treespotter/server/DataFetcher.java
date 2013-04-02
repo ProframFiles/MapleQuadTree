@@ -110,13 +110,11 @@ public class DataFetcher extends HttpServlet {
 		tree.setStreet(values[5]);
 		tree.setStreetBlock(values[6]);
 		tree.setStreetSideName(values[7]);
-		tree.setAssigned(valueToBoolean(values[8]));
 		tree.setHeightRange(Integer.parseInt(values[9]));
 		tree.setDiameter(Float.parseFloat(values[10]));
 		tree.setPlanted(null);
 		tree.setPlantArea(values[12]);
-		tree.setRootBarrier(valueToBoolean(values[13]));
-		tree.setCurb(valueToBoolean(values[14]));
+		//tree.setRootBarrier(valueToBoolean(values[13]));
 		tree.setCultivar(values[15]);
 		tree.setGenus(values[16]);
 		tree.setSpecies(values[17]);
@@ -125,12 +123,4 @@ public class DataFetcher extends HttpServlet {
 		return tree;
 	}
 
-
-	private Boolean valueToBoolean(String b) {
-		if (b.equals("Y"))
-			return true;
-		else if (b.equals("N"))
-			return false;
-		return null;
-	}
 }

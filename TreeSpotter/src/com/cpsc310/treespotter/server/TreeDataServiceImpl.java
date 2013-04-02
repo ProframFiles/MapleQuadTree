@@ -7,7 +7,6 @@ import static com.cpsc310.treespotter.server.ImageLinkDepot.imageLinkDepot;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -333,7 +332,9 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		else if(field_id == SearchFieldID.KEYWORD){
 			all_set = treeDepot().getKeywordSet();
 		}
-		LOG.info("Found " + all_set.size() + " suggestions");
+		if(all_set != null){
+			LOG.info("Found " + all_set.size() + " suggestions");
+		}
 		if(all_set != null && hint != null && hint.length() > 0)
 		{
 			LOG.info("Now filtering list");

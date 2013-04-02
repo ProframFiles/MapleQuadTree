@@ -15,7 +15,6 @@ import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.fileupload.util.Streams;
 
 import com.google.appengine.api.blobstore.BlobKey;
 import com.google.appengine.api.blobstore.BlobstoreService;
@@ -26,6 +25,7 @@ import com.google.appengine.api.images.ServingUrlOptions;
 
 public class UploadImage extends HttpServlet {
 	
+	private static final long serialVersionUID = 1L;
 	private BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
 	
 	public void doPost(HttpServletRequest req, HttpServletResponse res) 
@@ -56,6 +56,8 @@ public class UploadImage extends HttpServlet {
 				while (iterator.hasNext()) {
 					FileItemStream item = iterator.next();
 					String name = item.getFieldName();
+					//(aleksy) I'm not sure if this is here for a reason
+					@SuppressWarnings("unused")
 					InputStream stream = item.openStream();
 					
 					if(item.isFormField()) {

@@ -22,8 +22,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import javax.management.RuntimeErrorException;
-
 import com.cpsc310.treespotter.shared.FilteredCSVReader;
 import com.cpsc310.treespotter.shared.LatLong;
 import com.cpsc310.treespotter.shared.Util;

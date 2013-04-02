@@ -62,9 +62,6 @@ public class TreeSearchMap{
 	}
 
 	public void onTabPageChanged(int page){
-		for(int i = pageSize*currentPage; i < (pageSize)*(currentPage+1) && i < treeList.size(); i++){
-			ClientTreeData tree = treeList.get(i);
-		}
 		
 		currentPage = page;
 		for (OnPageMarker marker: markers){
@@ -99,7 +96,6 @@ public class TreeSearchMap{
 		}
 		@Override
 		public double computeZIndex(Marker marker) {
-			// TODO Auto-generated method stub
 			return index;
 		}
 		
@@ -174,6 +170,7 @@ public class TreeSearchMap{
 			remove();
 		}
 		
+		@SuppressWarnings("unused")
 		public void requestGoogleLocation(){
 			String loc = tree.getLocation() + ", Vancouver, BC";
 			geo.getLatLng(loc, new LatLngCallback() {

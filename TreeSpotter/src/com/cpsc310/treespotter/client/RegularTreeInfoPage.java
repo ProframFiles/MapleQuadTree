@@ -247,6 +247,7 @@ public class RegularTreeInfoPage extends TreeInfoPage {
 			
 			public void onSuccess(String str){
 				// TODO: what do we need back from the server for this?
+				//(aleksy) nothing really, I just wasn't sure when I made the stub
 				
 			}
 		});

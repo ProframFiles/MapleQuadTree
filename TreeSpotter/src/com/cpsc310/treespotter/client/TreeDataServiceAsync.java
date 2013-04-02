@@ -2,7 +2,6 @@ package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
 import java.util.SortedMap;
-import java.util.TreeMap;
 
 import com.cpsc310.treespotter.shared.CSVFile;
 import com.cpsc310.treespotter.shared.ISharedTreeData;

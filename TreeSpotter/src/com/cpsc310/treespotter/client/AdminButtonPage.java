@@ -4,20 +4,16 @@
 package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
-import java.util.Map.Entry;
+import java.util.Arrays;
 import java.util.SortedMap;
 
 import com.cpsc310.treespotter.shared.CSVFile;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -73,7 +69,7 @@ public class AdminButtonPage {
 
 							@Override
 							public void onFailure(Throwable caught) {
-								System.out.println(caught.getStackTrace());
+								System.out.println(Arrays.toString(caught.getStackTrace()));
 							}
 
 							@Override
@@ -108,7 +104,7 @@ public class AdminButtonPage {
 
 			@Override
 			public void onFailure(Throwable caught) {
-				System.out.println(caught.getStackTrace());
+				System.out.println(Arrays.toString(caught.getStackTrace()));
 			}
 
 			@Override
@@ -130,7 +126,7 @@ public class AdminButtonPage {
 
 					@Override
 					public void onFailure(Throwable caught) {
-						System.out.println(caught.getStackTrace());		
+						System.out.println(Arrays.toString(caught.getStackTrace()));
 					}
 
 					@Override
@@ -160,7 +156,7 @@ public class AdminButtonPage {
 
 					@Override
 					public void onFailure(Throwable caught) {
-						System.out.println(caught.getStackTrace());
+						System.out.println(Arrays.toString(caught.getStackTrace()));
 						
 					}
 
@@ -264,7 +260,7 @@ public class AdminButtonPage {
 
 					@Override
 					public void onFailure(Throwable e) {
-						System.out.println(e.getStackTrace());
+						System.out.println(Arrays.toString(e.getStackTrace()));
 						
 					}
 
@@ -298,7 +294,7 @@ public class AdminButtonPage {
 
 					@Override
 					public void onFailure(Throwable e) {
-						System.out.println(e.getStackTrace());
+						System.out.println(Arrays.toString(e.getStackTrace()));
 						
 					}
 
@@ -323,7 +319,7 @@ public class AdminButtonPage {
 
 			@Override
 			public void onFailure(Throwable caught) {
-				System.out.println(caught.getStackTrace());
+				System.out.println(Arrays.toString(caught.getStackTrace()));
 			}
 
 			@Override

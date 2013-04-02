@@ -54,11 +54,6 @@ public class TransmittedTreeData implements Serializable, ISharedTreeData {
 		return num + street;
 	}
 
-	// depends on if we use the geocoded LatLng data
-	// TODO (someone) turn this into actual coordinates
-/*	public String getCoordinates(){
-		return getLocation();
-	}*/
 
 	/* (non-Javadoc)
 	 * @see com.cpsc310.treespotter.shared.ISharedTreeData#getCivicNumber()

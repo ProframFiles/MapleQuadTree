@@ -92,7 +92,6 @@ public class FilteredCSVReader extends FilterReader {
 	 */
 	@Override
 	public boolean markSupported() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -101,7 +100,6 @@ public class FilteredCSVReader extends FilterReader {
 	 */
 	@Override
 	public void reset() throws IOException {
-		// TODO Auto-generated method stub
 		super.reset();
 		linesRead = 0;
 		setUnparsed();

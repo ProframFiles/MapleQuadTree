@@ -4,7 +4,6 @@ import com.cpsc310.treespotter.shared.ISharedTreeData;
 import com.cpsc310.treespotter.shared.LatLong;
 import com.google.gwt.maps.client.geom.LatLng;
 import com.google.gwt.maps.client.overlay.Marker;
-import com.google.gwt.user.client.ui.FlexTable;
 
 public class ClientTreeData implements ISharedTreeData {
 	/**
@@ -13,7 +12,6 @@ public class ClientTreeData implements ISharedTreeData {
 	private ISharedTreeData data;
 	private Marker mapMarker = null;
 	private LatLng ll = null;
-	private int index = -1;
 	private Marker onPageMarker = null;
 
 	public ClientTreeData(ISharedTreeData data){

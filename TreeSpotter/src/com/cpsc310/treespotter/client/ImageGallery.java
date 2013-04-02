@@ -1,6 +1,7 @@
 package com.cpsc310.treespotter.client;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -13,14 +14,10 @@ import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 
 public class ImageGallery extends Composite {
@@ -153,7 +150,7 @@ public class ImageGallery extends Composite {
 	
 						@Override
 						public void onFailure(Throwable caught) {
-							System.out.println(caught.getStackTrace());
+							System.out.println(Arrays.toString(caught.getStackTrace()));
 						}
 	
 						@Override

@@ -12,7 +12,6 @@ import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -151,8 +150,9 @@ public abstract class TreeInfoPage extends Composite {
 
 	 protected void setShareLinks(HorizontalPanel shareLinks, ClientTreeData t) {
 		this.shareLinks = shareLinks;
-		String baseURL = GWT.getHostPageBaseURL();
-		String token = "tree" + t.getID();
+		//(aleksy) not used warnings...
+		//String baseURL = GWT.getHostPageBaseURL();
+		//String token = "tree" + t.getID();
 		Button fbButton = new Button("Share on Facebook");
 		
 		fbButton.addClickHandler(new ClickHandler() {

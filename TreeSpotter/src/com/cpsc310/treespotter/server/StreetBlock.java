@@ -1,11 +1,9 @@
 package com.cpsc310.treespotter.server;
-import java.util.List;
 
 
 import com.cpsc310.treespotter.shared.LatLong;
 import com.cpsc310.treespotter.shared.LatLongProvider;
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
+
 
 public class StreetBlock implements LatLongProvider {
 	

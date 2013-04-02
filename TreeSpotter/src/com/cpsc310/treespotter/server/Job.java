@@ -154,7 +154,6 @@ public abstract class Job {
 	}
 
 	protected boolean forceNewTasks() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
