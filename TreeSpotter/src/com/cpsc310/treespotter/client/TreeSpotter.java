@@ -209,7 +209,7 @@ public class TreeSpotter implements EntryPoint {
 		initTwitterScript();
 		initGooglePlusScript();
 		initHomePage();
-		//initSearchOracles();
+		initSearchOracles();
 		initButtons();
 		initLoginLogout();
 		initAdminButton();
