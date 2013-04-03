@@ -125,10 +125,24 @@ public class ServerTests {
 	@Test
 	public void testFlagging() {
 		String id = "V4374";
+		String id2 = "V110163";
+		ArrayList<String> flagged;
 		dataService.flagTreeData(id,"Genus", "why not");
-		ArrayList<String> flagged = dataService.getFlaggedTreeIDs();
+		flagged = dataService.getFlaggedTreeIDs();
 		assertEquals(flagged.size(),1);
-		dataService.clearTreeFlags(flagged.get(0));
+		dataService.flagTreeData(id,"Species", "why not again");
+		flagged = dataService.getFlaggedTreeIDs();
+		assertEquals(flagged.size(),1);
+		dataService.flagTreeData(id,"Genus", "Genus again?");
+		flagged = dataService.getFlaggedTreeIDs();
+		assertEquals(flagged.size(),1);
+		dataService.flagTreeData(id2,"Genus", "this genus is wrong too");
+		flagged = dataService.getFlaggedTreeIDs();
+		assertEquals(flagged.size(),2);
+		dataService.clearTreeFlags(id);
+		flagged = dataService.getFlaggedTreeIDs();
+		assertEquals(flagged.size(),1);
+		dataService.clearTreeFlags(id2);
 		flagged = dataService.getFlaggedTreeIDs();
 		assertEquals(flagged.size(),0);
 	}

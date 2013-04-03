@@ -98,7 +98,9 @@ public class DataUpdateJob extends Job {
 				LOG.warning("Invalid option: \"" + option_name+ "\", ignoring");
 			}
 		}
-		LOG.warning("Null task option is invalid");
+		else{
+			LOG.warning("Null task option is invalid");
+		}
 	}
 	protected boolean forceNewTasks() {
 		return forceTasks ;
