@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.mortbay.log.Log;
-
 import com.cpsc310.treespotter.shared.CSVFile;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Ref;

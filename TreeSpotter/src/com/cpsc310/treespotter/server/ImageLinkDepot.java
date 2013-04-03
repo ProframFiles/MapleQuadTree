@@ -110,6 +110,7 @@ public class ImageLinkDepot {
 					ofy().load().ref(imageRef);
 					treeImages = imageRef.get();
 				}
+				@SuppressWarnings("unused")
 				ArrayList<String> links = treeImages.getImageLinks();
 				return treeImages;
 			}

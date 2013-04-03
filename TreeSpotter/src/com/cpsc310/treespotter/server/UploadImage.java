@@ -3,7 +3,6 @@ package com.cpsc310.treespotter.server;
 import static com.cpsc310.treespotter.server.ImageLinkDepot.imageLinkDepot;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -11,11 +10,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.fileupload.FileItemIterator;
-import org.apache.commons.fileupload.FileItemStream;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import com.google.appengine.api.blobstore.BlobKey;
 import com.google.appengine.api.blobstore.BlobstoreService;
