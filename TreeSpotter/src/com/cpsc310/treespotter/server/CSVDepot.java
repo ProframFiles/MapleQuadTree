@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
+
+import org.mortbay.log.Log;
 
 import com.cpsc310.treespotter.shared.CSVFile;
 import com.googlecode.objectify.Key;
@@ -24,6 +27,7 @@ public class CSVDepot {
 	static CSVDepot instance;
 	@Id String id;
 	@Unindex Map<String, Ref<CSVFile>> csvFiles;
+	private static final Logger LOG = Logger.getLogger("Tree");
 	
 	CSVDepot() {}
 	
@@ -66,6 +70,9 @@ public class CSVDepot {
 	
 	
 	public synchronized void addCSVFile(final CSVFile csv) {
+		
+		checkForNullFiles();
+		
 		String email = csv.getEmail();
 		String f_email = formatEmail(email);
 		Ref<CSVFile> csvRef = csvFiles.get(f_email);
@@ -84,6 +91,9 @@ public class CSVDepot {
 	
 
 	public CSVFile getCSVFile(final String email) {
+		
+		checkForNullFiles();
+		
 		String f_email = formatEmail(email);
 		Ref<CSVFile> csvRef = csvFiles.get(f_email);
 		if (csvRef != null) {
@@ -95,6 +105,8 @@ public class CSVDepot {
 	}
 	
 	public ArrayList<CSVFile> getAllCSVFiles() {
+		checkForNullFiles();
+		
 		ArrayList<CSVFile> allCSVs = new ArrayList<CSVFile>();
 		Collection<Ref<CSVFile>> allCSVRefs = csvFiles.values();
 		
@@ -107,6 +119,8 @@ public class CSVDepot {
 	}
 	
 	public void deleteCSV(CSVFile csv) {
+		checkForNullFiles();
+		
 		String email = csv.getEmail();
 		String f_email = formatEmail(email);
 		Ref<CSVFile> csvRef = csvFiles.get(f_email);
@@ -121,5 +135,12 @@ public class CSVDepot {
 	private String formatEmail(String email) {
 		String str = email.replace('.', '\0');
 		return str;
+	}
+	
+	private void checkForNullFiles() {
+		if (csvFiles == null) {
+			LOG.info("Something bad happened");
+			csvFiles = new HashMap<String, Ref<CSVFile>>();
+		}
 	}
 }

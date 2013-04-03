@@ -5,6 +5,7 @@ import static com.cpsc310.treespotter.server.ImageLinkDepot.imageLinkDepot;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -25,13 +26,14 @@ import com.google.appengine.api.images.ServingUrlOptions;
 
 public class UploadImage extends HttpServlet {
 	
+	private static final Logger LOG = Logger.getLogger("Tree");
 	private static final long serialVersionUID = 1L;
 	private BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
 	
 	public void doPost(HttpServletRequest req, HttpServletResponse res) 
 			throws ServletException, IOException {
 
-		System.out.println("Received Upload Request on Server");
+		LOG.info("Received Upload Request on Server");
 		
 		
 		@SuppressWarnings("deprecation")
@@ -39,36 +41,19 @@ public class UploadImage extends HttpServlet {
 		BlobKey blobKey = blobs.get("image");
 		
 		if (blobKey == null) {
-			System.out.println("Blobkey is null");
+			LOG.info("Uh oh. Blobkey is null");
 			return;
 		} else {
 			
 			ImagesService imagesService = ImagesServiceFactory.getImagesService();
 			ServingUrlOptions urlOpts =  ServingUrlOptions.Builder.withBlobKey(blobKey);
 			String imageUrl = imagesService.getServingUrl(urlOpts);
-			System.out.println(imageUrl);	
+			LOG.info("URL: " + imageUrl);	
 			
-			String treeID = "";
-			
-			ServletFileUpload upload = new ServletFileUpload();
-			try {
-				FileItemIterator iterator = upload.getItemIterator(req);
-				while (iterator.hasNext()) {
-					FileItemStream item = iterator.next();
-					String name = item.getFieldName();
-					//(aleksy) I'm not sure if this is here for a reason
-					@SuppressWarnings("unused")
-					InputStream stream = item.openStream();
-					
-					if(item.isFormField()) {
-						System.out.println("Form field: " + name);
-						treeID = name;
-					}
-				}
-			} catch (FileUploadException e) {
-				e.printStackTrace();
-			}
-		
+			LOG.info("Grabbing TreeID");
+			String treeID = req.getParameter("treeID");
+
+			LOG.info("TreeID is " + treeID);
 			if (!treeID.equals(""))
 				imageLinkDepot().addImageLink(treeID, imageUrl);
 			
@@ -83,7 +68,7 @@ public class UploadImage extends HttpServlet {
         String imageUrl = req.getParameter("imageUrl");
         resp.setHeader("Content-Type", "text/html");
  
-        System.out.println("doGet URL: " + imageUrl);
+        LOG.info("doGet URL: " + imageUrl);
         resp.getWriter().println(imageUrl);
  
     }

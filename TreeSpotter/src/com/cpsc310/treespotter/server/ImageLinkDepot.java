@@ -2,8 +2,10 @@ package com.cpsc310.treespotter.server;
 
 import static com.cpsc310.treespotter.server.OfyService.ofy;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Ref;
@@ -21,6 +23,8 @@ public class ImageLinkDepot {
 	static ImageLinkDepot instance;
 	@Id String id;
 	@Unindex Map<String, Ref<TreeImageList>> treeImageLinks;
+	
+	private static Logger LOG  = Logger.getLogger("Tree");
 	
 	ImageLinkDepot() {}
 	
@@ -54,6 +58,7 @@ public class ImageLinkDepot {
 	}
 
 	private static void saveDepotState(final ImageLinkDepot depot) {
+		LOG.info("Saving current depot state");
 		ofy().transact(new VoidWork() {
 		    public void vrun() {
 		    	ofy().save().entity(depot);
@@ -63,6 +68,11 @@ public class ImageLinkDepot {
 	
 	
 	public void addImageLink(final String treeId, final String link) {
+		if (treeImageLinks == null) {
+			LOG.info("Uh oh. Error in persisting earlier");
+			treeImageLinks = new HashMap<String, Ref<TreeImageList>>();
+		}
+		LOG.info("Adding link " + link + " to tree " + treeId);
 		String treeID = originalTreeID(treeId);
 		final TreeImageList imageList = getImageList(treeID);
 		ofy().transact(new Work<TreeImageList>() {
@@ -72,6 +82,7 @@ public class ImageLinkDepot {
 				imageList.addImageLink(link);
 				ofy().save().entity(imageList);
 				saveDepotState(instance);
+				LOG.info("Done adding link to " + treeId);
 				return imageList;
 			}
 		});
@@ -79,6 +90,11 @@ public class ImageLinkDepot {
 	}
 	
 	public synchronized TreeImageList getImageList(final String treeId) {
+		if (treeImageLinks == null) {
+			LOG.info("Uh oh. Error in persisting earlier");
+			treeImageLinks = new HashMap<String, Ref<TreeImageList>>();
+		}
+		LOG.info("Received request to grab image links from " + treeId);
 		TreeImageList treeImages = ofy().transact(new Work<TreeImageList>() {
 
 			@Override
@@ -86,19 +102,18 @@ public class ImageLinkDepot {
 				String treeID = originalTreeID(treeId);
 				Ref<TreeImageList> imageRef = treeImageLinks.get(treeID);
 				TreeImageList treeImages;
+				
 				if (imageRef == null) {
-					treeImages = new TreeImageList(treeID);
-					ofy().save().entity(treeImages);
-					treeImageLinks.put(treeId, Ref.create(treeImages));
-					saveDepotState(instance);
+					LOG.info("No prior links");
+					return new TreeImageList(treeID);
 				} else {
 					ofy().load().ref(imageRef);
 					treeImages = imageRef.get();
 				}
+				ArrayList<String> links = treeImages.getImageLinks();
 				return treeImages;
 			}
 		});
-		
 		return treeImages;
 	}
 	

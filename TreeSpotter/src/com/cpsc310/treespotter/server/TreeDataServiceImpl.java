@@ -358,7 +358,7 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 	
 	public void parseCSV(CSVFile csv) {
-		System.out.println("Received parsing request");
+		LOG.info("Received parsing request");
 		
 		String[] contents = csv.getContents();
 		int num_trees = contents.length;
@@ -401,8 +401,6 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 		}
 		
 		String csvString = sb.toString();
-		System.out.println(csvString);
-		
 		
 		// Add trees to database -cross fingers-
 		DataUpdateJob job = new DataUpdateJob("Add Trees from User CSV");
@@ -418,22 +416,27 @@ public class TreeDataServiceImpl extends RemoteServiceServlet implements
 	}
 	
 	public void deleteCSV(CSVFile csv) {
-		System.out.println("Received delete request");
+		LOG.info("Received delete request");
 		csvDepot().deleteCSV(csv);
 		
 	}
 	
 	public String getBlobstoreUploadUrl() {
-		System.out.println("Preparing for image upload");
+		LOG.info("Preparing for image upload");
 		BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
 		String uploadUrl = blobstoreService.createUploadUrl("/upload");
-		System.out.println("Upload URL: " + uploadUrl);
+		LOG.info("Blobstore URL: " + uploadUrl);
 		return uploadUrl;
 	}
 	
 	public ArrayList<String> getTreeImages(String treeID) {
-		System.out.println("Fetching Tree Images for " + treeID);
+		LOG.info("Fetching Tree Images for " + treeID);
 		ArrayList<String> links = imageLinkDepot().getImageList(treeID).getImageLinks();
+		if (links == null) {
+			LOG.info("Null: Has no links");
+			return new ArrayList<String>();
+		}
+		LOG.info("Returning " + links.size() + "links");
 		return links;
 	}
 }
