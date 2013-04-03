@@ -65,11 +65,10 @@ public class ImportCSVTrees extends HttpServlet {
 		
 		String user = strs[0];
 		String email = strs[1];
-		// String header = strs[2]; // 1st line in CSV is header
 		
-		String[] contents = new String[strs.length - 3];
-		for (int i=3; i<strs.length; i++) {
-			contents[i-3] = (strs[i]);
+		String[] contents = new String[strs.length - 2];
+		for (int i=2; i<strs.length; i++) {
+			contents[i-2] = (strs[i]);
 		}
 		
 		CSVFile csvFile = new CSVFile(email, user, contents);
